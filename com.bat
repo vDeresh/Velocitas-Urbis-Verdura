@@ -1,0 +1,1 @@
+clang --shared -o src\shared\physics.dll src\code\c\physics.c

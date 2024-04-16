@@ -1,0 +1,34 @@
+
+    "fs1": {
+        "info": {
+            "length": 0,
+            "starting-direction": [1, 0],
+            "pit-lane-speed-limit": 80,
+            "pit-lane-capacity": 12
+        },
+
+        "pit-lane": [
+            [ 80,  30, []],
+            [ 90,  35, ["speed-limit-start"]],
+            [200,  35, ["pit-box",  1]],
+            [200,  35, ["pit-box",  2]],
+            [200,  35, ["pit-box",  3]],
+            [200,  35, ["pit-box",  4]],
+            [200,  35, ["pit-box",  5]],
+            [200,  35, ["pit-box",  6]],
+            [200,  35, ["pit-box",  7]],
+            [200,  35, ["pit-box",  8]],
+            [200,  35, ["pit-box",  9]],
+            [200,  35, ["pit-box", 10]],
+            [200,  35, ["pit-box", 11]],
+            [200,  35, ["pit-box", 12]],
+            [360,  35, ["speed-limit-end"]],
+            [380,  30, []]
+        ],
+
+        "track": [
+            [000, 000, ["meta"]],
+            [000, 000, ["turn-start", {"reference-target-speed": 70, "overtaking-risk": 0.7}]],
+            [000, 000, ["turn-end", "lap-end"]]
+        ]
+    }
