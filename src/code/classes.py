@@ -32,6 +32,7 @@ class Driver:
         self.position: int
         self.prev_position: int
         self.was_overtaken: float = 120 * self.reaction_time_multiplier
+        self.is_already_turning: int = 0
 
         self.decision_stack: deque[dict] = deque([{"type": "pit"}])
         self.pitting: bool = False
