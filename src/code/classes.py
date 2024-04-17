@@ -1,6 +1,8 @@
 from pygame.math import Vector2
-from .others import distance_between_points, next_turn_data, is_it_end_of_turn #, distance_to_next_driver
+from .others import distance_between_points, next_turn_data, is_it_end_of_turn, distance_to_pit_lane_entry
 from ..code.manager.link import calculate_speed
+
+from collections import deque
 
 
 class Team:
@@ -25,17 +27,14 @@ class Driver:
         # self.tyre_type: int # TODO
 
         self.current_point: int = 0
-        self.next_point_xy: list[int] = []
-
-        self.next_turn_data: list
-        self.distance_to_next_turn: float | None = None
-        self.is_already_turning: int = 0
-
+        self.next_point_xy: list[int] = [2048, 2048]
         self.lap: int = 1
         self.position: int
         self.prev_position: int
-
         self.was_overtaken: float = 120 * self.reaction_time_multiplier
+
+        self.decision_stack: deque[dict] = deque([{"type": "pit"}])
+        self.pitting: bool = False
 
     def init(self, track, position: int) -> None:
         self.next_turn_data = next_turn_data(track, self.current_point)
@@ -50,23 +49,38 @@ class Driver:
     def set_pos(self, x: float, y: float) -> None:
         self.pos = Vector2(x, y)
 
-    def update(self, track: list[list], track_points: list, drivers: list) -> None:
+    def update(self, track: list[list], track_points: list, pitlane_points: list, track_info: dict, drivers: list) -> None:
+        self.distance_to_next_turn = self.pos.distance_to((self.next_turn_data[0], self.next_turn_data[1]))
+
+        # Calls
+        for call in self.decision_stack:
+            match call['type']:
+                case "pit":
+                    if distance_to_pit_lane_entry(track, self.current_point, self.pos.distance_to(self.next_point_xy[:2])) < self.distance_to_next_turn and not self.is_already_turning:
+                        self.pitting = True
+                        self.current_point = 0
+
+        # Pitting
+        if self.pitting:
+            self.speed = track_info['pit-lane-speed-limit']
+            self.next_point_xy = pitlane_points[self.current_point + 1]
+
+            if self.pos == self.next_point_xy:
+                self.current_point += 1
+            return
+
+        # Racing
         if self.position > self.prev_position:
             self.was_overtaken = 60 * self.reaction_time_multiplier
 
         if self.was_overtaken > 0:
-            print("wo >", self.was_overtaken)
             self.was_overtaken -= 1
 
             if self.was_overtaken < 0:
                 self.was_overtaken = 0
 
-
-        # print(self.was_overtaken)
-
         self.speed = self.calculate_speed(track_points, drivers)
 
-        self.distance_to_next_turn = self.pos.distance_to((self.next_turn_data[0], self.next_turn_data[1]))
 
         if self.distance_to_next_turn == 0:
             self.is_already_turning = 1

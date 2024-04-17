@@ -103,7 +103,7 @@ double slipstream(double distanceToCarAhead, double speedOfCarAhead, double down
 
 
     double x = (-distanceToCarAhead + speedOfCarAhead + ((downforceOfCarAhead * downforceOfCarAhead) / speed)) / 16;
-    printf("slipstream > %f\n", x);
+    // printf("slipstream > %f\n", x);
     if (x > 0) return x / FPS;
     else return 0;
 }
