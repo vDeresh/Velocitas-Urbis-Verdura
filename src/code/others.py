@@ -1,14 +1,12 @@
 from pygame.math import Vector2
+# from .manager.link import distance_between_points
 
 
-pit_entry_point = -1
-def init(track: list[list]) -> None:
-    global pit_entry_point
-
+def calculate_pit_entry_point(track: list[list]) -> int:
     for n, p in enumerate(track):
         if "pit-lane-entry" in p[2]:
-            pit_entry_point = n
-            return
+            return n
+    return -1
 
 
 def distance_between_points(track: list[list], p1: int, p2: int) -> float:
@@ -30,8 +28,15 @@ def is_it_end_of_turn(track: list[list], current_point: int) -> bool:
         return True
     return False
 
-def distance_to_pit_lane_entry(track: list[list], current_point: int, distance_to_next_point: float) -> float:
+def distance_to_pit_lane_entry(track: list[list], current_point: int, distance_to_next_point: float, pit_entry_point: int) -> float:
     for p in track[current_point : len(track)]:
         if "pit-lane-entry" in p[2]:
+            # return distance_to_next_point + distance_between_points(track, current_point, pit_entry_point)
+            # print(distance_between_points(track, current_point, pit_entry_point))
             return distance_to_next_point + distance_between_points(track, current_point, pit_entry_point)
     return 0
+
+# def pit_info(pitlane: list[list], current_point: int) -> bool:
+#     if "pit-lane-speed-limit" in pitlane[current_point + 1][2]:
+#         return True
+#     return False

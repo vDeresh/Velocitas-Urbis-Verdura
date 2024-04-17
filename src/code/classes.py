@@ -1,8 +1,10 @@
 from pygame.math import Vector2
-from .others import distance_between_points, next_turn_data, is_it_end_of_turn, distance_to_pit_lane_entry
+from .others import calculate_pit_entry_point, distance_between_points, next_turn_data, is_it_end_of_turn, distance_to_pit_lane_entry #, is_it_pit_entry
 from ..code.manager.link import calculate_speed
 
-from collections import deque
+# from collections import deque
+
+pit_entry_point = -1
 
 
 class Team:
@@ -34,40 +36,60 @@ class Driver:
         self.was_overtaken: float = 120 * self.reaction_time_multiplier
         self.is_already_turning: int = 0
 
-        self.decision_stack: deque[dict] = deque([{"type": "pit"}])
+        self.decision_stack: list[dict] = [{"type": "pit"}]
         self.pitting: bool = False
+        self.pit_path_points: list
+        self.on_pitlane: bool = False
 
     def init(self, track, position: int) -> None:
+        global pit_entry_point
+        pit_entry_point = calculate_pit_entry_point(track)
+
         self.next_turn_data = next_turn_data(track, self.current_point)
         self.position = self.prev_position = position
 
     def calculate_speed(self, track_points: list, drivers: list) -> float:
         if self.distance_to_next_turn and self.next_turn_data:
             return calculate_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.skill_breaking, self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.team.car_stats['downforce'], self.team.car_stats['drag'], distance_to_next_driver(track_points, self, drivers), drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken)
-        else:
-            return self.speed
+        return self.speed
 
     def set_pos(self, x: float, y: float) -> None:
         self.pos = Vector2(x, y)
 
-    def update(self, track: list[list], track_points: list, pitlane_points: list, track_info: dict, drivers: list) -> None:
+    def update(self, track: list[list], track_points: list, pitlane: list, pitlane_points: list, track_info: dict, drivers: list) -> None:
         self.distance_to_next_turn = self.pos.distance_to((self.next_turn_data[0], self.next_turn_data[1]))
 
         # Calls
         for call in self.decision_stack:
             match call['type']:
                 case "pit":
-                    if distance_to_pit_lane_entry(track, self.current_point, self.pos.distance_to(self.next_point_xy[:2])) < self.distance_to_next_turn and not self.is_already_turning:
-                        self.pitting = True
+                    if (not self.is_already_turning) and (not self.on_pitlane) and (self.distance_to_next_turn > distance_to_pit_lane_entry(track, self.current_point, self.pos.distance_to(self.next_point_xy[:2]), pit_entry_point)):
+                        self.on_pitlane = True
+                        self.pit_path_points = track_points[self.current_point : pit_entry_point - 1] + pitlane_points
                         self.current_point = 0
+                        print(self.pit_path_points)
+                        self.decision_stack.remove(call)
 
         # Pitting
-        if self.pitting:
-            self.speed = track_info['pit-lane-speed-limit']
-            self.next_point_xy = pitlane_points[self.current_point + 1]
+        if self.on_pitlane:
+            self.next_point_xy = self.pit_path_points[self.current_point + 1][0 : 2]
 
             if self.pos == self.next_point_xy:
                 self.current_point += 1
+
+            if "pit-lane-speed-limit" in pitlane[self.current_point + 1][2]:
+                self.speed = track_info['pit-lane-speed-limit']
+
+            if "pit-lane-speed-exit" in pitlane[self.current_point + 1][2]:
+                self.speed = track_info['pit-lane-speed-limit']
+
+            if self.pitting:
+                self.pos = self.pos.move_towards(self.next_point_xy, track_info['pit-lane-speed-limit'])
+
+                self.speed = track_info['pit-lane-speed-limit']
+                self.next_point_xy = pitlane_points[self.current_point + 1]
+            else:
+                self.pos = self.pos.move_towards(self.next_point_xy, self.speed)
             return
 
         # Racing

@@ -148,7 +148,9 @@
             "length": 4766.786947384414,
             "starting-direction": [-1, 0],
             "pit-lane-speed-limit": 70,
-            "track-capacity": 16
+            "track-capacity": 16,
+            "pit-lane-entry-point": 0,
+            "pit-lane-exit-point": 0
         },
 
         "pit-lane": [
@@ -233,7 +235,7 @@
             [224, 944, []],
             [217, 947, []],
             [209, 949, []],
-            [199, 950, []]
+            [200, 950, ["pit-lane-exit"]]
         ],
 
         "track": [
