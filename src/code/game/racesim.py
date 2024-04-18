@@ -2,7 +2,7 @@ from ..config import *
 from ..manager import track as mgr_track
 from ..manager import team as mgr_team
 from ..classes import Team, Driver, distance_to_next_driver
-from ..others import calculate_pit_entry_point as init_others
+# from ..others import calculate_pit_entry_point as init_others
 
 from threading import Thread
 
@@ -26,7 +26,7 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 
     clock = pg.Clock()
     while 1:
-        clock.tick(60)
+        clock.tick(FPS)
 
         for n, driver in enumerate(DRIVERS):
             driver.position = n + 1
@@ -41,7 +41,10 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 
 
 def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
-    DRIVERS = DRIVERS[::2]
+    # DRIVERS = DRIVERS[::2]
+    DRIVERS = [DRIVERS[0], DRIVERS[1]]
+
+    DRIVERS[0].decision_stack.append({"type": "pit"})
 
     TRACK_INFO = mgr_track.show()[track_name]['info']
 
@@ -77,26 +80,26 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
         for driver in DRIVERS:
             pg.draw.circle(WIN, driver.team.color, driver.pos / 2, 2)
 
-        for n, p in enumerate(PITLANE_POINTS_SCALED):
-            if "speed-limit-start" in PITLANE[n][2] or "speed-limit-end" in PITLANE[n][2]:
-                pg.draw.circle(WIN, "yellow",  (p[0], p[1]), 3)
+        # for n, p in enumerate(PITLANE_POINTS_SCALED):
+        #     if "speed-limit-start" in PITLANE[n][2] or "speed-limit-end" in PITLANE[n][2]:
+        #         pg.draw.circle(WIN, "yellow",  (p[0], p[1]), 3)
 
-            if "pit-box" in PITLANE[n][2]:
-                pg.draw.circle(WIN, "pink", (p[0], p[1]), 3)
+        #     if "pit-box" in PITLANE[n][2]:
+        #         pg.draw.circle(WIN, "pink", (p[0], p[1]), 3)
 
-            pg.draw.circle(WIN, "darkred", (p[0], p[1]), 1)
-            # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
+        #     pg.draw.circle(WIN, "darkred", (p[0], p[1]), 1)
+        #     # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
 
 
-        for n, p in enumerate(TRACK_POINTS_SCALED):
-            if "turn-end" in TRACK[n][2]:
-                pg.draw.circle(WIN, "red",  (p[0], p[1]), 4)
+        # for n, p in enumerate(TRACK_POINTS_SCALED):
+        #     if "turn-end" in TRACK[n][2]:
+        #         pg.draw.circle(WIN, "red",  (p[0], p[1]), 4)
 
-            if "turn-start" in TRACK[n][2]:
-                pg.draw.circle(WIN, "lime", (p[0], p[1]), 3)
+        #     if "turn-start" in TRACK[n][2]:
+        #         pg.draw.circle(WIN, "lime", (p[0], p[1]), 3)
 
-            pg.draw.circle(WIN, "darkred", (p[0], p[1]), 1)
-            # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
+        #     pg.draw.circle(WIN, "darkred", (p[0], p[1]), 1)
+        #     # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
 
         WIN.blit(FONT_1.render(str((SHARED['fps'])), True, "white"), (0, 0))
         WIN.blit(FONT_1.render(str(DRIVERS[0].lap), True, "white"), (0, 26))

@@ -147,13 +147,24 @@
         "info": {
             "length": 4766.786947384414,
             "starting-direction": [-1, 0],
-            "pit-lane-speed-limit": 70,
+            "pit-lane-speed-limit": 0.5,
             "track-capacity": 16,
-            "pit-lane-entry-point": 0,
+            "pit-lane-entry-point": 297,
             "pit-lane-exit-point": 0
         },
 
         "pit-lane": [
+            [790, 556, []],
+            [790, 567, []],
+            [792, 578, []],
+            [795, 589, []],
+
+            [800, 600, []],
+            [805, 610, []],
+            [810, 620, []],
+            [815, 630, []],
+            [820, 640, []],
+
             [825, 650, ["pit-lane-entry"]],
             [829, 659, []],
             [833, 667, []],

@@ -2,13 +2,6 @@ from pygame.math import Vector2
 # from .manager.link import distance_between_points
 
 
-def calculate_pit_entry_point(track: list[list]) -> int:
-    for n, p in enumerate(track):
-        if "pit-lane-entry" in p[2]:
-            return n
-    return -1
-
-
 def distance_between_points(track: list[list], p1: int, p2: int) -> float:
     distance = 0
 

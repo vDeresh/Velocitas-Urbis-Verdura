@@ -37,8 +37,17 @@ for p in TRACK:
 
 avg_rts /= avg_divider_counter
 
+
+pitlane_entry_point = -1
+
+for n, p in enumerate(TRACK):
+    if "pit-lane-entry" in p[2]:
+        pitlane_entry_point = n
+
+
 print()
 print("Track length (km / m / sd) >", length / 1000, "/", length, "/", length / 2)
 print("Starting direction >", starting_direction)
 print("Average reference target speed >", avg_rts)
 print("Point count >", len(TRACK_POINTS))
+print("Pit lane entry point >", pitlane_entry_point)
