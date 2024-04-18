@@ -23,8 +23,8 @@ class Driver:
 
         self.pos: Vector2 = Vector2(0, 0)
         self.speed: float = 0
-        self.tyre_wear: float = 1
-        # self.tyre_type: int # TODO
+        self.tyre_wear: float = 1 # desmos
+        self.tyre_type: int
 
         self.current_point: int = 0
         self.next_point_xy: list[int] = [2048, 2048]
@@ -41,9 +41,10 @@ class Driver:
         self.pitting: bool = False
         self.pitlane_speed_limit_on: bool = False
 
-    def init(self, track, position: int) -> None:
+    def init(self, track, position: int, tyre_type: int) -> None:
         self.next_turn_data = next_turn_data(track, self.current_point)
         self.position = self.prev_position = position
+        self.tyre_type = tyre_type
 
     def calculate_speed(self, track_points: list, drivers: list) -> float:
         if self.distance_to_next_turn and self.next_turn_data:
@@ -61,11 +62,13 @@ class Driver:
             match call['type']:
                 case "pit":
                     if (not self.is_already_turning) and (self.current_point + 60 > track_info['pit-lane-entry-point']) and (not self.on_pitlane) and (self.distance_to_next_turn > distance_to_pit_lane_entry(track, self.current_point, self.pos.distance_to(self.next_point_xy[:2]), track_info['pit-lane-entry-point'])):
+                        self.pit_to_tyre_type = call['tyre']
                         self.on_pitlane = True
                         # self.pit_path_points = track_points[self.current_point : track_info['pit-lane-entry-point'] - 1]
                         # self.pit_path_points = pitlane_points
                         self.current_point = 0
                         self.decision_stack.remove(call)
+                        break
 
         # Pitting
         if self.on_pitlane:
