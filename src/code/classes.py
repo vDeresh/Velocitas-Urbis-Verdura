@@ -6,20 +6,20 @@ from ..code.manager import link
 
 
 class Team:
-    def __init__(self, name: str, drivers: list[int], color: str, name_abbreviation: str, car_stats: dict) -> None:
+    def __init__(self, name: str, data: dict) -> None:
         self.name = name
-        self.drivers = drivers
-        self.color = color
-        self.name_abbreviation = name_abbreviation
-        self.car_stats = car_stats
+        self.id = data['id']
+        self.drivers = data['drivers']
+        self.color = data['color']
+        self.name_abbreviation = data['name-abbreviation']
+        self.car_stats = data['car-stats']
 
 
 class Driver:
     def __init__(self, team: Team, number: int, skills: dict[str, float]) -> None:
         self.team = team
         self.number = number
-        self.skill_breaking = skills['breaking']
-        self.reaction_time_multiplier = skills['reaction-time-multiplier']
+        self.skills: dict[str, float] = skills
 
         self.pos: Vector2 = Vector2(0, 0)
         self.speed: float = 0
@@ -31,7 +31,7 @@ class Driver:
         self.lap: int = 1
         self.position: int
         self.prev_position: int
-        self.was_overtaken: float = 120 * self.reaction_time_multiplier
+        self.was_overtaken: float = 120 * self.skills['reaction-time-multiplier']
         self.is_already_turning: int = 0
 
         self.decision_stack: list[dict] = [] # [{"type": "pit"}]
@@ -40,6 +40,7 @@ class Driver:
         self.on_pitlane: bool = False
         self.pitting: bool = False
         self.pitlane_speed_limit_on: bool = False
+        self.pitstop_timer: float
 
     def init(self, track, position: int, tyre_type: int) -> None:
         self.next_turn_data = next_turn_data(track, self.current_point)
@@ -48,7 +49,7 @@ class Driver:
 
     def calculate_speed(self, track_points: list, drivers: list) -> float:
         if self.distance_to_next_turn and self.next_turn_data:
-            return link.calculate_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.skill_breaking, self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.team.car_stats['downforce'], self.team.car_stats['drag'], distance_to_next_driver(track_points, self, drivers), drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken)
+            return link.calculate_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.tyre_type, self.skills['breaking'], self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.team.car_stats['downforce'], self.team.car_stats['drag'], distance_to_next_driver(track_points, self, drivers), drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken)
         return self.speed
 
     def set_pos(self, x: float, y: float) -> None:
@@ -67,11 +68,15 @@ class Driver:
                         # self.pit_path_points = track_points[self.current_point : track_info['pit-lane-entry-point'] - 1]
                         # self.pit_path_points = pitlane_points
                         self.current_point = 0
+                        self.pitstop_timer = 0
                         self.decision_stack.remove(call)
                         break
 
         # Pitting
         if self.on_pitlane:
+            if self.pitlane_speed_limit_on:
+                self.speed = track_info['pit-lane-speed-limit']
+
             if self.pos == self.next_point_xy:
                 self.current_point += 1
 
@@ -85,6 +90,15 @@ class Driver:
                     self.pitlane_speed_limit_on = False
 
 
+            if "pit-box" in pitlane[self.current_point][2] and self.team.id == pitlane[self.current_point][2][1]:
+                self.speed = 0
+                self.pitstop_timer += 1 / 60 # 1 / FPS
+                if self.pitstop_timer >= 2 * self.skills['reaction-time-multiplier']:
+                    self.current_point += 1
+                    self.tyre_wear = 1
+                    self.tyre_type = self.pit_to_tyre_type
+                    del self.pit_to_tyre_type
+
             if "pit-lane-exit" in pitlane[self.current_point][2]:
                 self.on_pitlane = False
                 self.pitting = False
@@ -96,10 +110,6 @@ class Driver:
                 self.next_point_xy = track_points[self.current_point + 1]
 
 
-            if self.pitlane_speed_limit_on:
-                self.speed = track_info['pit-lane-speed-limit']
-
-
             # if self.pitting:
             self.pos = self.pos.move_towards(self.next_point_xy, self.speed)
             #     self.next_point_xy = pitlane_points[self.current_point + 1]
@@ -109,7 +119,7 @@ class Driver:
 
         # Racing
         if self.position > self.prev_position:
-            self.was_overtaken = 60 * self.reaction_time_multiplier
+            self.was_overtaken = 60 * self.skills['reaction-time-multiplier']
 
         if self.was_overtaken > 0:
             self.was_overtaken -= 1

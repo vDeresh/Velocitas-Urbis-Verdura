@@ -20,7 +20,6 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
     for n, driver in enumerate(DRIVERS):
         driver.set_pos(TRACK_POINTS[0][0] - 12 * TRACK_INFO['starting-direction'][0] * (n + 1), TRACK_POINTS[0][1] - 12 * TRACK_INFO['starting-direction'][1] * (n + 1))
         # driver.set_pos(TRACK_POINTS[0][0], TRACK_POINTS[0][1])
-        driver.init(TRACK, n + 1, 3)
 
     LAP = 0
 
@@ -42,10 +41,11 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 
 def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
     # DRIVERS = DRIVERS[::2]
-    # DRIVERS = [DRIVERS[0], DRIVERS[1]]
-    DRIVERS = [DRIVERS[0]]
+    DRIVERS = [DRIVERS[0], DRIVERS[1]]
+    # DRIVERS = [DRIVERS[0]]
 
-    # DRIVERS[0].decision_stack.append({"type": "pit", "tyre": 0})
+    # for driver in DRIVERS:
+    #     driver.decision_stack.append({"type": "pit", "tyre": 0})
 
     TRACK_INFO = mgr_track.show()[track_name]['info']
 
@@ -58,7 +58,13 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
     TRACK_POINTS_SCALED = mgr_track.scale_track_points(TRACK_POINTS)
     PITLANE_POINTS_SCALED = mgr_track.scale_track_points(PITLANE_POINTS)
 
-    # print(PITLANE_POINTS)
+
+    for n, driver in enumerate(DRIVERS):
+        driver.init(TRACK, n + 1, 0)
+
+    DRIVERS[0].tyre_type = 0
+    DRIVERS[1].tyre_type = 3
+
 
     SHARED = {
         "fps": 0
@@ -77,6 +83,20 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
         pg.draw.aalines(WIN, "azure1", True, TRACK_POINTS_SCALED)
         pg.draw.aalines(WIN, "azure4", False, PITLANE_POINTS_SCALED)
         pg.draw.rect(WIN, "red", (TRACK_POINTS_SCALED[0][0] - 1, TRACK_POINTS_SCALED[0][1] - 1, 4, 4), 2)
+
+        for driver in DRIVERS:
+            if driver.tyre_type == 0:
+                pg.draw.circle(WIN, "#ff7a7a", driver.pos / 2, 3)
+            elif driver.tyre_type == 1:
+                pg.draw.circle(WIN, "#c61010", driver.pos / 2, 3)
+            elif driver.tyre_type == 2:
+                pg.draw.circle(WIN, "#ffcf24", driver.pos / 2, 3)
+            elif driver.tyre_type == 3:
+                pg.draw.circle(WIN, "#f2f2f2", driver.pos / 2, 3)
+            elif driver.tyre_type == 4:
+                pg.draw.circle(WIN, "#21ad46", driver.pos / 2, 3)
+            elif driver.tyre_type == 5:
+                pg.draw.circle(WIN, "#0050d1", driver.pos / 2, 3)
 
         for driver in DRIVERS:
             pg.draw.circle(WIN, driver.team.color, driver.pos / 2, 2)
@@ -102,8 +122,9 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
         #     pg.draw.circle(WIN, "darkred", (p[0], p[1]), 1)
         #     # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
 
-        WIN.blit(FONT_1.render(str(SHARED['fps']), True, "white"), (0, 0))
-        WIN.blit(FONT_1.render(str(DRIVERS[0].tyre_wear), True, "white"), (0, 26))
+        # WIN.blit(FONT_1.render(str(SHARED['fps']), True, "white"), (0, 0))
+        # WIN.blit(FONT_1.render(str(DRIVERS[0].tyre_wear), True, "white"), (0, 26))
+        # WIN.blit(FONT_1.render(str(DRIVERS[1].tyre_wear), True, "white"), (0, 50))
         # WIN.blit(FONT_1.render(str(distance_to_next_driver(TRACK_POINTS, DRIVERS[1], DRIVERS)), True, "white"), (0, 26))
         # WIN.blit(FONT_1.render(str(DRIVERS[0].speed * 2 * 60), True, "white"), (0, 26))
         # WIN.blit(FONT_1.render(str(DRIVERS[-1].speed * 2 * 60), True, "white"), (0, 50))

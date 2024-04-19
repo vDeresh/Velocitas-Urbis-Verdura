@@ -41,10 +41,10 @@ def driver_show() -> dict:
 def ready_drivers() -> list[Driver]:
     DRIVERS: list[Driver] = []
 
-    for team in (teams := team_show()):
+    for team_name in (teams := team_show()):
         for driver in (drivers := driver_show()):
-            for n in teams[team]['drivers']:
+            for n in teams[team_name]['drivers']:
                 if n == drivers[driver]['number']:
-                    DRIVERS.append(Driver(Team(team, teams[team]['drivers'], teams[team]['color'], teams[team]['name-abbreviation'], teams[team]['car-stats']), drivers[driver]['number'], drivers[driver]['skills']))
+                    DRIVERS.append(Driver(Team(team_name, teams[team_name]), drivers[driver]['number'], drivers[driver]['skills']))
 
     return DRIVERS

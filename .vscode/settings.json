@@ -4,5 +4,6 @@
         "drivers": "json",
         "teams": "json",
         "tracks": "json"
-    }
+    },
+    "C_Cpp.errorSquiggles": "disabled"
 }
