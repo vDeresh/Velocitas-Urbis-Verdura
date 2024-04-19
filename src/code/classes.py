@@ -1,6 +1,6 @@
 from pygame.math import Vector2
 from .others import distance_between_points, next_turn_data, is_it_end_of_turn, distance_to_pit_lane_entry #, is_it_pit_entry
-from ..code.manager.link import calculate_speed
+from ..code.manager import link
 
 # from collections import deque
 
@@ -23,7 +23,7 @@ class Driver:
 
         self.pos: Vector2 = Vector2(0, 0)
         self.speed: float = 0
-        self.tyre_wear: float = 1 # desmos
+        self.tyre_wear: float = 1
         self.tyre_type: int
 
         self.current_point: int = 0
@@ -48,7 +48,7 @@ class Driver:
 
     def calculate_speed(self, track_points: list, drivers: list) -> float:
         if self.distance_to_next_turn and self.next_turn_data:
-            return calculate_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.skill_breaking, self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.team.car_stats['downforce'], self.team.car_stats['drag'], distance_to_next_driver(track_points, self, drivers), drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken)
+            return link.calculate_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.skill_breaking, self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.team.car_stats['downforce'], self.team.car_stats['drag'], distance_to_next_driver(track_points, self, drivers), drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken)
         return self.speed
 
     def set_pos(self, x: float, y: float) -> None:
@@ -127,6 +127,10 @@ class Driver:
             if is_it_end_of_turn(track, self.current_point):
                 self.is_already_turning = 0
                 self.next_turn_data = next_turn_data(track, self.current_point)
+
+
+        if self.is_already_turning:
+            self.tyre_wear = link.calculate_tyre_wear(self.tyre_wear, self.tyre_type, self.speed, self.next_turn_data[2][-1]['reference-target-speed'])
 
 
         if self.pos == self.next_point_xy:

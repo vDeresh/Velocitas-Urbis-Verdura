@@ -579,7 +579,7 @@
             [890, 740, ["turn-start", {"reference-target-speed": 50, "overtaking-risk": 0.7}]],
             [900, 750, []],
 
-            [888, 762, ["turn-end", "turn-start", {"reference-target-speed": 50, "overtaking-risk": 0.7}]],
+            [888, 762, []],
 
             [875, 775, []],
             [879, 780, []],

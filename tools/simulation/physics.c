@@ -7,7 +7,7 @@
 
 void init();
 
-double handle(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double driversBrakingSkill, double referenceTargetSpeed, double mass, double downforce, double drag, double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken);
+double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double driversBrakingSkill, double referenceTargetSpeed, double mass, double downforce, double drag, double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken);
 double realTargetSpeed(double referenceTargetSpeed, double mass, double downforce);
 double acceleration(double drag, double tyreWear, double mass, double downforce, double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double speed, float wasOvertaken);
 double maxSpeed(double drag);
@@ -43,7 +43,7 @@ void init()
 }
 
 
-double handle(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double driversBrakingSkill,
+double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double driversBrakingSkill,
              double referenceTargetSpeed, double mass, double downforce, double drag,
              double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken)
 {

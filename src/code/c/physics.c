@@ -7,12 +7,15 @@
 
 void init();
 
-double handle(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double driversBrakingSkill, double referenceTargetSpeed, double mass, double downforce, double drag, double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken);
+double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double driversBrakingSkill, double referenceTargetSpeed, double mass, double downforce, double drag, double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken);
+double braking(double distanceToTurn, double driversBrakingSkill, double tyreWear, double referenceTargetSpeed, double mass, double downforce);
 double realTargetSpeed(double referenceTargetSpeed, double mass, double downforce);
 double acceleration(double drag, double tyreWear, double mass, double downforce, double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double speed, float wasOvertaken);
 double maxSpeed(double drag);
 
 double slipstream(double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double currentSpeed, float wasOvertaken);
+
+double handleTyreWear(double tyreWear, int tyreType, double speed, double targetSpeed);
 
 
 const int FPS = 60;
@@ -43,7 +46,7 @@ void init()
 }
 
 
-double handle(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double driversBrakingSkill,
+double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double driversBrakingSkill,
              double referenceTargetSpeed, double mass, double downforce, double drag,
              double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken)
 {
@@ -61,10 +64,16 @@ double handle(int alreadyTurning, double currentSpeed, double distanceToTurn, do
         return min(tempMaxSpeed, (min(realTargetSpeed(referenceTargetSpeed, mass, downforce), currentSpeed + acceleration(drag, tyreWear, mass, downforce, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, currentSpeed, wasOvertaken)))) / 2 / FPS;
     }
 
-    double s1 = min(tempMaxSpeed, (distanceToTurn * distanceToTurn) * ((driversBrakingSkill * sqrt(tyreWear)) / distanceToTurn) + realTargetSpeed(referenceTargetSpeed, mass, downforce));
+    double s1 = min(tempMaxSpeed, braking(distanceToTurn, driversBrakingSkill, tyreWear, referenceTargetSpeed, mass, downforce));
     double s2 = min(tempMaxSpeed, currentSpeed + acceleration(drag, tyreWear, mass, downforce, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, currentSpeed, wasOvertaken));
 
     return (min(s1, s2) /*- (rand() % 101 / 100)*/) / 2 / FPS;
+}
+
+
+double braking(double distanceToTurn, double driversBrakingSkill, double tyreWear, double referenceTargetSpeed, double mass, double downforce)
+{
+    return (distanceToTurn * distanceToTurn) * ((driversBrakingSkill * sqrt(tyreWear)) / distanceToTurn) + realTargetSpeed(referenceTargetSpeed, mass, downforce);
 }
 
 
@@ -106,4 +115,11 @@ double slipstream(double distanceToCarAhead, double speedOfCarAhead, double down
     // printf("slipstream > %f\n", x);
     if (x > 0) return x / FPS;
     else return 0;
+}
+
+
+double handleTyreWear(double tyreWear, int tyreType, double speed, double targetSpeed)
+{
+    // return max(0.01, tyreWear - ((speed + pow(5 - tyreType, 2)) / (speed * speed)) / FPS);
+    return max(0.01, tyreWear - ((speed + pow(7 - tyreType, 2)) / pow(2 * targetSpeed, 2)) / FPS);
 }

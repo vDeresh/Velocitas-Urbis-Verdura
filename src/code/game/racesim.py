@@ -20,7 +20,7 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
     for n, driver in enumerate(DRIVERS):
         driver.set_pos(TRACK_POINTS[0][0] - 12 * TRACK_INFO['starting-direction'][0] * (n + 1), TRACK_POINTS[0][1] - 12 * TRACK_INFO['starting-direction'][1] * (n + 1))
         # driver.set_pos(TRACK_POINTS[0][0], TRACK_POINTS[0][1])
-        driver.init(TRACK, n + 1, 0)
+        driver.init(TRACK, n + 1, 3)
 
     LAP = 0
 
@@ -42,9 +42,10 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 
 def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
     # DRIVERS = DRIVERS[::2]
-    DRIVERS = [DRIVERS[0], DRIVERS[1]]
+    # DRIVERS = [DRIVERS[0], DRIVERS[1]]
+    DRIVERS = [DRIVERS[0]]
 
-    DRIVERS[0].decision_stack.append({"type": "pit", "tyre": 0})
+    # DRIVERS[0].decision_stack.append({"type": "pit", "tyre": 0})
 
     TRACK_INFO = mgr_track.show()[track_name]['info']
 
@@ -101,8 +102,8 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
         #     pg.draw.circle(WIN, "darkred", (p[0], p[1]), 1)
         #     # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
 
-        WIN.blit(FONT_1.render(str((SHARED['fps'])), True, "white"), (0, 0))
-        WIN.blit(FONT_1.render(str(DRIVERS[0].lap), True, "white"), (0, 26))
+        WIN.blit(FONT_1.render(str(SHARED['fps']), True, "white"), (0, 0))
+        WIN.blit(FONT_1.render(str(DRIVERS[0].tyre_wear), True, "white"), (0, 26))
         # WIN.blit(FONT_1.render(str(distance_to_next_driver(TRACK_POINTS, DRIVERS[1], DRIVERS)), True, "white"), (0, 26))
         # WIN.blit(FONT_1.render(str(DRIVERS[0].speed * 2 * 60), True, "white"), (0, 26))
         # WIN.blit(FONT_1.render(str(DRIVERS[-1].speed * 2 * 60), True, "white"), (0, 50))
