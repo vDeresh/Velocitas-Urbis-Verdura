@@ -1,6 +1,7 @@
 from pygame.math import Vector2
 from .others import distance_between_points, next_turn_data, is_it_end_of_turn, distance_to_pit_lane_entry #, is_it_pit_entry
 from ..code.manager import link
+import random
 
 # from collections import deque
 
@@ -49,14 +50,18 @@ class Driver:
 
     def calculate_speed(self, track_points: list, drivers: list) -> float:
         if self.distance_to_next_turn and self.next_turn_data:
-            return link.calculate_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.tyre_type, self.skills['breaking'], self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.team.car_stats['downforce'], self.team.car_stats['drag'], distance_to_next_driver(track_points, self, drivers), drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken)
+            return link.calculate_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.tyre_type, self.skills['breaking'], self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.team.car_stats['downforce'], self.team.car_stats['drag'], self.distance_to_next_driver, drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken)
         return self.speed
+
+    def slipstream_multiplier(self, drivers: list) -> float:
+        return link.calculate_slipstream_multiplier(self.distance_to_next_driver, drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken)
 
     def set_pos(self, x: float, y: float) -> None:
         self.pos = Vector2(x, y)
 
     def update(self, track: list[list], track_points: list, pitlane: list, pitlane_points: list, track_info: dict, drivers: list) -> None:
         self.distance_to_next_turn = self.pos.distance_to((self.next_turn_data[0], self.next_turn_data[1]))
+        self.distance_to_next_driver = distance_to_next_driver(track_points, self, drivers)
 
         # Calls
         for call in self.decision_stack:
@@ -128,6 +133,7 @@ class Driver:
                 self.was_overtaken = 0
 
         self.speed = self.calculate_speed(track_points, drivers)
+        self.racing_logic(drivers)
 
 
         if self.distance_to_next_turn == 0:
@@ -161,8 +167,22 @@ class Driver:
     def post_update(self) -> None:
         self.prev_position = self.position
 
-    # def racing_logic(self, track: list[list], drivers: list) -> None:
-        # pass
+    def racing_logic(self, drivers: list) -> None: # TODO
+        if self.was_overtaken: return
+
+        slipstream = self.slipstream_multiplier(drivers)
+        next_driver = drivers[self.position - 1 - 1]
+        speed_of_the_next_driver = next_driver.speed
+
+        if (self.distance_to_next_turn < 200) and (self.skills['attack'] - next_driver.skills['defence'] * self.next_turn_data[2][-1]['overtaking-risk'] < random.random()):
+            self.speed *= slipstream
+
+        elif self.distance_to_next_turn < 400:
+            self.speed = min(self.speed * slipstream, speed_of_the_next_driver)
+            print("a")
+
+        else:
+            self.speed *= slipstream
 
 
 def distance_to_next_driver(track_points: list, driver1: Driver, drivers: list[Driver]) -> float:

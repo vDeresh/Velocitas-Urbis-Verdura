@@ -18,6 +18,14 @@ def calculate_speed(alreadyTurning: int, currentSpeed: float, distanceToTurn: fl
     return physics.handleSpeed(ctypes.c_int(alreadyTurning), ctypes.c_double(currentSpeed), ctypes.c_double(distanceToTurn), ctypes.c_double(tyreWear), ctypes.c_double(tyreType), ctypes.c_double(driversBrakingSkill), ctypes.c_double(referenceTargetSpeed), ctypes.c_double(mass), ctypes.c_double(downforce), ctypes.c_double(drag), ctypes.c_double(distanceToCarAhead), ctypes.c_double(speedOfCarAhead), ctypes.c_double(downforceOfCarAhead), ctypes.c_float(wasOvertaken))
 
 
+# double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double speed, float wasOvertaken)
+physics.slipstreamMultiplier.argtypes = [ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_float]
+physics.slipstreamMultiplier.restype = ctypes.c_double
+
+def calculate_slipstream_multiplier(distanceToCarAhead: float, speedOfCarAhead: float, downforceOfCarAhead: float, wasOvertaken: float) -> float:
+    return physics.slipstreamMultiplier(ctypes.c_double(distanceToCarAhead), ctypes.c_double(speedOfCarAhead), ctypes.c_double(downforceOfCarAhead), ctypes.c_float(wasOvertaken))
+
+
 # double handleTyreWear(double tyreWear, int tyreType, double speed, double targetSpeed)
 physics.handleTyreWear.argtypes = [ctypes.c_double, ctypes.c_int, ctypes.c_double, ctypes.c_double]
 physics.handleTyreWear.restype = ctypes.c_double

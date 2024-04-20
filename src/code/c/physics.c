@@ -13,7 +13,7 @@ double realTargetSpeed(double referenceTargetSpeed, double mass, double downforc
 double acceleration(double drag, double tyreWear, double tyreType, double mass, double downforce, double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double speed, float wasOvertaken);
 double maxSpeed(double drag);
 
-// double slipstream(double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double currentSpeed, float wasOvertaken);
+double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, /*double currentSpeed,*/ float wasOvertaken);
 
 double handleTyreWear(double tyreWear, int tyreType, double speed, double targetSpeed);
 
@@ -45,7 +45,7 @@ void init()
     srand(t1.tv_usec * t1.tv_sec);
 }
 
-
+# TODO
 double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double tyreType, double driversBrakingSkill,
              double referenceTargetSpeed, double mass, double downforce, double drag,
              double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken)
@@ -99,23 +99,25 @@ double maxSpeed(double drag)
 }
 
 
-// double slipstream(double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double speed, float wasOvertaken)
-// {
-//     // double x = -(sqrt((distanceToCarAhead * distanceToCarAhead) + (speedOfCarAhead * speedOfCarAhead)) / 4) + (speedOfCarAhead / 2);
-//     // printf("%d, %f, %f, %f, %f\n", wasOvertaken, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, speed);
-//     // printf("a > %f, %f\n", speedOfCarAhead, speed);
-//     if (speedOfCarAhead * speed < 0) return 0;
-//     // printf("b\n");
-//     if (distanceToCarAhead < 4) return 0;
-//     // printf("c\n");
-//     if (wasOvertaken > 0) return -wasOvertaken / FPS;
+double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, /*double speed,*/ float wasOvertaken)
+{
+    // double x = -(sqrt((distanceToCarAhead * distanceToCarAhead) + (speedOfCarAhead * speedOfCarAhead)) / 4) + (speedOfCarAhead / 2);
+    // printf("%d, %f, %f, %f, %f\n", wasOvertaken, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, speed);
+    // printf("a > %f, %f\n", speedOfCarAhead, speed);
+    // if (speedOfCarAhead * speed < 0) return 0;
+    // printf("b\n");
+    if (distanceToCarAhead < 0) return 0;
+    // printf("c\n");
+    if (wasOvertaken > 0) return -wasOvertaken / FPS;
 
 
-//     double x = (-distanceToCarAhead + speedOfCarAhead + ((downforceOfCarAhead * downforceOfCarAhead) / speed)) / 16;
-//     // printf("slipstream > %f\n", x);
-//     if (x > 0) return x / FPS;
-//     else return 0;
-// }
+    // double x = (-distanceToCarAhead + speedOfCarAhead + ((downforceOfCarAhead * downforceOfCarAhead) / speed)) / 16;
+    // printf("slipstream > %f\n", x);
+    // if (x > 0) return x / FPS;
+    // else return 0;
+    // return (1 + (speedOfCarAhead / (100 * (distanceToCarAhead * distanceToCarAhead))));
+    return 1 + ((downforceOfCarAhead * speedOfCarAhead) / (1000 * (distanceToCarAhead * distanceToCarAhead)));
+}
 
 
 double handleTyreWear(double tyreWear, int tyreType, double speed, double targetSpeed)
