@@ -5,7 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debuger języka Python: Moduł",
+            "name": "Simulator",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tools\\simulator\\simulator.py",
+            "args": "${command:pickArgs}"
+        },
+        {
+            "name": "Game",
             "type": "debugpy",
             "request": "launch",
             "module": "__init__"

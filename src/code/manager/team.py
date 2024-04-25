@@ -42,9 +42,9 @@ def ready_drivers() -> list[Driver]:
     DRIVERS: list[Driver] = []
 
     for team_name in (teams := team_show()):
-        for driver in (drivers := driver_show()):
+        for driver_name in (drivers := driver_show()):
             for n in teams[team_name]['drivers']:
-                if n == drivers[driver]['number']:
-                    DRIVERS.append(Driver(Team(team_name, teams[team_name]), drivers[driver]['number'], drivers[driver]['skills']))
+                if n == drivers[driver_name]['number']:
+                    DRIVERS.append(Driver(driver_name, Team(team_name, teams[team_name]), drivers[driver_name]['number'], drivers[driver_name]['skills']))
 
     return DRIVERS

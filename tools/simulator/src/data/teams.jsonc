@@ -1,0 +1,4 @@
+{
+    "Team 1": {"drivers": [1, 2], "color": "#faafff", "name-abbreviation": "T01", "car-stats": {"drag": 1.2, "downforce": 2}},
+    "Team 2": {"drivers": [3, 4], "color": "#0123ff", "name-abbreviation": "T02", "car-stats": {"drag": 1.2, "downforce": 2}}
+}

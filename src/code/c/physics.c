@@ -45,7 +45,7 @@ void init()
     srand(t1.tv_usec * t1.tv_sec);
 }
 
-# TODO
+// TODO
 double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double tyreType, double driversBrakingSkill,
              double referenceTargetSpeed, double mass, double downforce, double drag,
              double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken)
@@ -108,7 +108,7 @@ double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, d
     // printf("b\n");
     if (distanceToCarAhead < 0) return 0;
     // printf("c\n");
-    if (wasOvertaken > 0) return -wasOvertaken / FPS;
+    if (wasOvertaken > 0) return 1;
 
 
     // double x = (-distanceToCarAhead + speedOfCarAhead + ((downforceOfCarAhead * downforceOfCarAhead) / speed)) / 16;
