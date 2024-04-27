@@ -5,7 +5,7 @@
 #include <sys/time.h>
 
 
-void init();
+void init(float _slipstream_effectiveness);
 
 double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double tyreType, double driversBrakingSkill, double referenceTargetSpeed, double mass, double downforce, double drag, double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken);
 double braking(double distanceToTurn, double driversBrakingSkill, double tyreWear, double referenceTargetSpeed, double mass, double downforce);
@@ -39,8 +39,13 @@ struct timeval t1;
 })
 
 
-void init()
+
+float SLIPSTREAM_EFFECTIVENESS;
+
+void init(float _slipstream_effectiveness)
 {
+    SLIPSTREAM_EFFECTIVENESS = _slipstream_effectiveness;
+
     gettimeofday(&t1, NULL);
     srand(t1.tv_usec * t1.tv_sec);
 }
@@ -109,6 +114,7 @@ double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, d
     // printf("b\n");
     // if (distanceToCarAhead < 0) return 1;
     // printf("c\n");
+    if (speedOfCarAhead < 90) return 1;
     if (wasOvertaken > 0) return 1 / (wasOvertaken - (wasOvertaken / 1.2) + 1);
 
 
@@ -117,7 +123,7 @@ double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, d
     // if (x > 0) return x / FPS;
     // else return 0;
     // return (1 + (speedOfCarAhead / (100 * (distanceToCarAhead * distanceToCarAhead))));
-    return 1 + ((downforceOfCarAhead * speedOfCarAhead) / (100 * distanceToCarAhead));
+    return 1 + ((downforceOfCarAhead * speedOfCarAhead) / (100 * distanceToCarAhead) / SLIPSTREAM_EFFECTIVENESS); // 10 - slipstream effectifity
     // double temp1 = 1 + ((downforceOfCarAhead * speedOfCarAhead) / (100 * distanceToCarAhead));
 
     // printf("downforce [%f], speed [%f], distance [%f] - %f\n", downforceOfCarAhead, speedOfCarAhead, distanceToCarAhead, temp1);

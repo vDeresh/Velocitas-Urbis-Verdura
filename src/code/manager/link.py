@@ -8,6 +8,11 @@ physics      = ctypes.CDLL(path.abspath(path.join("src", "shared", "physics.dll"
 # """
 
 
+physics.init.argtypes = [ctypes.c_float]
+physics.init.restype = None
+# physics.init() # init in main_mgr.py
+
+
 # double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double driversBrakingSkill,
 #              double referenceTargetSpeed, double mass, double downforce, double drag,
 #              double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead)

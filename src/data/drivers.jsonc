@@ -1,4 +1,0 @@
-{
-    "Driver 1": {"number": 1, "skills": {"breaking": 0.02, "reaction-time-multiplier": 1}},
-    "Driver 2": {"number": 2, "skills": {"breaking": 0.02, "reaction-time-multiplier": 1}}
-}

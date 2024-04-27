@@ -31,7 +31,7 @@ class Driver:
         self.lap: int = 1
         self.position: int
         self.prev_position: int
-        self.was_overtaken: float = 0 # 180 * self.skills['reaction-time-multiplier']
+        self.was_overtaken: float = 10 * self.skills['reaction-time-multiplier']
         self.is_already_turning: int = 0
 
         self.decision_stack: list[dict] = [] # [{"type": "pit"}]
@@ -124,9 +124,6 @@ class Driver:
             return
 
         # Racing
-        if self.position > self.prev_position:
-            self.was_overtaken = 1/2 * 60 * self.skills['reaction-time-multiplier']
-
         self.speed = self.calculate_speed(track_points, drivers)
         self.racing_logic(drivers)
 
@@ -164,6 +161,9 @@ class Driver:
     #     self.prev_position = self.position
 
     def racing_logic(self, drivers: list) -> None: # TODO
+        if self.position > self.prev_position:
+            self.was_overtaken = 30 * self.skills['reaction-time-multiplier']
+
         if self.was_overtaken > 0:
             self.was_overtaken -= 1
 
@@ -171,7 +171,7 @@ class Driver:
                 self.was_overtaken = 0
             else:
                 return
-        return
+
         # slipstream = self.slipstream_multiplier(drivers)
         next_driver: Driver = drivers[self.position - 1 - 1]
         speed_of_the_next_driver = next_driver.speed
@@ -185,8 +185,8 @@ class Driver:
                 self.overtaking = 0
 
         #     # self.speed *= 1.00002
-            if self.position < self.prev_position:
-                self.overtaking = 1 * 60 * self.skills['reaction-time-multiplier']
+            # if self.position < self.prev_position:
+            #     self.overtaking = 1 * 60 * self.skills['reaction-time-multiplier']
         #     return
 
         if (4 < self.distance_to_next_driver < 500) and (next_driver.next_turn_data[2][-1]['reference-target-speed'] == self.next_turn_data[2][-1]['reference-target-speed']):
@@ -195,8 +195,8 @@ class Driver:
             #         self.speed = min(self.speed, speed_of_the_next_driver)
                 # print("Opponent is already fighting")
 
-            if (self.distance_to_next_turn < 100) and (self.skills['attack'] - next_driver.skills['defence'] * self.next_turn_data[2][-1]['overtaking-risk'] > random.random() * 100):
-                self.overtaking = 3 * 60 * self.skills['reaction-time-multiplier']
+            if (self.distance_to_next_turn < 100) and (self.skills['attack'] - next_driver.skills['defence'] * self.next_turn_data[2][-1]['overtaking-risk'] > random.random() * 60):
+                self.overtaking = 1 * 60 * self.skills['reaction-time-multiplier']
                 pass
                 # self.speed *= slipstream
                 # self.speed = min(self.speed, speed_of_the_next_driver)
@@ -204,7 +204,7 @@ class Driver:
                 # print("Overtake 1")
 
             elif self.distance_to_next_turn > 200:
-                self.overtaking = 3 * 60 * self.skills['reaction-time-multiplier']
+                self.overtaking = 1 * 60 * self.skills['reaction-time-multiplier']
                 pass
                 # self.speed = min(self.speed, speed_of_the_next_driver)
                 # print("Waiting for the corner")

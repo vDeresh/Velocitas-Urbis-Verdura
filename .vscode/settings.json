@@ -3,7 +3,8 @@
     "files.associations": {
         "drivers": "json",
         "teams": "json",
-        "tracks": "json"
+        "tracks": "json",
+        ".manifest": "json"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

@@ -50,10 +50,10 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
         DRIVERS = DRIVERS[1::2]
 
 
-    TRACK_INFO = mgr_track.show()[track_name]['info']
+    TRACK_INFO = mgr_track.track_show()[track_name]['info']
 
-    TRACK = mgr_track.show()[track_name]['track']
-    PITLANE = mgr_track.show()[track_name]['pit-lane']
+    TRACK = mgr_track.track_show()[track_name]['track']
+    PITLANE = mgr_track.track_show()[track_name]['pit-lane']
 
     TRACK_POINTS = mgr_track.convert_track_to_points(TRACK)
     PITLANE_POINTS = mgr_track.convert_track_to_points(PITLANE)

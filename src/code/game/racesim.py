@@ -1,6 +1,5 @@
 from ..config import *
-from ..manager import track as mgr_track
-from ..manager import team as mgr_team
+from ..manager import main_mgr
 from ..classes import Team, Driver, distance_to_next_driver
 # from ..others import calculate_pit_entry_point as init_others
 
@@ -34,20 +33,20 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
     # for driver in DRIVERS:
     #     driver.decision_stack.append({"type": "pit", "tyre": 0})
 
-    TRACK_INFO = mgr_track.show()[track_name]['info']
+    TRACK_INFO = main_mgr.track_show()[track_name]['info']
 
-    TRACK = mgr_track.show()[track_name]['track']
-    PITLANE = mgr_track.show()[track_name]['pit-lane']
+    TRACK = main_mgr.track_show()[track_name]['track']
+    PITLANE = main_mgr.track_show()[track_name]['pit-lane']
 
-    TRACK_POINTS = mgr_track.convert_track_to_points(TRACK)
-    PITLANE_POINTS = mgr_track.convert_track_to_points(PITLANE)
+    TRACK_POINTS = main_mgr.convert_track_to_points(TRACK)
+    PITLANE_POINTS = main_mgr.convert_track_to_points(PITLANE)
 
-    TRACK_POINTS_SCALED = mgr_track.scale_track_points(TRACK_POINTS)
-    PITLANE_POINTS_SCALED = mgr_track.scale_track_points(PITLANE_POINTS)
+    TRACK_POINTS_SCALED = main_mgr.scale_track_points(TRACK_POINTS)
+    PITLANE_POINTS_SCALED = main_mgr.scale_track_points(PITLANE_POINTS)
 
 
     for n, driver in enumerate(DRIVERS):
-        driver.init(TRACK, n + 1, 0)
+        driver.init(TRACK, n + 1, 3)
         driver.set_pos(TRACK_POINTS[0][0] - 16 * TRACK_INFO['starting-direction'][0] * (n + 1), TRACK_POINTS[0][1] - 16 * TRACK_INFO['starting-direction'][1] * (n + 1))
         # driver.set_pos(TRACK_POINTS[0][0], TRACK_POINTS[0][1])
 
@@ -137,4 +136,4 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
         pg.display.flip()
 
 
-simulation_interface("sc1", mgr_team.ready_drivers())
+simulation_interface("sc1", main_mgr.ready_drivers())
