@@ -8,15 +8,6 @@ from threading import Thread
 
 
 def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS: list[Driver]) -> None:
-    # DRIVERS = DRIVERS[:2:]
-    # DRIVERS = [DRIVERS[0]]
-    # DRIVERS = [DRIVERS[0], DRIVERS[-1]]
-    # DRIVERS = DRIVERS[::2]
-
-    # print(TRACK)
-    # print(DRIVERS)
-    # print()
-
     # LAP = 0
 
     clock = pg.Clock()
@@ -24,13 +15,9 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
         clock.tick(FPS)
 
         prev_DRIVERS = DRIVERS
-
         for n, driver in enumerate(DRIVERS):
             driver.position = n + 1
             driver.update(TRACK, TRACK_POINTS, PITLANE, PITLANE_POINTS, TRACK_INFO, prev_DRIVERS)
-
-        # for driver in DRIVERS:
-        #     driver.post_update()
 
         DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True) # the bigger the better
         # LAP = DRIVERS[0].lap
@@ -39,7 +26,7 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 
 
 def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
-    # DRIVERS = DRIVERS[::2]
+    DRIVERS = DRIVERS[::2]
     # DRIVERS = [DRIVERS[0], DRIVERS[1]]
     # DRIVERS = [DRIVERS[0]]
     # DRIVERS = DRIVERS[:4]
@@ -140,11 +127,11 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
         #     # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
 
         WIN.blit(FONT_1.render(str(SHARED['fps']), True, "white"), (0, 0))
-        WIN.blit(FONT_1.render(str(SHARED['lap']), True, "white"), (0, 26))
+        # WIN.blit(FONT_1.render(str(SHARED['lap']), True, "white"), (0, 26))
         # WIN.blit(FONT_1.render(str(DRIVERS[0].tyre_wear), True, "white"), (0, 26))
         # WIN.blit(FONT_1.render(str(DRIVERS[1].tyre_wear), True, "white"), (0, 50))
         # WIN.blit(FONT_1.render(str(distance_to_next_driver(TRACK_POINTS, DRIVERS[1], DRIVERS)), True, "white"), (0, 26))
-        # WIN.blit(FONT_1.render(str(DRIVERS[0].speed * 2 * 60), True, "white"), (0, 26))
+        WIN.blit(FONT_1.render(str(DRIVERS[0].speed * 2 * 60), True, "white"), (0, 26))
         # WIN.blit(FONT_1.render(str(DRIVERS[-1].speed * 2 * 60), True, "white"), (0, 50))
 
         pg.display.flip()

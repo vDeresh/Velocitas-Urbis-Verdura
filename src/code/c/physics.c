@@ -50,8 +50,8 @@ double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTur
              double referenceTargetSpeed, double mass, double downforce, double drag,
              double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken)
 {
-    // gettimeofday(&t1, NULL);
-    // srand(t1.tv_usec * t1.tv_sec);
+    gettimeofday(&t1, NULL);
+    srand(t1.tv_usec * t1.tv_sec);
 
     currentSpeed *= 2 * FPS;
     speedOfCarAhead *= 2 * FPS;
@@ -61,13 +61,13 @@ double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTur
     double tempMaxSpeed = maxSpeed(drag);
 
     if (alreadyTurning) {
-        return min(tempMaxSpeed, (min(realTargetSpeed(referenceTargetSpeed, mass, downforce), currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, currentSpeed, wasOvertaken)))) / 2 / FPS;
+        return (min(tempMaxSpeed, (min(realTargetSpeed(referenceTargetSpeed, mass, downforce), currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, currentSpeed, wasOvertaken)))) - (rand() % 1001 / 1000)) / 2 / FPS;
     }
 
     double s1 = min(tempMaxSpeed, braking(distanceToTurn, driversBrakingSkill, tyreWear, referenceTargetSpeed, mass, downforce));
     double s2 = min(tempMaxSpeed, currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, currentSpeed, wasOvertaken));
 
-    return (min(s1, s2) /*- (rand() % 101 / 100)*/) / 2 / FPS;
+    return (min(s1, s2) - (rand() % 1001 / 1000)) / 2 / FPS;
 }
 
 
@@ -86,10 +86,11 @@ double realTargetSpeed(double referenceTargetSpeed, double mass, double downforc
 
 
 double acceleration(double drag, double tyreWear, double tyreType, double mass, double downforce,
-                    double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double speed, float wasOvertaken)
+                    double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double speed, float wasOvertaken) // TODO: delete `double speed`
 {
     // return (23 - (drag - 2 * pow(2 + tyreWear, 2)) - (mass / 360) - (downforce / 4)) / 2 / FPS;
-    return ((23 - (drag - 2 * pow(2 + tyreWear, 2)) - (90 * downforce + mass) / 360) - ((downforce + (2 * (tyreType * tyreType))) / 4) /*+ slipstream(distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, speed, wasOvertaken)*/) / 2 / FPS;
+    // return ((23 - (drag - 2 * pow(2 + tyreWear, 2)) - (90 * downforce + mass) / 360) - ((downforce + (2 * (tyreType * tyreType))) / 4) /*+ slipstream(distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, speed, wasOvertaken)*/) / 2 / FPS;
+    return ((23 - (drag - 2 * pow(2 + tyreWear, 2)) - (90 * downforce + mass) / 360) - ((downforce + (2 * (tyreType * tyreType))) / 4)) * slipstreamMultiplier(distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, wasOvertaken) / 2 / FPS;
 }
 
 
@@ -106,9 +107,9 @@ double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, d
     // printf("a > %f, %f\n", speedOfCarAhead, speed);
     // if (speedOfCarAhead * speed < 0) return 0;
     // printf("b\n");
-    if (distanceToCarAhead < 0) return 0;
+    // if (distanceToCarAhead < 0) return 1;
     // printf("c\n");
-    if (wasOvertaken > 0) return 1;
+    if (wasOvertaken > 0) return 1 / (wasOvertaken - (wasOvertaken / 1.2) + 1);
 
 
     // double x = (-distanceToCarAhead + speedOfCarAhead + ((downforceOfCarAhead * downforceOfCarAhead) / speed)) / 16;
@@ -116,7 +117,12 @@ double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, d
     // if (x > 0) return x / FPS;
     // else return 0;
     // return (1 + (speedOfCarAhead / (100 * (distanceToCarAhead * distanceToCarAhead))));
-    return 1 + ((downforceOfCarAhead * speedOfCarAhead) / (1000 * (distanceToCarAhead * distanceToCarAhead)));
+    return 1 + ((downforceOfCarAhead * speedOfCarAhead) / (100 * distanceToCarAhead));
+    // double temp1 = 1 + ((downforceOfCarAhead * speedOfCarAhead) / (100 * distanceToCarAhead));
+
+    // printf("downforce [%f], speed [%f], distance [%f] - %f\n", downforceOfCarAhead, speedOfCarAhead, distanceToCarAhead, temp1);
+
+    // return temp1;
 }
 
 
