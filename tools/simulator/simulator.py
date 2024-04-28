@@ -44,7 +44,7 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
 
     if _pit:
         for driver in DRIVERS:
-            driver.decision_stack.append({"type": "pit", "tyre": _pit})
+            driver.call_stack.append({"type": "pit", "tyre": _pit})
 
     if _half_of_the_grid:
         DRIVERS = DRIVERS[1::2]

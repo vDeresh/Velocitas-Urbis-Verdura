@@ -11,7 +11,7 @@ double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTur
 double braking(double distanceToTurn, double driversBrakingSkill, double tyreWear, double referenceTargetSpeed, double mass, double downforce);
 double realTargetSpeed(double referenceTargetSpeed, double mass, double downforce);
 double acceleration(double drag, double tyreWear, double tyreType, double mass, double downforce, double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double speed, float wasOvertaken);
-double maxSpeed(double drag);
+double maxSpeed(double drag, double mass, double downforce);
 
 double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, /*double currentSpeed,*/ float wasOvertaken);
 
@@ -44,7 +44,7 @@ float SLIPSTREAM_EFFECTIVENESS;
 
 void init(float _slipstream_effectiveness)
 {
-    SLIPSTREAM_EFFECTIVENESS = _slipstream_effectiveness;
+    SLIPSTREAM_EFFECTIVENESS = 1 / _slipstream_effectiveness;
 
     gettimeofday(&t1, NULL);
     srand(t1.tv_usec * t1.tv_sec);
@@ -63,7 +63,7 @@ double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTur
 
     // printf("%f", slipstream(distanceToCarAhead, speedOfCarAhead));
 
-    double tempMaxSpeed = maxSpeed(drag);
+    double tempMaxSpeed = maxSpeed(drag, mass, downforce);
 
     if (alreadyTurning) {
         return (min(tempMaxSpeed, (min(realTargetSpeed(referenceTargetSpeed, mass, downforce), currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, currentSpeed, wasOvertaken)))) - (rand() % 1001 / 1000)) / 2 / FPS;
@@ -99,9 +99,10 @@ double acceleration(double drag, double tyreWear, double tyreType, double mass, 
 }
 
 
-double maxSpeed(double drag)
+double maxSpeed(double drag, double mass, double downforce)
 {
-    return pow(19 - drag / 2, 2);
+    // return pow(19 - drag / 2, 2);
+    return 250000 / (mass * sqrt(drag / 2)) - downforce;
 }
 
 
@@ -123,7 +124,7 @@ double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, d
     // if (x > 0) return x / FPS;
     // else return 0;
     // return (1 + (speedOfCarAhead / (100 * (distanceToCarAhead * distanceToCarAhead))));
-    return 1 + ((downforceOfCarAhead * speedOfCarAhead) / (100 * distanceToCarAhead) / SLIPSTREAM_EFFECTIVENESS); // 10 - slipstream effectifity
+    return 1 + ((downforceOfCarAhead * speedOfCarAhead) / (100 * distanceToCarAhead) * SLIPSTREAM_EFFECTIVENESS); // 10 - slipstream effectifity
     // double temp1 = 1 + ((downforceOfCarAhead * speedOfCarAhead) / (100 * distanceToCarAhead));
 
     // printf("downforce [%f], speed [%f], distance [%f] - %f\n", downforceOfCarAhead, speedOfCarAhead, distanceToCarAhead, temp1);

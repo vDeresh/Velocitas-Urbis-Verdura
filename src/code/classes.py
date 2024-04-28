@@ -34,7 +34,7 @@ class Driver:
         self.was_overtaken: float = 10 * self.skills['reaction-time-multiplier']
         self.is_already_turning: int = 0
 
-        self.decision_stack: list[dict] = [] # [{"type": "pit"}]
+        self.call_stack: list[dict] = [] # [{"type": "pit"}]
 
         self.pit_path_points: list
         self.on_pitlane: bool = False
@@ -65,7 +65,7 @@ class Driver:
         self.distance_to_next_driver = distance_to_next_driver(track_info['length'], track_points, self, drivers)
 
         # Calls
-        for call in self.decision_stack:
+        for call in self.call_stack:
             match call['type']:
                 case "pit":
                     if (not self.is_already_turning) and (self.current_point + 60 > track_info['pit-lane-entry-point']) and (not self.on_pitlane) and (self.distance_to_next_turn > distance_to_pit_lane_entry(track_info['length'], track, self.current_point, self.pos.distance_to(self.next_point_xy[:2]), track_info['pit-lane-entry-point'])):
@@ -75,7 +75,7 @@ class Driver:
                         # self.pit_path_points = pitlane_points
                         self.current_point = 0
                         self.pitstop_timer = 0
-                        self.decision_stack.remove(call)
+                        self.call_stack.remove(call)
                         break
 
         # Pitting
@@ -196,7 +196,7 @@ class Driver:
                 # print("Opponent is already fighting")
 
             if (self.distance_to_next_turn < 100) and (self.skills['attack'] - next_driver.skills['defence'] * self.next_turn_data[2][-1]['overtaking-risk'] > random.random() * 60):
-                self.overtaking = 1 * 60 * self.skills['reaction-time-multiplier']
+                # self.overtaking = 60 * self.skills['reaction-time-multiplier']
                 pass
                 # self.speed *= slipstream
                 # self.speed = min(self.speed, speed_of_the_next_driver)
@@ -204,7 +204,7 @@ class Driver:
                 # print("Overtake 1")
 
             elif self.distance_to_next_turn > 200:
-                self.overtaking = 1 * 60 * self.skills['reaction-time-multiplier']
+                # self.overtaking = 60 * self.skills['reaction-time-multiplier']
                 pass
                 # self.speed = min(self.speed, speed_of_the_next_driver)
                 # print("Waiting for the corner")
