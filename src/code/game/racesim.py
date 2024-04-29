@@ -1,15 +1,18 @@
 from ..config import *
 from ..manager import main_mgr
-from ..classes import Team, Driver, distance_to_next_driver
+from ..classes import Team, Driver, Timer
 # from ..others import calculate_pit_entry_point as init_others
 
 from threading import Thread
 
 
 def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS: list[Driver]) -> None:
-    # LAP = 0
-
     clock = pg.Clock()
+
+    TIMERS = [Timer(n) for n in TRACK_INFO['timers']]
+
+    DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True)
+
     while 1:
         clock.tick(FPS)
 
@@ -18,17 +21,29 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
             driver.position = n + 1
             driver.update(TRACK, TRACK_POINTS, PITLANE, PITLANE_POINTS, TRACK_INFO, prev_DRIVERS)
 
+        # for n, driver in enumerate(DRIVERS):
+            if driver.current_point in TRACK_INFO['timers']:
+                for timer in TIMERS:
+                    if timer.id == driver.current_point:
+                        if timer.cached_driver == driver.number:
+                            break
+
+                        driver.time_difference = timer.time
+                        timer.time = 0
+                        timer.cached_driver = driver.number
+                        # break
+
+        for timer in TIMERS:
+            if timer.cached_driver != 0:
+                timer.time += 1 # / 60
+
         DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True) # the bigger the better
-        # LAP = DRIVERS[0].lap
         shared["lap"] = DRIVERS[0].lap
         shared["fps"] = clock.get_fps()
 
 
 def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
     DRIVERS = DRIVERS[::2]
-    # DRIVERS = [DRIVERS[0], DRIVERS[1]]
-    # DRIVERS = [DRIVERS[0]]
-    # DRIVERS = DRIVERS[:4]
 
     # for driver in DRIVERS:
     #     driver.decision_stack.append({"type": "pit", "tyre": 0})
@@ -50,11 +65,6 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
         driver.set_pos(TRACK_POINTS[0][0] - 16 * TRACK_INFO['starting-direction'][0] * (n + 1), TRACK_POINTS[0][1] - 16 * TRACK_INFO['starting-direction'][1] * (n + 1))
         # driver.set_pos(TRACK_POINTS[0][0], TRACK_POINTS[0][1])
 
-    # DRIVERS[0].tyre_type = 0
-    # DRIVERS[1].tyre_type = 1
-    # DRIVERS[2].tyre_type = 2
-    # DRIVERS[3].tyre_type = 3
-
 
     SHARED = {
         "fps": 0,
@@ -74,20 +84,6 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
         pg.draw.aalines(WIN, "azure1", True, TRACK_POINTS_SCALED)
         pg.draw.aalines(WIN, "azure4", False, PITLANE_POINTS_SCALED)
         pg.draw.rect(WIN, "red", (TRACK_POINTS_SCALED[0][0] - 1, TRACK_POINTS_SCALED[0][1] - 1, 4, 4), 2)
-
-        # for driver in DRIVERS:
-        #     if driver.tyre_type == 0:
-        #         pg.draw.circle(WIN, "#ff7a7a", driver.pos / 2, 3)
-        #     elif driver.tyre_type == 1:
-        #         pg.draw.circle(WIN, "#c61010", driver.pos / 2, 3)
-        #     elif driver.tyre_type == 2:
-        #         pg.draw.circle(WIN, "#ffcf24", driver.pos / 2, 3)
-        #     elif driver.tyre_type == 3:
-        #         pg.draw.circle(WIN, "#f2f2f2", driver.pos / 2, 3)
-        #     elif driver.tyre_type == 4:
-        #         pg.draw.circle(WIN, "#21ad46", driver.pos / 2, 3)
-        #     elif driver.tyre_type == 5:
-        #         pg.draw.circle(WIN, "#0050d1", driver.pos / 2, 3)
 
         for driver in DRIVERS:
             if driver.tyre_type == 0:
@@ -126,12 +122,10 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
         #     # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
 
         WIN.blit(FONT_1.render(str(SHARED['fps']), True, "white"), (0, 0))
-        # WIN.blit(FONT_1.render(str(SHARED['lap']), True, "white"), (0, 26))
-        # WIN.blit(FONT_1.render(str(DRIVERS[0].tyre_wear), True, "white"), (0, 26))
-        # WIN.blit(FONT_1.render(str(DRIVERS[1].tyre_wear), True, "white"), (0, 50))
-        # WIN.blit(FONT_1.render(str(distance_to_next_driver(TRACK_POINTS, DRIVERS[1], DRIVERS)), True, "white"), (0, 26))
-        WIN.blit(FONT_1.render(str(DRIVERS[0].speed * 2 * 60), True, "white"), (0, 26))
-        # WIN.blit(FONT_1.render(str(DRIVERS[-1].speed * 2 * 60), True, "white"), (0, 50))
+        # WIN.blit(FONT_1.render(str(DRIVERS[0].speed * 2 * 60), True, "white"), (0, 26))
+
+        for n, d in enumerate(DRIVERS):
+            WIN.blit(FONT_1.render(str(round(d.time_difference, 3)), True, "white"), (0, 26 * (n + 1)))
 
         pg.display.flip()
 

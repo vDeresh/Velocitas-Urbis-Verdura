@@ -4,6 +4,19 @@ from ..code.manager import link
 import random
 
 
+def distance_to_next_driver(track_length: float, track_points: list, driver1, drivers: list) -> float:
+    next_driver = drivers[driver1.position - 1 - 1]
+
+    if (driver1.position != 1) and (driver1.current_point == next_driver.current_point):
+        return driver1.pos.distance_to(next_driver.pos)
+    else:
+        temp1 = driver1.pos.distance_to(driver1.next_point_xy)
+        temp2 = distance_between_points(track_length, track_points, driver1.current_point + 1, next_driver.current_point)
+        temp3 = next_driver.pos.distance_to(track_points[next_driver.current_point])
+
+        return temp1 + temp2 + temp3
+
+
 class Team:
     def __init__(self, name: str, data: dict) -> None:
         self.name = name
@@ -27,7 +40,7 @@ class Driver:
         self.tyre_type: int
 
         self.current_point: int = 0
-        self.next_point_xy: list[int] = [2048, 2048]
+        self.next_point_xy: list[int] # = [2048, 2048]
         self.lap: int = 1
         self.position: int
         self.prev_position: int
@@ -43,13 +56,17 @@ class Driver:
         self.pitstop_timer: float
 
         self.overtaking: float = 0
+        self.drs_active: bool = False
+
+        self.time_difference: float = 0
 
     def init(self, track, position: int, tyre_type: int) -> None:
         self.next_turn_data = next_turn_data(track, self.current_point)
         self.position = self.prev_position = position
         self.tyre_type = tyre_type
+        self.next_point_xy = track[self.current_point][0 : 2]
 
-    def calculate_speed(self, track_points: list, drivers: list) -> float:
+    def calculate_speed(self, drivers: list) -> float: # track_points: list
         if self.distance_to_next_turn:
             return link.calculate_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.tyre_type, self.skills['braking'], self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.team.car_stats['downforce'], self.team.car_stats['drag'], self.distance_to_next_driver, drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken)
         return self.speed
@@ -124,7 +141,11 @@ class Driver:
             return
 
         # Racing
-        self.speed = self.calculate_speed(track_points, drivers)
+        if self.drs_active:
+            self.speed = self.calculate_speed(drivers) * self.team.car_stats['drs-efficiency']
+        else:
+            self.speed = self.calculate_speed(drivers)
+
         self.racing_logic(drivers)
 
 
@@ -221,14 +242,8 @@ class Driver:
             # print("else 1")
 
 
-def distance_to_next_driver(track_length: float, track_points: list, driver1: Driver, drivers: list[Driver]) -> float:
-    next_driver = drivers[driver1.position - 1 - 1]
-
-    if (driver1.position != 1) and (driver1.current_point == next_driver.current_point):
-        return driver1.pos.distance_to(next_driver.pos)
-    else:
-        temp1 = driver1.pos.distance_to(driver1.next_point_xy)
-        temp2 = distance_between_points(track_length, track_points, driver1.current_point + 1, next_driver.current_point)
-        temp3 = next_driver.pos.distance_to(track_points[next_driver.current_point])
-
-        return temp1 + temp2 + temp3
+class Timer:
+    def __init__(self, track_point: int) -> None:
+        self.id = track_point
+        self.cached_driver: int = 0
+        self.time: float = 0
