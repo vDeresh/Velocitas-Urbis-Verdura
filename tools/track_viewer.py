@@ -4,16 +4,16 @@ from os import path
 
 
 def show():
-    with open(path.abspath(path.join("src", "data", "tracks")), "r") as file:
+    with open(path.abspath(path.join("src", "data", "racing-categories", sys.argv[1], "tracks")), "r") as file:
         return json.load(file)
 
 
-TRACK = show()[sys.argv[1]]['track']
+TRACK = show()[sys.argv[2]]['track']
 TRACK_POINTS = []
 for x, y, *_ in TRACK:
     TRACK_POINTS.append((x, y))
 
-PITLANE = show()[sys.argv[1]]['pit-lane']
+PITLANE = show()[sys.argv[2]]['pit-lane']
 PITLANE_POINTS = []
 for x, y, *_ in PITLANE:
     PITLANE_POINTS.append((x, y))
@@ -54,6 +54,9 @@ while 1:
 
         if "turn-start" in TRACK[n][2]:
             pg.draw.circle(WIN, "lime", (p[0], p[1]), 6)
+
+        if "timer" in TRACK[n][2]:
+            pg.draw.circle(WIN, "orange", (p[0], p[1]), 4)
 
         pg.draw.circle(WIN, "darkred", (p[0], p[1]), 2)
         WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))

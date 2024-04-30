@@ -4,38 +4,36 @@ from ..classes import Team, Driver, Timer
 # from ..others import calculate_pit_entry_point as init_others
 
 from threading import Thread
+from time import perf_counter
 
 
 def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS: list[Driver]) -> None:
     clock = pg.Clock()
 
-    TIMERS = [Timer(n) for n in TRACK_INFO['timers']]
+    TIMERS = [Timer(_id, TRACK_INFO['timer-pos'][n]) for n, _id in enumerate(TRACK_INFO['timer-ids'])]
 
     DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True)
 
     while 1:
-        clock.tick(FPS)
+        clock.tick(60)
 
         prev_DRIVERS = DRIVERS
         for n, driver in enumerate(DRIVERS):
             driver.position = n + 1
             driver.update(TRACK, TRACK_POINTS, PITLANE, PITLANE_POINTS, TRACK_INFO, prev_DRIVERS)
 
-        # for n, driver in enumerate(DRIVERS):
-            if driver.current_point in TRACK_INFO['timers']:
+            if driver.current_point in TRACK_INFO['timer-ids'] \
+            and [int(driver.pos.x), int(driver.pos.y)] in TRACK_INFO['timer-pos']:
                 for timer in TIMERS:
                     if timer.id == driver.current_point:
-                        if timer.cached_driver == driver.number:
-                            break
+                        if timer.cached_driver != driver.number:
+                            timer.cached_driver = driver.number
+                            driver.time_difference = perf_counter() - timer.time
+                            timer.time = perf_counter()
+                        break
 
-                        driver.time_difference = timer.time
-                        timer.time = 0
-                        timer.cached_driver = driver.number
-                        # break
-
-        for timer in TIMERS:
-            if timer.cached_driver != 0:
-                timer.time += 1 # / 60
+            if n == 0:
+                driver.time_difference = 0
 
         DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True) # the bigger the better
         shared["lap"] = DRIVERS[0].lap
@@ -60,9 +58,12 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
     PITLANE_POINTS_SCALED = main_mgr.scale_track_points(PITLANE_POINTS)
 
 
+    TRACK_INFO['timer-ids'] = set(TRACK_INFO['timer-ids'])
+
+
     for n, driver in enumerate(DRIVERS):
         driver.init(TRACK, n + 1, 3)
-        driver.set_pos(TRACK_POINTS[0][0] - 16 * TRACK_INFO['starting-direction'][0] * (n + 1), TRACK_POINTS[0][1] - 16 * TRACK_INFO['starting-direction'][1] * (n + 1))
+        driver.set_pos(TRACK_POINTS[0][0] - 8 * TRACK_INFO['starting-direction'][0] * (n + 1), TRACK_POINTS[0][1] - 8 * TRACK_INFO['starting-direction'][1] * (n + 1))
         # driver.set_pos(TRACK_POINTS[0][0], TRACK_POINTS[0][1])
 
 
@@ -120,6 +121,9 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
 
         #     pg.draw.circle(WIN, "darkred", (p[0], p[1]), 1)
         #     # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
+
+        for p in TRACK_INFO['timer-pos']:
+            pg.draw.circle(WIN, "orange", pg.Vector2(p) / 2, 4)
 
         WIN.blit(FONT_1.render(str(SHARED['fps']), True, "white"), (0, 0))
         # WIN.blit(FONT_1.render(str(DRIVERS[0].speed * 2 * 60), True, "white"), (0, 26))

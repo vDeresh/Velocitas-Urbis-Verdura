@@ -43,3 +43,10 @@ with open("test.json", "r") as file:
     for n, p in enumerate(json.load(file)):
         if "timer" in p[2]:
             print(n, end=", ")
+
+print("\n")
+
+with open("test.json", "r") as file:
+    for n, p in enumerate(json.load(file)):
+        if "timer" in p[2]:
+            print(p[0:2], end=",\n")

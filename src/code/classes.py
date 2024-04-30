@@ -243,7 +243,8 @@ class Driver:
 
 
 class Timer:
-    def __init__(self, track_point: int) -> None:
+    def __init__(self, track_point: int, track_point_xy: tuple[int, int]) -> None:
         self.id = track_point
+        self.track_point_xy = track_point_xy
         self.cached_driver: int = 0
         self.time: float = 0

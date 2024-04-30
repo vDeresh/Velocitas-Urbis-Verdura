@@ -1,12 +1,12 @@
 {
-    "Team 01": {"id":  1, "drivers": [ 1,  2], "color": "#faafff", "name-abbreviation": "T01", "car-stats": {"mass": 700, "drag": 2, "downforce": 1, "drs-efficiency": 1.02}},
-    "Team 02": {"id":  2, "drivers": [ 3,  4], "color": "#0123ff", "name-abbreviation": "T02", "car-stats": {"mass": 700, "drag": 2, "downforce": 1, "drs-efficiency": 1.02}},
-    "Team 03": {"id":  3, "drivers": [ 5,  6], "color": "#4400bb", "name-abbreviation": "T03", "car-stats": {"mass": 700, "drag": 2, "downforce": 1, "drs-efficiency": 1.02}},
-    "Team 04": {"id":  4, "drivers": [ 7,  8], "color": "#dddddd", "name-abbreviation": "T04", "car-stats": {"mass": 700, "drag": 2, "downforce": 1, "drs-efficiency": 1.02}},
-    "Team 05": {"id":  5, "drivers": [ 9, 10], "color": "#fafb00", "name-abbreviation": "T05", "car-stats": {"mass": 700, "drag": 2, "downforce": 1, "drs-efficiency": 1.02}},
-    "Team 06": {"id":  6, "drivers": [11, 12], "color": "#fafafa", "name-abbreviation": "T06", "car-stats": {"mass": 700, "drag": 2, "downforce": 1, "drs-efficiency": 1.02}},
-    "Team 07": {"id":  7, "drivers": [13, 14], "color": "#afafaf", "name-abbreviation": "T07", "car-stats": {"mass": 700, "drag": 2, "downforce": 1, "drs-efficiency": 1.02}},
-    "Team 08": {"id":  8, "drivers": [15, 16], "color": "#5c6c7c", "name-abbreviation": "T08", "car-stats": {"mass": 700, "drag": 2, "downforce": 1, "drs-efficiency": 1.02}},
-    "Team 09": {"id":  9, "drivers": [17, 18], "color": "#1fff00", "name-abbreviation": "T09", "car-stats": {"mass": 700, "drag": 2, "downforce": 1, "drs-efficiency": 1.02}},
-    "Team 10": {"id": 10, "drivers": [19, 20], "color": "#ff8888", "name-abbreviation": "T10", "car-stats": {"mass": 700, "drag": 2, "downforce": 1, "drs-efficiency": 1.02}}
+    "Team 01": {"id":  1, "drivers": [ 1,  2], "color": "#faafff", "name-abbreviation": "T01", "car-stats": {"mass": 700, "drag": 2, "downforce":  1, "drs-efficiency": 1.02}},
+    "Team 02": {"id":  2, "drivers": [ 3,  4], "color": "#0123ff", "name-abbreviation": "T02", "car-stats": {"mass": 700, "drag": 2, "downforce":  2, "drs-efficiency": 1.02}},
+    "Team 03": {"id":  3, "drivers": [ 5,  6], "color": "#4400bb", "name-abbreviation": "T03", "car-stats": {"mass": 700, "drag": 2, "downforce":  3, "drs-efficiency": 1.02}},
+    "Team 04": {"id":  4, "drivers": [ 7,  8], "color": "#dddddd", "name-abbreviation": "T04", "car-stats": {"mass": 700, "drag": 2, "downforce":  4, "drs-efficiency": 1.02}},
+    "Team 05": {"id":  5, "drivers": [ 9, 10], "color": "#fafb00", "name-abbreviation": "T05", "car-stats": {"mass": 700, "drag": 2, "downforce":  5, "drs-efficiency": 1.02}},
+    "Team 06": {"id":  6, "drivers": [11, 12], "color": "#fafafa", "name-abbreviation": "T06", "car-stats": {"mass": 700, "drag": 2, "downforce":  6, "drs-efficiency": 1.02}},
+    "Team 07": {"id":  7, "drivers": [13, 14], "color": "#afafaf", "name-abbreviation": "T07", "car-stats": {"mass": 700, "drag": 2, "downforce":  7, "drs-efficiency": 1.02}},
+    "Team 08": {"id":  8, "drivers": [15, 16], "color": "#5c6c7c", "name-abbreviation": "T08", "car-stats": {"mass": 700, "drag": 2, "downforce":  8, "drs-efficiency": 1.02}},
+    "Team 09": {"id":  9, "drivers": [17, 18], "color": "#1fff00", "name-abbreviation": "T09", "car-stats": {"mass": 700, "drag": 2, "downforce":  9, "drs-efficiency": 1.02}},
+    "Team 10": {"id": 10, "drivers": [19, 20], "color": "#ff8888", "name-abbreviation": "T10", "car-stats": {"mass": 700, "drag": 2, "downforce": 10, "drs-efficiency": 1.02}}
 }
