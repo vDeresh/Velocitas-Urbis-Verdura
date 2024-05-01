@@ -5,6 +5,7 @@ from ..classes import Team, Driver, Timer
 
 from threading import Thread
 from time import perf_counter
+from random import shuffle
 
 
 def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS: list[Driver]) -> None:
@@ -23,7 +24,7 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
             driver.update(TRACK, TRACK_POINTS, PITLANE, PITLANE_POINTS, TRACK_INFO, prev_DRIVERS)
 
             if driver.current_point in TRACK_INFO['timer-ids'] \
-            and [int(driver.pos.x), int(driver.pos.y)] in TRACK_INFO['timer-pos']:
+            and any([driver.pos.distance_squared_to(tpos) < 2.25 for tpos in TRACK_INFO['timer-pos']]):
                 for timer in TIMERS:
                     if timer.id == driver.current_point:
                         if timer.cached_driver != driver.number:
@@ -43,8 +44,12 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
     DRIVERS = DRIVERS[::2]
 
-    # for driver in DRIVERS:
-    #     driver.decision_stack.append({"type": "pit", "tyre": 0})
+    shuffle(DRIVERS)
+
+    for driver in DRIVERS[::2]:
+        driver.call_stack.append({"type": "pit", "tyre": 2})
+    else:
+        del driver
 
     TRACK_INFO = main_mgr.track_show()[track_name]['info']
 
@@ -65,12 +70,28 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
         driver.init(TRACK, n + 1, 3)
         driver.set_pos(TRACK_POINTS[0][0] - 8 * TRACK_INFO['starting-direction'][0] * (n + 1), TRACK_POINTS[0][1] - 8 * TRACK_INFO['starting-direction'][1] * (n + 1))
         # driver.set_pos(TRACK_POINTS[0][0], TRACK_POINTS[0][1])
+    else:
+        del n, driver
 
 
     SHARED = {
         "fps": 0,
         "lap": 0
     }
+
+
+    drs_zone_points = []
+    for n, p in enumerate(TRACK):
+        if "drs-start" in p[2]:
+            for p2 in TRACK[n:] + TRACK[:n]:
+                drs_zone_points.append(tuple(p2[0 : 2]))
+                if "drs-end" in p2[2]:
+                    del n, p, p2
+                    break
+
+    drs_zone_points_scaled = main_mgr.scale_track_points(drs_zone_points)
+    del drs_zone_points
+
 
     _thread_simulation = Thread(target=simulation, name="simulation-thread", args=[SHARED, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS], daemon=True)
     _thread_simulation.start()
@@ -82,9 +103,15 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
                 exit()
 
         WIN.fill("black")
-        pg.draw.aalines(WIN, "azure1", True, TRACK_POINTS_SCALED)
         pg.draw.aalines(WIN, "azure4", False, PITLANE_POINTS_SCALED)
-        pg.draw.rect(WIN, "red", (TRACK_POINTS_SCALED[0][0] - 1, TRACK_POINTS_SCALED[0][1] - 1, 4, 4), 2)
+
+        # pg.draw.lines(WIN, "azure1", True, TRACK_POINTS_SCALED)
+        pg.draw.aalines(WIN, "azure1", True, TRACK_POINTS_SCALED)
+
+        # pg.draw.lines(WIN, "lime", False, drs_zone_points_scaled)
+        pg.draw.aalines(WIN, "lime", False, drs_zone_points_scaled)
+
+        pg.draw.rect(WIN, "red", (TRACK_POINTS_SCALED[0][0] - 1, TRACK_POINTS_SCALED[0][1] - 1, 3, 3), 2)
 
         for driver in DRIVERS:
             if driver.tyre_type == 0:
@@ -122,14 +149,11 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
         #     pg.draw.circle(WIN, "darkred", (p[0], p[1]), 1)
         #     # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
 
-        for p in TRACK_INFO['timer-pos']:
-            pg.draw.circle(WIN, "orange", pg.Vector2(p) / 2, 4)
-
         WIN.blit(FONT_1.render(str(SHARED['fps']), True, "white"), (0, 0))
-        # WIN.blit(FONT_1.render(str(DRIVERS[0].speed * 2 * 60), True, "white"), (0, 26))
+        WIN.blit(FONT_1.render(str(DRIVERS[1].speed * 2 * 60), True, "white"), (0, 26))
 
-        for n, d in enumerate(DRIVERS):
-            WIN.blit(FONT_1.render(str(round(d.time_difference, 3)), True, "white"), (0, 26 * (n + 1)))
+        # for n, d in enumerate(DRIVERS):
+        #     WIN.blit(FONT_1.render(str(round(d.time_difference, 3)), True, "white"), (0, 26 * (n + 1)))
 
         pg.display.flip()
 

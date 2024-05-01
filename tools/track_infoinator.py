@@ -5,14 +5,14 @@ from pygame.math import Vector2
 
 
 def show():
-    with open(path.abspath(path.join("src", "data", "tracks")), "r") as file:
+    with open(path.abspath(path.join("src", "data", "racing-categories", sys.argv[1], "tracks")), "r") as file:
         return json.load(file)
 
 
-TRACK = show()[sys.argv[1]]['track']
+TRACK = show()[sys.argv[2]]['track']
 
 TRACK_POINTS = []
-for x, y, *_ in show()[sys.argv[1]]['track']:
+for x, y, *_ in show()[sys.argv[2]]['track']:
     TRACK_POINTS.append((x, y))
 
 
@@ -45,9 +45,17 @@ for n, p in enumerate(TRACK):
         pitlane_entry_point = n
 
 
+pitlane_exit_point = -1
+
+for n, p in enumerate(TRACK):
+    if "pit-lane-exit" in p[2]:
+        pitlane_exit_point = n
+
+
 print()
 print("Track length (km / m / sd) >", length / 1000, "/", length, "/", length / 2)
 print("Starting direction >", starting_direction)
 print("Average reference target speed >", avg_rts)
 print("Point count >", len(TRACK_POINTS))
 print("Pit lane entry point >", pitlane_entry_point)
+print("Pit lane exit point >", pitlane_exit_point)

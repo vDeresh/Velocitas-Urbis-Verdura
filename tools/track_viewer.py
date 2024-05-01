@@ -61,4 +61,15 @@ while 1:
         pg.draw.circle(WIN, "darkred", (p[0], p[1]), 2)
         WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
 
+
+    drs_zone = []
+    for n, p in enumerate(TRACK):
+        if "drs-start" in p[2]:
+            for p2 in TRACK[n:]:
+                drs_zone.append(p2[0 : 2])
+                if "drs-end" in p2[2]:
+                    break
+
+    pg.draw.lines(WIN, "lime", False, drs_zone, 3)
+
     pg.display.flip()

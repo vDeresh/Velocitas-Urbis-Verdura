@@ -84,12 +84,18 @@ def driver_show() -> dict:
 
 def ready_drivers() -> list[Driver]:
     DRIVERS: list[Driver] = []
+    TEAMS: dict[int, Team] = {}
+
+    for team_name in (teams := team_show()):
+        TEAMS.update({
+            teams[team_name]['id']: Team(team_name, teams[team_name])
+        })
 
     for team_name in (teams := team_show()):
         for driver_name in (drivers := driver_show()):
             for n in teams[team_name]['drivers']:
                 if n == drivers[driver_name]['number']:
-                    DRIVERS.append(Driver(driver_name, Team(team_name, teams[team_name]), drivers[driver_name]['number'], drivers[driver_name]['skills']))
+                    DRIVERS.append(Driver(driver_name, TEAMS[drivers[driver_name]['team-id']], drivers[driver_name]['number'], drivers[driver_name]['skills']))
 
     return DRIVERS
 

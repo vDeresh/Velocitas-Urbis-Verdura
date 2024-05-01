@@ -55,7 +55,9 @@ class Driver:
         self.pitlane_speed_limit_on: bool = False
         self.pitstop_timer: float
 
-        self.overtaking: float = 0
+        # self.overtaking: float = 0
+        self.drs_zone: bool = False
+        self.drs_available: float
         self.drs_active: bool = False
 
         self.time_difference: float = 0
@@ -66,9 +68,9 @@ class Driver:
         self.tyre_type = tyre_type
         self.next_point_xy = track[self.current_point][0 : 2]
 
-    def calculate_speed(self, drivers: list) -> float: # track_points: list
+    def calculate_speed(self, drivers: list, ultimateAccelerationMultiplier3000: float) -> float: # track_points: list
         if self.distance_to_next_turn:
-            return link.calculate_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.tyre_type, self.skills['braking'], self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.team.car_stats['downforce'], self.team.car_stats['drag'], self.distance_to_next_driver, drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken)
+            return link.calculate_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.tyre_type, self.skills['braking'], self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.team.car_stats['downforce'], self.team.car_stats['drag'], self.distance_to_next_driver, drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken, ultimateAccelerationMultiplier3000)
         return self.speed
 
     # def slipstream_multiplier(self, drivers: list) -> float:
@@ -81,7 +83,7 @@ class Driver:
         self.distance_to_next_turn = self.pos.distance_to((self.next_turn_data[0], self.next_turn_data[1]))
         self.distance_to_next_driver = distance_to_next_driver(track_info['length'], track_points, self, drivers)
 
-        # Calls
+        # Calls -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         for call in self.call_stack:
             match call['type']:
                 case "pit":
@@ -94,8 +96,10 @@ class Driver:
                         self.pitstop_timer = 0
                         self.call_stack.remove(call)
                         break
+        # ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- calls
 
-        # Pitting
+
+        # Pitting -----------------------------------------------------------------------------------------------
         if self.on_pitlane:
             if self.pitlane_speed_limit_on:
                 self.speed = track_info['pit-lane-speed-limit']
@@ -139,14 +143,17 @@ class Driver:
             # else:
             #     self.pos = self.pos.move_towards(self.next_point_xy, self.speed)
             return
+        # ----------------------------------------------------------------------------------------------- pitting
 
-        # Racing
+
+        # Racing --------------------------------------------------------------------------------------------------------------------------------------
         if self.drs_active:
-            self.speed = self.calculate_speed(drivers) * self.team.car_stats['drs-efficiency']
+            self.speed = self.calculate_speed(drivers, self.team.car_stats['drs-efficiency'])
         else:
-            self.speed = self.calculate_speed(drivers)
+            self.speed = self.calculate_speed(drivers, 1)
 
-        self.racing_logic(drivers)
+        self.racing_logic(track, drivers)
+        # -------------------------------------------------------------------------------------------------------------------------------------- racing
 
 
         if self.distance_to_next_turn == 0:
@@ -181,17 +188,38 @@ class Driver:
     # def post_update(self) -> None:
     #     self.prev_position = self.position
 
-    def racing_logic(self, drivers: list) -> None: # TODO
-        if self.position > self.prev_position:
-            self.was_overtaken = 30 * self.skills['reaction-time-multiplier']
+    def racing_logic(self, track: list[list], drivers: list) -> None: # TODO
+        # DRS ----------------------------------------------------------------
+        if "drs-start" in track[self.current_point][2]:
+            self.drs_zone = True
+            self.drs_available = 0.1 * self.skills['reaction-time-multiplier'] * (self.time_difference <= 1) * (self.position > 1)
+            self.drs_active = False
 
-        if self.was_overtaken > 0:
-            self.was_overtaken -= 1
+        elif "drs-end" in track[self.current_point][2]:
+            self.drs_zone = False
+            self.drs_available = 0
+            self.drs_active = False
 
-            if self.was_overtaken < 0:
-                self.was_overtaken = 0
-            else:
-                return
+
+        if self.drs_zone:
+            if self.drs_available > 0:
+                self.drs_available -= 0.1
+                if self.drs_available < 0:
+                    self.drs_available = 0
+
+                    self.drs_active = True
+        # ---------------------------------------------------------------- drs
+
+        # if self.position > self.prev_position:
+        #     self.was_overtaken = 30 * self.skills['reaction-time-multiplier']
+
+        # if self.was_overtaken > 0:
+        #     self.was_overtaken -= 1
+
+        #     if self.was_overtaken < 0:
+        #         self.was_overtaken = 0
+        #     else:
+        #         return
 
         # slipstream = self.slipstream_multiplier(drivers)
         next_driver: Driver = drivers[self.position - 1 - 1]
@@ -200,10 +228,10 @@ class Driver:
         # print()
         # print(self.number, self.distance_to_next_driver)
 
-        if self.overtaking:
-            self.overtaking -= 1
-            if self.overtaking < 0:
-                self.overtaking = 0
+        # if self.overtaking:
+        #     self.overtaking -= 1
+        #     if self.overtaking < 0:
+        #         self.overtaking = 0
 
         #     # self.speed *= 1.00002
             # if self.position < self.prev_position:
