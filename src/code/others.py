@@ -22,18 +22,18 @@ def distance_between_points(track_length: float, track: list[list], p1: int, p2:
 
 def next_turn_data(track: list[list], current_point: int) -> list:
     for p in track[current_point : len(track)]:
-        if "turn-start" in p[2]:
+        if "braking-finish-point" in p[2]:
             return p
 
     for p in track[0 : current_point - 1]:
-        if "turn-start" in p[2]:
+        if "braking-finish-point" in p[2]:
             return p
 
     raise
     # return track[1]
 
 def is_it_end_of_turn(track: list[list], current_point: int) -> bool:
-    if "turn-end" in track[current_point][2]:
+    if "acceleration-start-point" in track[current_point][2]:
         return True
     return False
 

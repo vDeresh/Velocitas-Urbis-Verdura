@@ -31,23 +31,24 @@ def get_racing_categories_dict():
 
 
 RACING_CATEGORY = "Volo"
-RACING_CLASS = "CAT-B"
+RACING_CLASS = "CAT-A"
+RACE_TRACK = "sc1"
 
 PATH_TEAMS   = os.path.abspath(os.path.join(path_to_class(RACING_CATEGORY, RACING_CLASS), "teams"))
 PATH_DRIVERS = os.path.abspath(os.path.join(path_to_class(RACING_CATEGORY, RACING_CLASS), "drivers"))
-PATH_TRACKS  = os.path.abspath(os.path.join(path_to_class(RACING_CATEGORY, RACING_CLASS), "tracks"))
+PATH_TRACKS  = os.path.abspath(os.path.join("src", "data", "defaults", "tracks"))
 
 
 
 # MANIFEST / SETUP
 
-def read_manifest(path_to_class):
-    with open(os.path.join(path_to_class, ".manifest"), "r") as file:
+def read_manifest(racing_category: str, racing_class: str):
+    with open(os.path.join(path_to_class(racing_category, racing_class), ".manifest"), "r") as file:
         return json.load(file)
 
 
 from .link import physics
-physics.init(read_manifest(path_to_class(RACING_CATEGORY, RACING_CLASS))['slipstream-effectiveness'])
+physics.init(read_manifest(RACING_CATEGORY, RACING_CLASS)['slipstream-effectiveness'])
 
 
 # TEAM / DRIVER
@@ -103,7 +104,7 @@ def ready_drivers() -> list[Driver]:
 
 # TRACK
 
-def track_show() -> Any:
+def tracks_show() -> Any:
     with open(PATH_TRACKS, "r") as file:
         return json.load(file)
 
@@ -115,3 +116,8 @@ def convert_track_to_points(track: list[list]):
 def scale_track_points(track_points: list[tuple[int, int]]) -> list:
     SCALED_POINTS = [(x / 2, y / 2) for x, y in track_points]
     return SCALED_POINTS
+
+
+
+if read_manifest(RACING_CATEGORY, RACING_CLASS)['racing-type'] not in tracks_show()[RACE_TRACK]['allowed-racing-types']:
+    raise ValueError(f"{RACING_CATEGORY}\\{RACING_CLASS} is not allowed on track {RACE_TRACK}")

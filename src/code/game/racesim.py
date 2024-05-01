@@ -51,10 +51,10 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
     else:
         del driver
 
-    TRACK_INFO = main_mgr.track_show()[track_name]['info']
+    TRACK_INFO = main_mgr.tracks_show()[track_name]['info']
 
-    TRACK = main_mgr.track_show()[track_name]['track']
-    PITLANE = main_mgr.track_show()[track_name]['pit-lane']
+    TRACK = main_mgr.tracks_show()[track_name]['track']
+    PITLANE = main_mgr.tracks_show()[track_name]['pit-lane']
 
     TRACK_POINTS = main_mgr.convert_track_to_points(TRACK)
     PITLANE_POINTS = main_mgr.convert_track_to_points(PITLANE)

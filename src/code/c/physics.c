@@ -45,7 +45,7 @@ float SLIPSTREAM_EFFECTIVENESS;
 
 void init(float _slipstream_effectiveness)
 {
-    SLIPSTREAM_EFFECTIVENESS = 1 / _slipstream_effectiveness;
+    SLIPSTREAM_EFFECTIVENESS = _slipstream_effectiveness;
 
     gettimeofday(&t1, NULL);
     srand(t1.tv_usec * t1.tv_sec);
@@ -100,7 +100,8 @@ double acceleration(double drag, double tyreWear, double tyreType, double mass, 
 {
     // return (23 - (drag - 2 * pow(2 + tyreWear, 2)) - (mass / 360) - (downforce / 4)) / 2 / FPS;
     // return ((23 - (drag - 2 * pow(2 + tyreWear, 2)) - (90 * downforce + mass) / 360) - ((downforce + (2 * (tyreType * tyreType))) / 4) /*+ slipstream(distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, speed, wasOvertaken)*/) / 2 / FPS;
-    return ((23 - (drag - 2 * pow(2 + tyreWear, 2)) - (90 * downforce + mass) / 360) - ((downforce + (2 * (tyreType * tyreType))) / 4)) * slipstreamMultiplier(distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, wasOvertaken) * ultimateAccelerationMultiplier3000 / 2 / FPS;
+    // return ((23 - (drag - 2 * pow(2 + tyreWear, 2)) - (90 * downforce + mass) / 360) - ((downforce + (2 * (tyreType * tyreType))) / 4)) * slipstreamMultiplier(distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, wasOvertaken) * ultimateAccelerationMultiplier3000 / 2 / FPS;
+    return (50 - (drag - 2 * pow(2 + tyreWear, 2)) - (mass / 100) - ((downforce + (2 * (tyreType * tyreType))) / 4)) * slipstreamMultiplier(distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, wasOvertaken) * ultimateAccelerationMultiplier3000 / 2 / FPS;
 }
 
 
@@ -150,6 +151,6 @@ double dirtyAir(double distanceToCarAhead, double downforceOfCarAhead, double sp
 {
     double result = ((distanceToCarAhead - (downforceOfCarAhead / 10)) / 2) - (speedOfCarAhead / 100);
 
-    if (result < 0) return result / FPS;
+    if (result < 0) return result * (1 + SLIPSTREAM_EFFECTIVENESS) / FPS;
     else return 0;
 }

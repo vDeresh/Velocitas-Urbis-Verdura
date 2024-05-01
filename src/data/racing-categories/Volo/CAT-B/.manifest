@@ -1,5 +1,6 @@
 {
     "racing-category": "Volo",
     "racing-class": "CAT-B",
-    "slipstream-effectiveness": 2.6
+    "racing-type": "formula",
+    "slipstream-effectiveness": 0.4
 }
