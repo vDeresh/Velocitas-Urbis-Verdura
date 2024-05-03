@@ -151,6 +151,6 @@ double dirtyAir(double distanceToCarAhead, double downforceOfCarAhead, double sp
 {
     double result = ((distanceToCarAhead - (downforceOfCarAhead / 10)) / 2) - (speedOfCarAhead / 100);
 
-    if (result < 0) return result * (1 + SLIPSTREAM_EFFECTIVENESS) / FPS;
+    if (result < 0) return result * ((1 + SLIPSTREAM_EFFECTIVENESS) * (1 + SLIPSTREAM_EFFECTIVENESS)) / FPS;
     else return 0;
 }

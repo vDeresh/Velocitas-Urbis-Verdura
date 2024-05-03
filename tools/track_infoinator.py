@@ -5,14 +5,14 @@ from pygame.math import Vector2
 
 
 def show():
-    with open(path.abspath(path.join("src", "data", "racing-categories", sys.argv[1], "tracks")), "r") as file:
-        return json.load(file)
+    with open(path.abspath(path.join("src", "data", "tracks", sys.argv[1])), "r") as file:
+        return json.load(file)[sys.argv[2]]
 
 
-TRACK = show()[sys.argv[2]]['track']
+TRACK = show()['track']
 
 TRACK_POINTS = []
-for x, y, *_ in show()[sys.argv[2]]['track']:
+for x, y, *_ in show()['track']:
     TRACK_POINTS.append((x, y))
 
 
@@ -31,25 +31,25 @@ avg_rts = 0
 avg_divider_counter = 0
 
 for p in TRACK:
-    if "turn-start" in p[2]:
+    if "braking-finish-point" in p[2]:
         avg_rts += p[2][-1]["reference-target-speed"]
         avg_divider_counter += 1
 
 avg_rts /= avg_divider_counter
 
+pitlane_entry_point = "N/A"
+pitlane_exit_point = "N/A"
+if sys.argv[2] != "rallycross":
+    pitlane_entry_point = -1
+    for n, p in enumerate(TRACK):
+        if "pit-lane-entry" in p[2]:
+            pitlane_entry_point = n
 
-pitlane_entry_point = -1
 
-for n, p in enumerate(TRACK):
-    if "pit-lane-entry" in p[2]:
-        pitlane_entry_point = n
-
-
-pitlane_exit_point = -1
-
-for n, p in enumerate(TRACK):
-    if "pit-lane-exit" in p[2]:
-        pitlane_exit_point = n
+    pitlane_exit_point = -1
+    for n, p in enumerate(TRACK):
+        if "pit-lane-exit" in p[2]:
+            pitlane_exit_point = n
 
 
 print()

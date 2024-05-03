@@ -41,26 +41,37 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
         shared["fps"] = clock.get_fps()
 
 
-def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
-    DRIVERS = DRIVERS[::2]
+def simulation_interface(racing_category_name: str, racing_class_name: str, track_name: str, DRIVERS: list[Driver]) -> None:
+    main_mgr.init(racing_category_name, racing_class_name)
 
+    # DRIVERS = DRIVERS[:len(DRIVERS) // 2]
     shuffle(DRIVERS)
 
-    for driver in DRIVERS[::2]:
-        driver.call_stack.append({"type": "pit", "tyre": 2})
+    # for driver in DRIVERS[::2]:
+    #     driver.call_stack.append({"type": "pit", "tyre": 2})
+    # else:
+    #     del driver
+
+    track_features = main_mgr.get_features(racing_category_name, racing_class_name, track_name)
+    class_manifest = main_mgr.read_manifest(racing_category_name, racing_class_name)
+
+    if isinstance(track_features, dict):
+        TRACK_INFO = main_mgr.track_show(track_name)[class_manifest['racing-type']]['info']
+        TRACK      = main_mgr.track_show(track_name)[class_manifest['racing-type']]['track']
+
+        ALL_TRACKS = main_mgr.track_show(track_name)
+
+        TRACK_POINTS = main_mgr.convert_track_to_points(TRACK)
+        TRACK_POINTS_SCALED = main_mgr.scale_track_points(TRACK_POINTS)
+
+        if track_features['pit-lane']:
+            PITLANE = main_mgr.track_show(track_name)[class_manifest['racing-type']]['pit-lane']
+            PITLANE_POINTS = main_mgr.convert_track_to_points(PITLANE)
+            PITLANE_POINTS_SCALED = main_mgr.scale_track_points(PITLANE_POINTS)
+        else:
+            PITLANE = PITLANE_POINTS = PITLANE_POINTS_SCALED = []
     else:
-        del driver
-
-    TRACK_INFO = main_mgr.tracks_show()[track_name]['info']
-
-    TRACK = main_mgr.tracks_show()[track_name]['track']
-    PITLANE = main_mgr.tracks_show()[track_name]['pit-lane']
-
-    TRACK_POINTS = main_mgr.convert_track_to_points(TRACK)
-    PITLANE_POINTS = main_mgr.convert_track_to_points(PITLANE)
-
-    TRACK_POINTS_SCALED = main_mgr.scale_track_points(TRACK_POINTS)
-    PITLANE_POINTS_SCALED = main_mgr.scale_track_points(PITLANE_POINTS)
+        raise ValueError(f"{racing_category_name}\\{racing_class_name} is not allowed on track `{track_name}`")
 
 
     TRACK_INFO['timer-ids'] = set(TRACK_INFO['timer-ids'])
@@ -93,8 +104,31 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
     del drs_zone_points
 
 
+    # For showing other tracks in this place ----
+    all_tracks = [[]]
+    all_tracks_points_scaled = []
+    for n, t in enumerate(ALL_TRACKS):
+        n -= 1
+        if n == -1: continue
+        for p in ALL_TRACKS[t]['track']:
+            if len(all_tracks) < n + 1:
+                all_tracks.append([])
+            all_tracks[n].append(p)
+    else:
+        for t in all_tracks:
+            temp_all_tracks_scaled = []
+            for p in t:
+                temp_all_tracks_scaled.append(p[0 : 2])
+
+            all_tracks_points_scaled.append(main_mgr.scale_track_points(temp_all_tracks_scaled))
+
+        del n, t, p, temp_all_tracks_scaled, all_tracks
+    # -------------------------------------------
+
     _thread_simulation = Thread(target=simulation, name="simulation-thread", args=[SHARED, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS], daemon=True)
     _thread_simulation.start()
+
+    _current_surface_type = "asphalt"
 
     while 1:
         for e in pg.event.get():
@@ -103,13 +137,46 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
                 exit()
 
         WIN.fill("black")
-        pg.draw.aalines(WIN, "azure4", False, PITLANE_POINTS_SCALED)
+
+        for t in all_tracks_points_scaled: # Showing other (all) tracks
+            # for n2, p in enumerate(t):
+            #     if "dirt" in all_tracks[n1][n2][2]:
+            #         _current_surface_type = "dirt"
+            #     elif "asphalt" in all_tracks[n1][n2][2]:
+            #         _current_surface_type = "asphalt"
+
+            # if _current_surface_type == "dirt":
+            #     pg.draw.aalines(WIN, "gray50", True, t)
+            # else:
+                pg.draw.aalines(WIN, "gray16", True, t)
+
+
+        if track_features['pit-lane']:
+            pg.draw.aalines(WIN, "azure4", False, PITLANE_POINTS_SCALED)
 
         # pg.draw.lines(WIN, "azure1", True, TRACK_POINTS_SCALED)
-        pg.draw.aalines(WIN, "azure1", True, TRACK_POINTS_SCALED)
+        for n, p in enumerate(TRACK_POINTS_SCALED):
+            # pg.draw.aalines(WIN, "azure1", True, TRACK_POINTS_SCALED)
+
+            if "dirt" in TRACK[n][2]:
+                _current_surface_type = "dirt"
+            elif "asphalt" in TRACK[n][2]:
+                _current_surface_type = "asphalt"
+
+            if n < len(TRACK_POINTS_SCALED) - 1:
+                if _current_surface_type == "dirt":
+                    pg.draw.aalines(WIN, "orange", True, [p, TRACK_POINTS_SCALED[n + 1]])
+                else:
+                    pg.draw.aalines(WIN, "azure1", True, [p, TRACK_POINTS_SCALED[n + 1]])
+            else:
+                if _current_surface_type == "dirt":
+                    pg.draw.aalines(WIN, "orange", True, [p, TRACK_POINTS_SCALED[0]])
+                else:
+                    pg.draw.aalines(WIN, "azure1", True, [p, TRACK_POINTS_SCALED[0]])
 
         # pg.draw.lines(WIN, "lime", False, drs_zone_points_scaled)
-        pg.draw.aalines(WIN, "lime", False, drs_zone_points_scaled)
+        if track_features['drs']:
+            pg.draw.aalines(WIN, "lime", False, drs_zone_points_scaled)
 
         pg.draw.rect(WIN, "red", (TRACK_POINTS_SCALED[0][0] - 1, TRACK_POINTS_SCALED[0][1] - 1, 3, 3), 2)
 
@@ -150,12 +217,17 @@ def simulation_interface(track_name: str, DRIVERS: list[Driver]) -> None:
         #     # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
 
         WIN.blit(FONT_1.render(str(SHARED['fps']), True, "white"), (0, 0))
-        WIN.blit(FONT_1.render(str(DRIVERS[1].speed * 2 * 60), True, "white"), (0, 26))
+        # WIN.blit(FONT_1.render(str(DRIVERS[1].speed * 2 * 60), True, "white"), (0, 26))
 
         # for n, d in enumerate(DRIVERS):
         #     WIN.blit(FONT_1.render(str(round(d.time_difference, 3)), True, "white"), (0, 26 * (n + 1)))
 
         pg.display.flip()
 
+# _racing_category_name = "Aper"
+# _racing_class_name = "Aper 1"
+_racing_category_name = "Volo"
+_racing_class_name = "CAT-B"
+_race_track_name = "sc1"
 
-simulation_interface("sc1", main_mgr.ready_drivers())
+simulation_interface(_racing_category_name, _racing_class_name, _race_track_name, main_mgr.ready_drivers(_racing_category_name, _racing_class_name))

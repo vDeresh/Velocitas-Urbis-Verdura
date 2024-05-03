@@ -103,6 +103,8 @@ class Driver:
         if self.on_pitlane:
             if self.pitlane_speed_limit_on:
                 self.speed = track_info['pit-lane-speed-limit']
+            else:
+                self.speed = self.calculate_speed(drivers, 1)
 
             if self.pos == self.next_point_xy:
                 self.current_point += 1

@@ -83,8 +83,8 @@ if len(sys.argv) == 8 + 1:
     fin_points = compute_bezier_points(control_points, 16)
     print()
     for n, p in enumerate(fin_points):
-        if n == 0:
-            print(f"            [{p[0]}, {p[1]}, " + '["turn-start", {"reference-target-speed": 70, "overtaking-risk": 0.7}]],')
+        if n == 1:
+            print(f"            [{p[0]}, {p[1]}, " + '["turn-start", {"reference-target-speed": 0, "overtaking-risk": 0.0}]],')
         elif n == len(fin_points) - 1:
             print(f"            [{p[0]}, {p[1]}, " + '["turn-end"]],')
         else:
