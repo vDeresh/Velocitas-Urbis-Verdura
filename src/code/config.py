@@ -11,3 +11,4 @@ WIN = pg.display.set_mode((WIN_W, WIN_H), pg.SCALED) # , pg.FULLSCREEN
 # FPS = 60
 
 FONT_1 = pg.sysfont.SysFont("console", 24)
+FONT_2 = pg.sysfont.SysFont("console", 16)

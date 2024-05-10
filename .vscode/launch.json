@@ -8,7 +8,7 @@
             "name": "Simulator",
             "type": "debugpy",
             "request": "launch",
-            "program": "tools\\simulator\\simulator.py",
+            "program": "simulator.py",
             "args": "${command:pickArgs}"
         },
         {

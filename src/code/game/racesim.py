@@ -8,6 +8,24 @@ from time import perf_counter
 from random import shuffle
 
 
+def qualifications(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS: list[Driver]) -> list:
+    clock = pg.Clock()
+
+    shuffle(DRIVERS)
+
+    while 1:
+        clock.tick(60)
+
+        for n, driver in enumerate(DRIVERS):
+            driver.position = n + 1
+            driver.qualifications(TRACK, TRACK_POINTS, PITLANE, PITLANE_POINTS, TRACK_INFO)
+
+        DRIVERS.sort(key=lambda x: x.quali_best_lap_time)
+        shared["fps"] = clock.get_fps()
+
+    return DRIVERS
+
+
 def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS: list[Driver]) -> None:
     clock = pg.Clock()
 
@@ -217,6 +235,7 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
         #     # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
 
         WIN.blit(FONT_1.render(str(SHARED['fps']), True, "white"), (0, 0))
+        WIN.blit(FONT_1.render(str(SHARED['lap']), True, "white"), (0, 26))
         # WIN.blit(FONT_1.render(str(DRIVERS[1].speed * 2 * 60), True, "white"), (0, 26))
 
         # for n, d in enumerate(DRIVERS):
@@ -224,10 +243,20 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
 
         pg.display.flip()
 
-# _racing_category_name = "Aper"
-# _racing_class_name = "Aper 1"
-_racing_category_name = "Volo"
-_racing_class_name = "CAT-B"
-_race_track_name = "sc1"
 
-simulation_interface(_racing_category_name, _racing_class_name, _race_track_name, main_mgr.ready_drivers(_racing_category_name, _racing_class_name))
+
+def simulation_no_racing(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS: list[Driver]) -> None:
+    clock = pg.Clock()
+
+    DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True)
+
+    while 1:
+        clock.tick(60)
+
+        for n, driver in enumerate(DRIVERS):
+            driver.position = n + 1
+            driver.update(TRACK, TRACK_POINTS, PITLANE, PITLANE_POINTS, TRACK_INFO, [])
+
+        DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True) # the bigger the better
+        shared["lap"] = DRIVERS[0].lap
+        shared["fps"] = clock.get_fps()

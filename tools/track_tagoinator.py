@@ -20,7 +20,7 @@ for n, p in enumerate(TRACK):
 
 
 for n, p in enumerate(TRACK):
-    if not n % 10:
+    if (not n % 10) or ("drs-start" in p[2]) or ("drs-end" in p[2]):
         TRACK[n][2].insert(0, "timer")
 
 print("Modified track:")
