@@ -1,0 +1,29 @@
+{
+    "allowed-racing-types": ["formula"],
+    "authors": ["Deresh"],
+    "via-editor": true,
+
+    "formula": {
+        "features": {
+            "pit-lane": 0,
+            "drs": 0
+        },
+
+        "info": {
+            "length": 1502.8954824000864,
+            "starting-direction": [-0.3180740483406642, -0.948065873118625],
+            "track-capacity": 0,
+            "pit-lane-speed-limit": 0,
+            "pit-lane-entry-point": 0,
+            "pit-lane-exit-point": 0,
+            "timer-ids": [],
+            "timer-pos": []
+        },
+
+        "pit-lane": [],
+
+        "track": [
+            [134, 203, ["asphalt", "timer", "meta"]], [137, 189, ["asphalt"]], [148, 174, ["asphalt"]], [166, 158, ["asphalt"]], [189, 143, ["asphalt"]], [218, 127, ["asphalt"]], [250, 112, ["asphalt"]], [285, 97, ["asphalt"]], [321, 84, ["asphalt"]], [358, 73, ["asphalt"]], [395, 64, ["asphalt"]], [429, 57, ["asphalt"]], [462, 54, ["asphalt"]], [490, 53, ["asphalt"]], [514, 57, ["asphalt"]], [531, 65, ["asphalt"]], [547, 75, ["asphalt"]], [562, 88, ["asphalt"]], [578, 103, ["asphalt"]], [595, 120, ["asphalt"]], [611, 138, ["asphalt"]], [628, 157, ["asphalt"]], [644, 178, ["asphalt"]], [659, 200, ["asphalt"]], [673, 223, ["asphalt"]], [687, 247, ["asphalt"]], [699, 272, ["asphalt"]], [710, 297, ["asphalt"]], [718, 323, ["asphalt"]], [726, 349, ["asphalt"]], [730, 375, ["asphalt"]], [733, 400, ["asphalt"]], [734, 425, ["asphalt"]], [732, 449, ["asphalt"]], [729, 473, ["asphalt"]], [724, 495, ["asphalt"]], [717, 516, ["asphalt"]], [709, 536, ["asphalt"]], [699, 555, ["asphalt"]], [688, 572, ["asphalt"]], [676, 587, ["asphalt"]], [663, 601, ["asphalt"]], [649, 614, ["asphalt"]], [634, 624, ["asphalt"]], [618, 632, ["asphalt"]], [602, 638, ["asphalt"]], [584, 645, ["asphalt"]], [564, 655, ["asphalt"]], [542, 666, ["asphalt"]], [519, 678, ["asphalt"]], [495, 690, ["asphalt"]], [471, 702, ["asphalt"]], [446, 713, ["asphalt"]], [421, 722, ["asphalt"]], [397, 728, ["asphalt"]], [375, 730, ["asphalt"]], [353, 729, ["asphalt"]], [334, 722, ["asphalt"]], [316, 710, ["asphalt"]], [301, 691, ["asphalt"]], [289, 665, ["asphalt"]]
+        ]
+    }
+}

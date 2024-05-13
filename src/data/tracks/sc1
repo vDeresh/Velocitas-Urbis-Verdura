@@ -1,5 +1,7 @@
 {
     "allowed-racing-types": ["formula", "rallycross"],
+    "authors": ["Deresh"],
+    "via-editor": false,
 
     "formula": {
         "features": {
