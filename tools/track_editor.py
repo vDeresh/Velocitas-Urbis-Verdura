@@ -468,8 +468,8 @@ def terminal(stdscr: _curses.window) -> None:
             curses.curs_set(0)
 
 
-_thread_terminal = Thread(target=curses.wrapper, args=[terminal], name="thread-terminal", daemon=True)
-_thread_terminal.start()
+# _thread_terminal = Thread(target=curses.wrapper, args=[terminal], name="thread-terminal", daemon=True)
+# _thread_terminal.start()
 
 
 
@@ -504,6 +504,9 @@ while 1:
                     calculate_track_points()
 
         if e.type == pg.MOUSEBUTTONDOWN:
+            if temp_mouse_down_info and temp_mouse_down_point:
+                continue
+
             if KEY_PRESSED[pg.K_LSHIFT]:
                 temp_selected_point = closest_point(MOUSE_POS)
 
@@ -520,11 +523,14 @@ while 1:
                     temp_mouse_down_point = snap_point_to_grid(e.pos)
 
         if e.type == pg.MOUSEBUTTONUP:
-            if temp_mouse_down_point and temp_mouse_down_info:
-                if e.button in [1, 3]:
+            print(e.button, temp_mouse_down_info)
+            if temp_mouse_down_info
+            if ((e.button == 1) and ("asphalt" in temp_mouse_down_info)) or ((e.button == 3) and ("dirt" in temp_mouse_down_info)):
+                print(temp_mouse_down_point, temp_mouse_down_info)
+                if temp_mouse_down_point and temp_mouse_down_info:
                     TRACK_TURN_POINTS.append(Point(temp_mouse_down_point, snap_point_to_grid(MOUSE_POS), snap_point_to_grid((temp_mouse_down_point[0] + (temp_mouse_down_point[0] - snap_n_to_grid(MOUSE_POS[0])), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - snap_n_to_grid(MOUSE_POS[1])))), temp_mouse_down_info))
                     calculate_track_points()
-            temp_mouse_down_point = temp_mouse_down_info = temp_selected_point = temp_selected_checkpoint = None
+                temp_selected_point = temp_selected_checkpoint = temp_mouse_down_point = temp_mouse_down_info = None
 
 
     WIN.fill("white")
