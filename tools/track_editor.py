@@ -10,9 +10,15 @@ import curses, _curses
 
 
 SETTINGS = {
-    'bezier-num-of-points': 16,
-    'timer-tag-frequency': 10,
-    'grid-size': 0
+    'EDITOR': {
+        'bezier-num-of-points': 16,
+        'timer-tag-frequency': 10,
+        'grid-size': 0
+    },
+
+    'TRACK': {
+        'scale': 1
+    }
 }
 
 
@@ -23,14 +29,18 @@ def round_half_up(n) -> int:
         return int(n) + 1
 
 
-def snap_point_to_grid(point: tuple[int, int]) -> tuple[int, int]:
-    if SETTINGS['grid-size']:
-        return round_half_up(point[0] / SETTINGS['grid-size']) * SETTINGS['grid-size'], round_half_up(point[1] / SETTINGS['grid-size']) * SETTINGS['grid-size']
+def snap_point_to_grid(point: tuple[int, int], grid_size: None | int = None) -> tuple[int, int]:
+    if not grid_size:
+        grid_size = SETTINGS['EDITOR']['grid-size']
+
+    if grid_size:
+        return round_half_up(point[0] / grid_size) * grid_size, round_half_up(point[1] / grid_size) * grid_size
+
     return point
 
 def snap_n_to_grid(n: int) -> int:
-    if SETTINGS['grid-size']:
-        return round_half_up(n / SETTINGS['grid-size']) * SETTINGS['grid-size']
+    if SETTINGS['EDITOR']['grid-size']:
+        return round_half_up(n / SETTINGS['EDITOR']['grid-size']) * SETTINGS['EDITOR']['grid-size']
     return n
 
 
@@ -95,7 +105,7 @@ class Point:
 
 
 def compute_bezier_points(vertices) -> list[tuple[int, int]]:
-    numPoints = SETTINGS['bezier-num-of-points']
+    numPoints = SETTINGS['EDITOR']['bezier-num-of-points']
 
     result = []
 
@@ -259,7 +269,7 @@ def tag_track():
 
     TRACK[0][2].insert(0, "meta")
     for n, p in enumerate(TRACK):
-        if (not n % SETTINGS['timer-tag-frequency']) or ("drs-start" in p[2]) or ("drs-end" in p[2]):
+        if (not n % SETTINGS['EDITOR']['timer-tag-frequency']) or ("drs-start" in p[2]) or ("drs-end" in p[2]):
             TRACK[n][2].insert(0, "timer")
 
 
@@ -268,7 +278,7 @@ def terminal(stdscr: _curses.window) -> None:
     curses.curs_set(0)
     stdscr.nodelay(True)
 
-    textbox_win = curses.newwin(1, 115, 12, 5)
+    textbox_win = curses.newwin(1, 115, 13, 5)
     textbox = curses.textpad.Textbox(textbox_win)
 
     TERMINAL_ERROR_MESSAGE = ""
@@ -276,54 +286,60 @@ def terminal(stdscr: _curses.window) -> None:
     while 1:
         stdscr.clear()
 
-        curses.textpad.rectangle(stdscr, 1, 1, 5, 44)
+        curses.textpad.rectangle(stdscr, 1, 1, 6, 45)
         stdscr.addstr(1, 2, " Track info ")
-        stdscr.addstr(2, 3, f"amount of points:   {len(TRACK_POINTS)}")
-        stdscr.addstr(3, 3, f"track length:       {sum([pg.Vector2(TRACK_POINTS[n]).distance_to(TRACK_POINTS[n + 1]) for n in range(len(TRACK_POINTS) - 1)])}")
+        stdscr.addstr(2, 3, f"amount of points:.. {len(TRACK_POINTS)}")
+        stdscr.addstr(3, 3, f"track length:...... {sum([pg.Vector2(TRACK_POINTS[n]).distance_to(TRACK_POINTS[n + 1]) for n in range(len(TRACK_POINTS) - 1)]) * SETTINGS['TRACK']['scale']}")
 
         if len(TRACK_POINTS) >= 3:
             stdscr.addstr(4, 3, f"starting direction: {pg.Vector2(TRACK_POINTS[0][0] - TRACK_POINTS[-1][0], TRACK_POINTS[0][1] - TRACK_POINTS[-1][1]).normalize()}")
         else:
             stdscr.addstr(4, 3, f"starting direction: (not enough points)")
 
-
-        curses.textpad.rectangle(stdscr, 6, 1, 10, 44)
-        stdscr.addstr(6, 2, " Editor info ")
-        stdscr.addstr(7, 3, f"bnop:                {SETTINGS['bezier-num-of-points']}")
-        stdscr.addstr(8, 3, f"timer tag frequency: {SETTINGS['timer-tag-frequency']}")
-        stdscr.addstr(9, 3, f"grid size:           {SETTINGS['grid-size']}")
+        stdscr.addstr(5, 3, f"scale:............. {SETTINGS['TRACK']['scale']}")
 
 
-        curses.textpad.rectangle(stdscr, 1, 45, 10, 120)
-        stdscr.addstr(1, 46, " Help ")
-        stdscr.addstr(2, 47, "update")
-
-        stdscr.addstr(3, 47, "bnop") # <n>
-        stdscr.addstr(3, 52, "<n>")
-        stdscr.addstr(3, 56, "sets amount of points in curves to n (default: 16)", curses.A_REVERSE)
-
-        stdscr.addstr(4, 47, "save") # <track name> <racing type> <author(s)>
-        stdscr.addstr(4, 52, "<track name>")
-        stdscr.addstr(4, 65, "<racing type>")
-        stdscr.addstr(4, 79, "[*author(s)]")
-        stdscr.addstr(4, 91, "saves track (one racing type)", curses.A_REVERSE)
-
-        stdscr.addstr(5, 47, "tag") # <*frequency>
-        stdscr.addstr(5, 51, "<*frequency>")
-        stdscr.addstr(5, 64, "auto-tags track", curses.A_REVERSE)
-
-        stdscr.addstr(6, 47, "grid") # <size>
-        stdscr.addstr(6, 52, "<size>") # <size>
-        stdscr.addstr(6, 59, "sets size of the grid (default: 0)", curses.A_REVERSE) # <size>
+        curses.textpad.rectangle(stdscr, 7, 1, 11, 45)
+        stdscr.addstr( 7, 2, " Editor info ")
+        stdscr.addstr( 8, 3, f"bnop:                {SETTINGS['EDITOR']['bezier-num-of-points']}")
+        stdscr.addstr( 9, 3, f"timer tag frequency: {SETTINGS['EDITOR']['timer-tag-frequency']}")
+        stdscr.addstr(10, 3, f"grid size:           {SETTINGS['EDITOR']['grid-size']}")
 
 
-        curses.textpad.rectangle(stdscr, 11, 1, 13, 120)
-        stdscr.addstr(11, 2, " Command line ")
-        stdscr.addstr(12, 3, ">")
+        curses.textpad.rectangle(stdscr, 1, 46, 11, 122)
+        stdscr.addstr(1, 47, " Help ")
+        stdscr.addstr(2, 48, "update")
 
-        curses.textpad.rectangle(stdscr, 14, 1, 16, 120)
-        stdscr.addstr(14, 2, " Latest error ")
-        stdscr.addstr(15, 3, TERMINAL_ERROR_MESSAGE)
+        stdscr.addstr(3, 48, "bnop") # <n>
+        stdscr.addstr(3, 53, "<n>")
+        stdscr.addstr(3, 57, "sets amount of points in curves to n (default: 16)", curses.A_REVERSE)
+
+        stdscr.addstr(4, 48, "save") # <track name> <racing type> <author(s)>
+        stdscr.addstr(4, 53, "<track name>")
+        stdscr.addstr(4, 66, "<racing type>")
+        stdscr.addstr(4, 80, "[*author(s)]")
+        stdscr.addstr(4, 93, "saves track (one racing type)", curses.A_REVERSE)
+
+        stdscr.addstr(5, 48, "tag") # <*frequency>
+        stdscr.addstr(5, 52, "<*frequency>")
+        stdscr.addstr(5, 65, "auto-tags track", curses.A_REVERSE)
+
+        stdscr.addstr(6, 48, "grid") # <size>
+        stdscr.addstr(6, 53, "<size>")
+        stdscr.addstr(6, 60, "sets size of the grid (default: 0)", curses.A_REVERSE) # <size>
+
+        stdscr.addstr(7, 48, "snap") # <*objects>
+        stdscr.addstr(7, 53, "<*objects>")
+        stdscr.addstr(7, 64, "snaps choosen objects to the grid (default: 'points-only')", curses.A_REVERSE)
+
+
+        curses.textpad.rectangle(stdscr, 12, 1, 14, 122)
+        stdscr.addstr(12, 2, " Command line ")
+        stdscr.addstr(13, 3, ">")
+
+        curses.textpad.rectangle(stdscr, 15, 1, 17, 122)
+        stdscr.addstr(15, 2, " Latest info ")
+        stdscr.addstr(16, 3, TERMINAL_ERROR_MESSAGE)
 
         stdscr.refresh()
 
@@ -334,47 +350,62 @@ def terminal(stdscr: _curses.window) -> None:
                 textbox.edit()
                 command = textbox.gather().split()
 
+                if not len(command):
+                    continue
+
                 match command[0]:
                     case "bnop": # <n>
                         if len(command) == 2:
-                            if command[1].isdigit():
-                                if int(command[1]) > 1:
-                                    SETTINGS.update({'bezier-num-of-points': int(command[1])})
-                                else:
-                                    TERMINAL_ERROR_MESSAGE = f"parameter in `bnop` command must be a number bigger than 1 ('{command[1]}' provided)"
+                            if command[1].isdigit() and  int(command[1]) > 1:
+                                    SETTINGS['EDITOR'].update({'bezier-num-of-points': int(command[1])})
                             else:
-                                TERMINAL_ERROR_MESSAGE = f"parameter in `bnop` command must be a number bigger than 1 ('{command[1]}' provided)"
+                                TERMINAL_ERROR_MESSAGE = f"`bnop` command parameter must be a number bigger than 1 ('{command[1]}' provided)"
                         else:
                             TERMINAL_ERROR_MESSAGE = f"`bnop` command takes 1 parameter ({len(command) - 1} provided)"
+
+                        calculate_track_points()
 
                     case "tag": # <*frequency>
                         if len(command) == 2:
                             if command[1].isdigit() and int(command[1]) > 1:
-                                SETTINGS.update({'timer-tag-frequency': int(command[1])})
+                                SETTINGS['EDITOR'].update({'timer-tag-frequency': int(command[1])})
                             else:
                                 TERMINAL_ERROR_MESSAGE = f"`tag` command parameter must be a number bigger than 1 ('{command[1]}' provided)"
                         elif len(command) > 2:
                             TERMINAL_ERROR_MESSAGE = f"`tag` command takes 1 (optional) parameter ({len(command) - 1} provided)"
+
                         tag_track()
 
                     case "grid": # <size>
                         if len(command) == 2:
                             if command[1].isdigit() and int(command[1]) >= 0:
-                                SETTINGS.update({'grid-size': int(command[1])})
+                                SETTINGS['EDITOR'].update({'grid-size': int(command[1])})
                             else:
                                 TERMINAL_ERROR_MESSAGE = f"`grid` command parameter must be a positive number ('{command[1]}' provided)"
                         else:
                             TERMINAL_ERROR_MESSAGE = f"`grid` command takes 1 parameter ({len(command) - 1} provided)"
 
-                    case "snap": # <*grid-size>
-                        if len(command) == 1:
+                    case "snap": # TODO <*objects>
+                        if len(command) <= 2:
+                            # command.insert(2, "points-only")
                             for n, p in enumerate(TRACK_TURN_POINTS):
+                                _cache_turn_point_xy = p.xy
                                 TRACK_TURN_POINTS[n].x, TRACK_TURN_POINTS[n].y = snap_point_to_grid(p.xy)
-                        elif len(command) == 2:
-                            for n, p in enumerate(TRACK_TURN_POINTS):
-                                TRACK_TURN_POINTS[n].x, TRACK_TURN_POINTS[n].y = snap_point_to_grid(p.xy)
+
+                                TRACK_TURN_POINTS[n].cx0 += TRACK_TURN_POINTS[n].x -_cache_turn_point_xy[0]
+                                TRACK_TURN_POINTS[n].cy0 += TRACK_TURN_POINTS[n].y -_cache_turn_point_xy[1]
+
+                                TRACK_TURN_POINTS[n].cx1 += TRACK_TURN_POINTS[n].x -_cache_turn_point_xy[0]
+                                TRACK_TURN_POINTS[n].cy1 += TRACK_TURN_POINTS[n].y -_cache_turn_point_xy[1]
+
+                                del _cache_turn_point_xy
                         else:
                             TERMINAL_ERROR_MESSAGE = f"`snap` command takes 1 (optional) parameter ({len(command) - 1} provided)"
+
+                        calculate_track_points()
+
+                    case "clear":
+                        TERMINAL_ERROR_MESSAGE = ""
 
                     case "update":
                         if len(command) == 1:
@@ -468,8 +499,8 @@ def terminal(stdscr: _curses.window) -> None:
             curses.curs_set(0)
 
 
-# _thread_terminal = Thread(target=curses.wrapper, args=[terminal], name="thread-terminal", daemon=True)
-# _thread_terminal.start()
+_thread_terminal = Thread(target=curses.wrapper, args=[terminal], name="thread-terminal", daemon=True)
+_thread_terminal.start()
 
 
 
@@ -496,6 +527,18 @@ while 1:
 
         if e.type == pg.MOUSEMOTION:
             if KEY_PRESSED[pg.K_LALT]:
+                if temp_selected_point:
+                    TRACK_TURN_POINTS[temp_selected_point].x += e.rel[0]
+                    TRACK_TURN_POINTS[temp_selected_point].y += e.rel[1]
+
+                    TRACK_TURN_POINTS[temp_selected_point].cx0 += e.rel[0]
+                    TRACK_TURN_POINTS[temp_selected_point].cy0 += e.rel[1]
+
+                    TRACK_TURN_POINTS[temp_selected_point].cx1 += e.rel[0]
+                    TRACK_TURN_POINTS[temp_selected_point].cy1 += e.rel[1]
+
+                    calculate_track_points()
+
                 if temp_selected_checkpoint:
                     exec(
                         f"TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cx{temp_selected_checkpoint[1]} += e.rel[0];"
@@ -516,33 +559,40 @@ while 1:
             else:
                 if e.button == 1:
                     temp_mouse_down_info = ["asphalt"]
-                    temp_mouse_down_point = snap_point_to_grid(e.pos)
+                    if KEY_PRESSED[pg.K_LALT]:
+                        temp_mouse_down_point = e.pos
+                    else:
+                        temp_mouse_down_point = snap_point_to_grid(e.pos)
 
                 elif e.button == 3:
                     temp_mouse_down_info = ["dirt"]
-                    temp_mouse_down_point = snap_point_to_grid(e.pos)
+                    if KEY_PRESSED[pg.K_LALT]:
+                        temp_mouse_down_point = e.pos
+                    else:
+                        temp_mouse_down_point = snap_point_to_grid(e.pos)
 
         if e.type == pg.MOUSEBUTTONUP:
-            print(e.button, temp_mouse_down_info)
-            if temp_mouse_down_info
-            if ((e.button == 1) and ("asphalt" in temp_mouse_down_info)) or ((e.button == 3) and ("dirt" in temp_mouse_down_info)):
-                print(temp_mouse_down_point, temp_mouse_down_info)
-                if temp_mouse_down_point and temp_mouse_down_info:
-                    TRACK_TURN_POINTS.append(Point(temp_mouse_down_point, snap_point_to_grid(MOUSE_POS), snap_point_to_grid((temp_mouse_down_point[0] + (temp_mouse_down_point[0] - snap_n_to_grid(MOUSE_POS[0])), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - snap_n_to_grid(MOUSE_POS[1])))), temp_mouse_down_info))
-                    calculate_track_points()
-                temp_selected_point = temp_selected_checkpoint = temp_mouse_down_point = temp_mouse_down_info = None
+            if temp_mouse_down_point and temp_mouse_down_info:
+                if ((e.button == 1) and ("asphalt" in temp_mouse_down_info)) or ((e.button == 3) and ("dirt" in temp_mouse_down_info)):
+                    if KEY_PRESSED[pg.K_LALT]:
+                        TRACK_TURN_POINTS.append(Point(temp_mouse_down_point, MOUSE_POS, (temp_mouse_down_point[0] + (temp_mouse_down_point[0] - MOUSE_POS[0]), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - MOUSE_POS[1])), temp_mouse_down_info))
+                    else:
+                        TRACK_TURN_POINTS.append(Point(temp_mouse_down_point, snap_point_to_grid(MOUSE_POS), snap_point_to_grid((temp_mouse_down_point[0] + (temp_mouse_down_point[0] - snap_n_to_grid(MOUSE_POS[0])), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - snap_n_to_grid(MOUSE_POS[1])))), temp_mouse_down_info))
+
+            temp_selected_point = temp_selected_checkpoint = temp_mouse_down_point = temp_mouse_down_info = None
+            calculate_track_points()
 
 
     WIN.fill("white")
 
 
-    if SETTINGS['grid-size']:
-        for n in range(SETTINGS['grid-size'], 1000 - SETTINGS['grid-size'] + 1, SETTINGS['grid-size']):
+    if SETTINGS['EDITOR']['grid-size']:
+        for n in range(SETTINGS['EDITOR']['grid-size'], 1000 - SETTINGS['EDITOR']['grid-size'] + 1, SETTINGS['EDITOR']['grid-size']):
             pg.draw.line(WIN, "gray80", (n, 0), (n, 1000))
             pg.draw.line(WIN, "gray80", (0, n), (1000, n))
 
 
-    if temp_selected_point:
+    if (temp_selected_point) and (not KEY_PRESSED[pg.K_LALT]):
         TRACK_TURN_POINTS[temp_selected_point].cx0, TRACK_TURN_POINTS[temp_selected_point].cy0 = TRACK_TURN_POINTS[temp_selected_point].cx0 - (TRACK_TURN_POINTS[temp_selected_point].x - MOUSE_POS[0]), TRACK_TURN_POINTS[temp_selected_point].cy0 - (TRACK_TURN_POINTS[temp_selected_point].y - MOUSE_POS[1])
         TRACK_TURN_POINTS[temp_selected_point].cx1, TRACK_TURN_POINTS[temp_selected_point].cy1 = TRACK_TURN_POINTS[temp_selected_point].cx1 - (TRACK_TURN_POINTS[temp_selected_point].x - MOUSE_POS[0]), TRACK_TURN_POINTS[temp_selected_point].cy1 - (TRACK_TURN_POINTS[temp_selected_point].y - MOUSE_POS[1])
         TRACK_TURN_POINTS[temp_selected_point].x,   TRACK_TURN_POINTS[temp_selected_point].y   = MOUSE_POS
@@ -554,7 +604,7 @@ while 1:
         calculate_track_points()
 
 
-    if temp_selected_checkpoint:
+    if (temp_selected_checkpoint) and (not KEY_PRESSED[pg.K_LALT]):
         exec(
             f"TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cx{temp_selected_checkpoint[1]}, TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cy{temp_selected_checkpoint[1]} = MOUSE_POS;"
             f"TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cx{temp_selected_checkpoint[1]}, TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cy{temp_selected_checkpoint[1]} = snap_point_to_grid((TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cx{temp_selected_checkpoint[1]}, TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cy{temp_selected_checkpoint[1]}));"
@@ -564,8 +614,12 @@ while 1:
 
 
     if temp_mouse_down_point and temp_mouse_down_info:
-        _temp_checkpoint_0 = snap_point_to_grid(MOUSE_POS)
-        _temp_checkpoint_1 = snap_point_to_grid((temp_mouse_down_point[0] + (temp_mouse_down_point[0] - snap_n_to_grid(MOUSE_POS[0])), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - snap_n_to_grid(MOUSE_POS[1]))))
+        if KEY_PRESSED[pg.K_LALT]:
+            _temp_checkpoint_0 = MOUSE_POS
+            _temp_checkpoint_1 = (temp_mouse_down_point[0] + (temp_mouse_down_point[0] - MOUSE_POS[0]), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - MOUSE_POS[1]))
+        else:
+            _temp_checkpoint_0 = snap_point_to_grid(MOUSE_POS)
+            _temp_checkpoint_1 = snap_point_to_grid((temp_mouse_down_point[0] + (temp_mouse_down_point[0] - snap_n_to_grid(MOUSE_POS[0])), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - snap_n_to_grid(MOUSE_POS[1]))))
 
         TRACK_TURN_POINTS.append(Point(temp_mouse_down_point, _temp_checkpoint_0, _temp_checkpoint_1, temp_mouse_down_info))
         calculate_track_points()
@@ -580,6 +634,8 @@ while 1:
             pg.draw.circle(WIN, "aqua", temp_mouse_down_point, 2)
         elif "dirt" in temp_mouse_down_info:
             pg.draw.circle(WIN, "orange", temp_mouse_down_point, 2)
+
+        del _temp_checkpoint_0, _temp_checkpoint_1
 
 
     for n, p in enumerate(TRACK):
