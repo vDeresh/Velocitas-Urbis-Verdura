@@ -216,7 +216,7 @@
             [158, 222, []],
             [162, 200, []],
 
-            [163, 182, ["timer", "turn-start", {"reference-target-speed": 72, "overtaking-risk": 0.5}]],
+            [163, 182, ["timer", "turn-start"]],
             [161, 167, ["braking-finish-point", {"reference-target-speed": 72, "overtaking-risk": 0.5}]],
             [157, 157, []],
             [150, 149, []],
