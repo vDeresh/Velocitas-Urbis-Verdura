@@ -291,7 +291,7 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
     textbox_win = curses.newwin(1, 117, 12, 5)
     textbox = curses.textpad.Textbox(textbox_win)
 
-    TERMINAL_LATEST_INFO = ""
+    TERMINAL_OUTPUT = ""
 
     command: list[str]
 
@@ -313,13 +313,12 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
 
         curses.textpad.rectangle(stdscr, 6, 1, 10, 45)
         stdscr.addstr(6, 2, " Editor info ")
-        # stdscr.addstr(7, 3, f"bnop:............... {SETTINGS['EDITOR']['global -bezier-num-of-points']}")
         stdscr.addstr(7, 3, f"bnop:............... {SETTINGS['EDITOR']['current-bezier-num-of-points']}")
         stdscr.addstr(8, 3, f"timer tag frequency: {SETTINGS['EDITOR']['timer-tag-frequency']}")
         stdscr.addstr(9, 3, f"grid {"size:.......... " + str(SETTINGS['EDITOR']['grid-size']) if SETTINGS['EDITOR']['grid-size'] else "disabled"}")
 
 
-        curses.textpad.rectangle(stdscr, 0, 46, 10, 122)
+        curses.textpad.rectangle(stdscr, 0, 46, 10, 122) # TODO add `move` command to move whole track
         stdscr.addstr(0, 47, " Help ")
         stdscr.addstr(1, 48, "help")
         stdscr.addstr(1, 53, "<command>", curses.A_VERTICAL)
@@ -332,7 +331,8 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
         stdscr.addstr(4, 48, "save") # <track name> <racing type> [*author(s)]
         stdscr.addstr(4, 53, "<track name>", curses.A_BLINK)
         stdscr.addstr(4, 66, "<racing type>", curses.A_BLINK)
-        stdscr.addstr(4, 80, "[*author(s)]", curses.A_BLINK)
+        stdscr.addstr(4, 80, "{tag}", curses.A_BLINK)
+        stdscr.addstr(4, 86, "[*author(s)]", curses.A_BLINK)
 
         stdscr.addstr(5, 48, "tag") # <*frequency>
         stdscr.addstr(5, 52, "<*frequency>", curses.A_BLINK)
@@ -343,14 +343,18 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
         stdscr.addstr(7, 48, "snap") # <*objects>
         stdscr.addstr(7, 53, "<*objects>", curses.A_BLINK)
 
+        stdscr.addstr(7, 48, "move") # <x> <y>
+        stdscr.addstr(7, 53, "<x>", curses.A_BLINK)
+        stdscr.addstr(7, 57, "<y>", curses.A_BLINK)
+
 
         curses.textpad.rectangle(stdscr, 11, 1, 13, 122)
         stdscr.addstr(11, 2, " Command line ")
         stdscr.addstr(12, 3, ">")
 
-        stdscr.addstr(15, 3, TERMINAL_LATEST_INFO)
+        stdscr.addstr(15, 3, TERMINAL_OUTPUT)
         curses.textpad.rectangle(stdscr, 14, 1, 27, 122)
-        stdscr.addstr(14, 2, " Latest info ")
+        stdscr.addstr(14, 2, " Output ")
 
         stdscr.refresh()
 
@@ -371,56 +375,56 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
                                 if len(command) == 3:
                                     if command[2] in ["lc", "last-curve"]:
                                         TRACK_TURN_POINTS[-2].bnop = int(command[1])
-                                        TERMINAL_LATEST_INFO = f"BNOP: Last curve's bnop set to {TRACK_TURN_POINTS[-2].bnop}."
+                                        TERMINAL_OUTPUT = f"BNOP: Last curve's bnop set to {TRACK_TURN_POINTS[-2].bnop}."
 
                                     elif command[2] in ["c", "current"]:
                                         TRACK_TURN_POINTS[-1].bnop = int(command[1])
                                         SETTINGS['EDITOR'].update({'current-bezier-num-of-points': int(command[1])})
-                                        TERMINAL_LATEST_INFO = f"BNOP: Set to {SETTINGS['EDITOR']['current-bezier-num-of-points']}."
+                                        TERMINAL_OUTPUT = f"BNOP: Set to {SETTINGS['EDITOR']['current-bezier-num-of-points']}."
 
                                     else:
-                                        TERMINAL_LATEST_INFO = f"[!] BNOP: Invalid <*objects> parameter ('{command[1]}' provided)."
+                                        TERMINAL_OUTPUT = f"[!] BNOP: Invalid <*objects> parameter ('{command[1]}' provided)."
                                 else:
                                     TRACK_TURN_POINTS[-1].bnop = int(command[1])
                                     SETTINGS['EDITOR'].update({'current-bezier-num-of-points': int(command[1])})
-                                    TERMINAL_LATEST_INFO = f"BNOP: Set to {SETTINGS['EDITOR']['current-bezier-num-of-points']}."
+                                    TERMINAL_OUTPUT = f"BNOP: Set to {SETTINGS['EDITOR']['current-bezier-num-of-points']}."
 
                             elif command[1] in ["d", "default"]:
                                 TRACK_TURN_POINTS[-1].bnop = 16
                                 SETTINGS['EDITOR'].update({'current-bezier-num-of-points': 16})
-                                TERMINAL_LATEST_INFO = f"BNOP: Set to {SETTINGS['EDITOR']['current-bezier-num-of-points']}."
+                                TERMINAL_OUTPUT = f"BNOP: Set to {SETTINGS['EDITOR']['current-bezier-num-of-points']}."
 
                             else:
-                                TERMINAL_LATEST_INFO = f"[!] BNOP: First parameter must be a number bigger than 1 ('{command[1]}' provided)."
+                                TERMINAL_OUTPUT = f"[!] BNOP: First parameter must be a number bigger than 1 ('{command[1]}' provided)."
                         else:
-                            TERMINAL_LATEST_INFO = f"[!] BNOP: This command takes atmost 2 parameters ({len(command) - 1} provided)"
+                            TERMINAL_OUTPUT = f"[!] BNOP: This command takes atmost 2 parameters ({len(command) - 1} provided)"
 
                         calculate_track_points()
 
                     case "tag": # <*frequency>
-                        TERMINAL_LATEST_INFO = ""
+                        TERMINAL_OUTPUT = ""
 
                         if len(command) == 2:
                             if command[1].isdigit() and int(command[1]) > 1:
                                 SETTINGS['EDITOR'].update({'timer-tag-frequency': int(command[1])})
-                                TERMINAL_LATEST_INFO = f"TAG: Default tag frequency was to {SETTINGS['EDITOR']['timer-tag-frequency']}.\n   "
+                                TERMINAL_OUTPUT = f"TAG: Default tag frequency was to {SETTINGS['EDITOR']['timer-tag-frequency']}.\n   "
                             else:
-                                TERMINAL_LATEST_INFO = f"[!] TAG: Parameter must be a number bigger than 1 ('{command[1]}' provided)."
+                                TERMINAL_OUTPUT = f"[!] TAG: Parameter must be a number bigger than 1 ('{command[1]}' provided)."
                         elif len(command) > 2:
-                            TERMINAL_LATEST_INFO = f"[!] TAG: This command takes 1 (optional) parameter ({len(command) - 1} provided)."
+                            TERMINAL_OUTPUT = f"[!] TAG: This command takes 1 (optional) parameter ({len(command) - 1} provided)."
 
                         tag_track()
-                        TERMINAL_LATEST_INFO += "TAG: Track tagged."
+                        TERMINAL_OUTPUT += "TAG: Track tagged."
 
                     case "grid": # <size>
                         if len(command) == 2:
                             if command[1].isdigit() and int(command[1]) >= 0:
                                 SETTINGS['EDITOR'].update({'grid-size': int(command[1])})
-                                TERMINAL_LATEST_INFO = f"GRID: Grid set to {SETTINGS['EDITOR']['grid-size']}."
+                                TERMINAL_OUTPUT = f"GRID: Grid set to {SETTINGS['EDITOR']['grid-size']}."
                             else:
-                                TERMINAL_LATEST_INFO = f"[!] GRID: Parameter must be a positive number ('{command[1]}' provided)."
+                                TERMINAL_OUTPUT = f"[!] GRID: Parameter must be a positive number ('{command[1]}' provided)."
                         else:
-                            TERMINAL_LATEST_INFO = f"[!] GRID: This command takes 1 parameter ({len(command) - 1} provided)."
+                            TERMINAL_OUTPUT = f"[!] GRID: This command takes 1 parameter ({len(command) - 1} provided)."
 
                     case "snap": # <*objects>
                         if SETTINGS['EDITOR']['grid-size']:
@@ -439,89 +443,87 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
                                         TRACK_TURN_POINTS[n].cy1 += TRACK_TURN_POINTS[n].y -_cache_turn_point_xy[1]
                                 else:
                                     del _cache_turn_point_xy
-                                    TERMINAL_LATEST_INFO = f"SNAP: Snapped {"turn-points" if (command[1] in ["p", "turn-points"]) else "turn-checkpoints" if (command[1] in ["c", "turn-checkpoints"]) else "everything"} to the grid."
+                                    TERMINAL_OUTPUT = f"SNAP: Snapped {"turn-points" if (command[1] in ["p", "turn-points"]) else "turn-checkpoints" if (command[1] in ["c", "turn-checkpoints"]) else "everything"} to the grid."
                             else:
-                                TERMINAL_LATEST_INFO = f"[!] SNAP: This command takes 1 (optional) parameter ({len(command) - 1} provided)."
+                                TERMINAL_OUTPUT = f"[!] SNAP: This command takes 1 (optional) parameter ({len(command) - 1} provided)."
                         else:
-                            TERMINAL_LATEST_INFO = "[!] SNAP: Grid has not been set."
+                            TERMINAL_OUTPUT = "[!] SNAP: Grid has not been set."
+
+                        calculate_track_points()
+
+                    case "move":
+                        if len(command) == 3:
+                            if command[1].isdigit() and command[2].isdigit():
+                                for tp in TRACK_TURN_POINTS:
+                                    tp.x += int(command[1])
+                                    tp.y += int(command[2])
+
+                                    tp.cx0 += int(command[1])
+                                    tp.cy0 += int(command[2])
+
+                                    tp.cx1 += int(command[1])
+                                    tp.cy1 += int(command[2])
+                                else:
+                                    del tp
+                                TERMINAL_OUTPUT = f"MOVE: Moved the track by [{int(command[1])}, {int(command[2])}]."
+                            else:
+                                TERMINAL_OUTPUT = f"[!] MOVE: Parameters must be integers."
+                        else:
+                            TERMINAL_OUTPUT = f"[!] MOVE: This command requires 2 parameters ({len(command) - 1} provided)."
 
                         calculate_track_points()
 
                     case "clear":
-                        TERMINAL_LATEST_INFO = ""
+                        TERMINAL_OUTPUT = ""
 
                     case "update":
                         if len(command) == 1:
                             calculate_track_points()
-                            TERMINAL_LATEST_INFO = "UPDATE: Updated track."
+                            TERMINAL_OUTPUT = "UPDATE: Updated track."
                         else:
-                            TERMINAL_LATEST_INFO = f"[!] UPDATE: This command takes no parameters."
+                            TERMINAL_OUTPUT = f"[!] UPDATE: This command takes no parameters."
 
-                    case "save": # <track name> <racing type> [*author(s)]
+                    case "save": # <track name> <racing type> {tag} [*author(s)]
                         if len(command) < 2 + 1:
-                            TERMINAL_LATEST_INFO = f"[!] SAVE: This command takes atleast 2 parameters ({len(command) - 1} provided)."
+                            TERMINAL_OUTPUT = f"[!] SAVE: This command takes atleast 2 parameters ({len(command) - 1} provided)."
                             continue
                         if not command[2] in ["formula", "rallycross"]:
-                            TERMINAL_LATEST_INFO = f"[!] SAVE: <racing type> parameter is not valid ('{command[2]}' provided)."
+                            TERMINAL_OUTPUT = f"[!] SAVE: <racing type> parameter is not valid ('{command[2]}' provided)."
                             continue
 
                         path_to_file = path.abspath(path.join("src", "data", "tracks", command[1]))
 
 
+                        if (command[3].isdigit()) and (int(command[3]) in [0, 1]):
+                            if int(command[3]):
+                                tag_track()
+
+
+                        _temp_fist_turn = True
                         final_track: list[list] = []
-                        for n1, p in enumerate(TRACK):
-                            for n2, tp1 in enumerate(TRACK_TURN_POINTS):
-                                if tp1.index == n1:
-                                    final_track.append([tp1.x, tp1.y, ["turn-end", "turn-start"]])
+                        for n, p in enumerate(TRACK):
+                            for tp in TRACK_TURN_POINTS:
+                                if tp.index == n:
+                                    if _temp_fist_turn:
+                                        final_track.append([tp.x, tp.y, ["turn-start"]])
+                                        _temp_fist_turn = False
+                                    elif n == len(TRACK) - 1:
+                                        final_track[n - 1][2].append("acceleration-start-point")
+                                        final_track.append([tp.x, tp.y, ["turn-end", "lap-end"]])
+                                    else:
+                                        final_track[n - 1][2].append("acceleration-start-point")
+                                        final_track.append([tp.x, tp.y, ["turn-end", "turn-start"]])
                                     break
                             else:
-                                final_track.append(p)
+                                if len(final_track) and "turn-start" in final_track[n - 1][2]:
+                                    _temp_p2: list = p[2]
+                                    _temp_p2.append("braking-finish-point")
+                                    _temp_p2.append({"reference-target-speed": 0, "overtaking-risk": 1.0})
+                                    final_track.append([p[0], p[1], _temp_p2])
+                                else:
+                                    final_track.append(p)
                         else:
-                            del n1, tp1, n2, p
-
-
-                        # final_track: list[list] = []
-                        # for n, p in enumerate(TRACK):
-                        #     if n == 0:
-                        #         final_track.append(p)
-                        #         continue
-
-                        #     if n == len(TRACK) - 1:
-                        #         _temp_p2: list = p[2]
-                        #         _temp_p2.insert(0, "lap-end")
-
-                        #         if "timer" not in _temp_p2:
-                        #             _temp_p2.insert(0, "timer")
-
-                        #         final_track.append([p[0], p[1], _temp_p2])
-                        #         continue
-
-                        #     _temp_ttp_end = False
-                        #     for tp in TRACK_TURN_POINTS:
-                        #         if (p[0], p[1]) == tp.xy:
-                        #             _temp_p2: list = p[2]
-
-                        #             _temp_p2.append("turn-end")
-                        #             final_track[n - 1][2].append("acceleration-start-point")
-
-                        #             _temp_p2.append("turn-start")
-                        #             final_track.append([p[0], p[1], _temp_p2])
-
-                        #             _temp_ttp_end = True
-                        #             break
-                        #     if _temp_ttp_end:
-                        #         continue
-
-                        #     if "turn-start" in final_track[n - 1][2]:
-                        #         _temp_p2: list = p[2]
-                        #         _temp_p2.append("braking-finish-point")
-                        #         _temp_p2.append({"reference-target-speed": 0, "overtaking-risk": 0.0})
-                        #         final_track.append([p[0], p[1], _temp_p2])
-                        #         continue
-
-                        #     final_track.append(p)
-                        # else:
-                        #     del _temp_p2, _temp_ttp_end
+                            del n, p, tp, _temp_fist_turn, _temp_p2
 
 
                         while 1:
@@ -532,8 +534,8 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
                                     if not command[2] in final_file['allowed-racing-types']:
                                         final_file['allowed-racing-types'].append(command[2])
 
-                                    if len(command) > 3:
-                                        for n in range(3, len(command)):
+                                    if len(command) > 4:
+                                        for n in range(4, len(command)):
                                             if command[n] not in final_file['authors']:
                                                 final_file['authors'].append(command[n])
 
@@ -574,7 +576,7 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
                                     file.write(content)
                                     file.truncate()
 
-                                TERMINAL_LATEST_INFO = f"SAVE: Track saved as '{command[1]}' ({command[2]}) by {command[3]}."
+                                TERMINAL_OUTPUT = f"SAVE: Track saved as '{command[1]}' ({command[2]}) by {command[4]}."
                                 del final_track, final_file, path_to_file
                                 break
 
@@ -596,8 +598,18 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
                     case "help":
                         if len(command) > 1:
                             match command[1]:
+                                case "move":
+                                    TERMINAL_OUTPUT = """Command `move` moves whole track by a specified vector.
+
+    syntax:
+        move <x> <y>
+
+    parameters:
+        <x> - number of pixels by which to move the track in x axis
+        <y> - number of pixels by which to move the track in y axis
+"""
                                 case "save": # <track name> <racing type> [*author(s)]
-                                    TERMINAL_LATEST_INFO = """Command `save` saves track to a specified file.
+                                    TERMINAL_OUTPUT = """Command `save` saves track to a specified file.
 
     syntax:
         save <track name> <racing type> [*author(s)]
@@ -611,14 +623,14 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
 """
 
                                 case "clear":
-                                    TERMINAL_LATEST_INFO = """Command `clear` clears latest info.
+                                    TERMINAL_OUTPUT = """Command `clear` clears terminal output.
 
     syntax:
         clear
 """
 
                                 case "snap": # <*objects>
-                                    TERMINAL_LATEST_INFO = """Command `snap` snaps specified points to the grid.
+                                    TERMINAL_OUTPUT = """Command `snap` snaps specified points to the grid.
 
     syntax:
         snap <*objects>
@@ -631,7 +643,7 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
 """
 
                                 case "grid": # <size>
-                                    TERMINAL_LATEST_INFO = """Command `grid` allows the user to set the grid size.
+                                    TERMINAL_OUTPUT = """Command `grid` allows the user to set the grid size.
 
     syntax:
         grid <size>
@@ -641,17 +653,17 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
 """
 
                                 case "tag": # <*frequency>
-                                    TERMINAL_LATEST_INFO = """Command `tag` allows the user to auto-tag points and change the default 'timer' tag frequency.\n   If the <*frequency> parameter is specified, the command will auto-tag points and change default 'timer' tag frequency.
+                                    TERMINAL_OUTPUT = """Command `tag` allows the user to auto-tag points and change the default 'timer' tag frequency.\n   If the <*frequency> parameter is specified, the command will auto-tag points and change default 'timer' tag frequency.
 
     syntax:
         tag <*frequency>
 
     parameters:
-        <*frequency> - TODO
-""" # TODO
+        <*frequency> - number of points between each 'timer' tag
+"""
 
                                 case "bnop": # <n> <*objects>
-                                    TERMINAL_LATEST_INFO = """Command `bnop` allows the user to set the number of points in curves.
+                                    TERMINAL_OUTPUT = """Command `bnop` allows the user to set the number of points in curves.
 
     syntax:
         bnop <n> <*objects>
@@ -665,14 +677,14 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
 """
 
                                 case "update":
-                                    TERMINAL_LATEST_INFO = """Command `update` recalculates whole track.
+                                    TERMINAL_OUTPUT = """Command `update` recalculates whole track.
 
     syntax:
         update
 """
 
                                 case "help":
-                                    TERMINAL_LATEST_INFO = """Command `help` shows extended info about specific command.
+                                    TERMINAL_OUTPUT = """Command `help` shows extended info about specific command.
 
     syntax:
         help <command>
@@ -681,10 +693,10 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
         <command> - name of any command
 """
                         else:
-                            TERMINAL_LATEST_INFO = f"[!] HELP: command requires one parameter ({len(command)} provided)."
+                            TERMINAL_OUTPUT = f"[!] HELP: command requires one parameter ({len(command)} provided)."
 
                     case _other:
-                        TERMINAL_LATEST_INFO = f"[!] Command `{_other}` does not exist."
+                        TERMINAL_OUTPUT = f"[!] Command `{_other}` does not exist."
                         del _other
 
         except _curses.error: pass
