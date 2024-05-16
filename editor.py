@@ -55,6 +55,8 @@ TRACK_POINTS: list[tuple[int, int]] = []
 
 BACKGROUND_IMG: None | pg.Surface = None
 
+CURRENT_MODE: str = "track-design"
+
 
 def load_track_save(file_name: str) -> bool:
     name: list = file_name.split(".")
@@ -334,6 +336,8 @@ def tag_track():
 
 
 def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window - 122x24
+    global CURRENT_MODE
+
     curses.curs_set(0)
     stdscr.nodelay(True)
 
@@ -403,6 +407,9 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
 
         stdscr.addstr(9, 48, "del") # <index>
         stdscr.addstr(9, 52, "<index>", curses.A_BLINK)
+
+        # stdscr.addstr(9, 48, "mode") # <mode> TODO
+        # stdscr.addstr(9, 53, "<mode>", curses.A_BLINK)
 
 
         curses.textpad.rectangle(stdscr, 11, 1, 13, 122)
@@ -546,6 +553,13 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                             TERMINAL_OUTPUT = "[!] DEL: Parameter must be a positive integer."
 
                         calculate_track_points()
+
+                    case "mode":
+                        if len(command) > 1:
+                            command[1] = command[1].lower()
+
+                            if command[1] in ["d", "track-desing", "t", "tagging"]:
+                                CURRENT_MODE = command[1]
 
                     case "clear":
                         TERMINAL_OUTPUT = ""
@@ -693,6 +707,17 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                     case "help":
                         if len(command) > 1:
                             match command[1].lower():
+                                case "mode":
+                                    TERMINAL_OUTPUT = """Command `mode` changes editor mode.
+
+    syntax:
+        mode <mode>
+
+    parameters:
+        <mode>
+        ├ 'd', 'track-desing'
+        └ 't', 'tagging'
+"""
                                 case "del":
                                     TERMINAL_OUTPUT = """Command `del` deletes specified turn-point.
 
@@ -920,52 +945,7 @@ while 1:
             pg.draw.line(WIN, "gray80", (0, n), (1000, n))
 
 
-    if (temp_selected_point) and (not KEY_PRESSED[pg.K_LALT]):
-        TRACK_TURN_POINTS[temp_selected_point].cx0, TRACK_TURN_POINTS[temp_selected_point].cy0 = TRACK_TURN_POINTS[temp_selected_point].cx0 - (TRACK_TURN_POINTS[temp_selected_point].x - MOUSE_POS[0]), TRACK_TURN_POINTS[temp_selected_point].cy0 - (TRACK_TURN_POINTS[temp_selected_point].y - MOUSE_POS[1])
-        TRACK_TURN_POINTS[temp_selected_point].cx1, TRACK_TURN_POINTS[temp_selected_point].cy1 = TRACK_TURN_POINTS[temp_selected_point].cx1 - (TRACK_TURN_POINTS[temp_selected_point].x - MOUSE_POS[0]), TRACK_TURN_POINTS[temp_selected_point].cy1 - (TRACK_TURN_POINTS[temp_selected_point].y - MOUSE_POS[1])
-        TRACK_TURN_POINTS[temp_selected_point].x,   TRACK_TURN_POINTS[temp_selected_point].y   = MOUSE_POS
-
-        TRACK_TURN_POINTS[temp_selected_point].x,   TRACK_TURN_POINTS[temp_selected_point].y   = snap_point_to_grid(TRACK_TURN_POINTS[temp_selected_point].xy)
-        TRACK_TURN_POINTS[temp_selected_point].cx0, TRACK_TURN_POINTS[temp_selected_point].cy0 = snap_point_to_grid((TRACK_TURN_POINTS[temp_selected_point].cx0, TRACK_TURN_POINTS[temp_selected_point].cy0))
-        TRACK_TURN_POINTS[temp_selected_point].cx1, TRACK_TURN_POINTS[temp_selected_point].cy1 = snap_point_to_grid((TRACK_TURN_POINTS[temp_selected_point].cx1, TRACK_TURN_POINTS[temp_selected_point].cy1))
-
-        calculate_track_points()
-
-
-    if (temp_selected_checkpoint) and (not KEY_PRESSED[pg.K_LALT]):
-        exec(
-            f"TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cx{temp_selected_checkpoint[1]}, TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cy{temp_selected_checkpoint[1]} = MOUSE_POS;"
-            f"TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cx{temp_selected_checkpoint[1]}, TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cy{temp_selected_checkpoint[1]} = snap_point_to_grid((TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cx{temp_selected_checkpoint[1]}, TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cy{temp_selected_checkpoint[1]}));"
-        )
-
-        calculate_track_points()
-
-
-    if temp_mouse_down_point and temp_mouse_down_info:
-        if KEY_PRESSED[pg.K_LALT]:
-            _temp_checkpoint_0 = MOUSE_POS
-            _temp_checkpoint_1 = (temp_mouse_down_point[0] + (temp_mouse_down_point[0] - MOUSE_POS[0]), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - MOUSE_POS[1]))
-        else:
-            _temp_checkpoint_0 = snap_point_to_grid(MOUSE_POS)
-            _temp_checkpoint_1 = snap_point_to_grid((temp_mouse_down_point[0] + (temp_mouse_down_point[0] - snap_n_to_grid(MOUSE_POS[0])), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - snap_n_to_grid(MOUSE_POS[1]))))
-
-        TRACK_TURN_POINTS.append(TurnPoint(temp_mouse_down_point, _temp_checkpoint_0, _temp_checkpoint_1, temp_mouse_down_info))
-        calculate_track_points()
-
-        pg.draw.line(WIN, "red", temp_mouse_down_point, _temp_checkpoint_0)
-        pg.draw.line(WIN, "red", temp_mouse_down_point, _temp_checkpoint_1)
-
-        pg.draw.circle(WIN, "red", _temp_checkpoint_0, 4)
-        pg.draw.circle(WIN, "red", _temp_checkpoint_1, 4)
-
-        if "asphalt" in temp_mouse_down_info:
-            pg.draw.circle(WIN, "aqua", temp_mouse_down_point, 2)
-        elif "dirt" in temp_mouse_down_info:
-            pg.draw.circle(WIN, "orange", temp_mouse_down_point, 2)
-
-        del _temp_checkpoint_0, _temp_checkpoint_1
-
-
+    # Drawing ------------------------------------------------------------------------------------------------
     for n, p in enumerate(TRACK):
         if "asphalt" in p[2]: _current_surface_type = "asphalt"
         elif "dirt" in p[2]: _current_surface_type = "dirt"
@@ -993,14 +973,63 @@ while 1:
         if "timer" in p[2]:
             pg.draw.circle(WIN, "yellow", p[0:2], 4)
         pg.draw.circle(WIN, "darkred", p[0:2], 2)
+    # ------------------------------------------------------------------------------------------------ drawing
 
 
-    if KEY_PRESSED[pg.K_LCTRL]:
-        for p in TRACK_TURN_POINTS:
-            pg.draw.line(WIN, "green", p.xy, (p.cx0, p.cy0))
-            pg.draw.line(WIN, "green", p.xy, (p.cx1, p.cy1))
-            pg.draw.circle(WIN, "lime", (p.cx0, p.cy0), 6)
-            pg.draw.circle(WIN, "lime", (p.cx1, p.cy1), 6)
+    if CURRENT_MODE in ["d", "track-design"]: # ------------------------ CURRENT_MODE in ["d", "track-design"]
+        if (temp_selected_point) and (not KEY_PRESSED[pg.K_LALT]):
+            TRACK_TURN_POINTS[temp_selected_point].cx0, TRACK_TURN_POINTS[temp_selected_point].cy0 = TRACK_TURN_POINTS[temp_selected_point].cx0 - (TRACK_TURN_POINTS[temp_selected_point].x - MOUSE_POS[0]), TRACK_TURN_POINTS[temp_selected_point].cy0 - (TRACK_TURN_POINTS[temp_selected_point].y - MOUSE_POS[1])
+            TRACK_TURN_POINTS[temp_selected_point].cx1, TRACK_TURN_POINTS[temp_selected_point].cy1 = TRACK_TURN_POINTS[temp_selected_point].cx1 - (TRACK_TURN_POINTS[temp_selected_point].x - MOUSE_POS[0]), TRACK_TURN_POINTS[temp_selected_point].cy1 - (TRACK_TURN_POINTS[temp_selected_point].y - MOUSE_POS[1])
+            TRACK_TURN_POINTS[temp_selected_point].x,   TRACK_TURN_POINTS[temp_selected_point].y   = MOUSE_POS
+
+            TRACK_TURN_POINTS[temp_selected_point].x,   TRACK_TURN_POINTS[temp_selected_point].y   = snap_point_to_grid(TRACK_TURN_POINTS[temp_selected_point].xy)
+            TRACK_TURN_POINTS[temp_selected_point].cx0, TRACK_TURN_POINTS[temp_selected_point].cy0 = snap_point_to_grid((TRACK_TURN_POINTS[temp_selected_point].cx0, TRACK_TURN_POINTS[temp_selected_point].cy0))
+            TRACK_TURN_POINTS[temp_selected_point].cx1, TRACK_TURN_POINTS[temp_selected_point].cy1 = snap_point_to_grid((TRACK_TURN_POINTS[temp_selected_point].cx1, TRACK_TURN_POINTS[temp_selected_point].cy1))
+
+            calculate_track_points()
+
+
+        if (temp_selected_checkpoint) and (not KEY_PRESSED[pg.K_LALT]):
+            exec(
+                f"TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cx{temp_selected_checkpoint[1]}, TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cy{temp_selected_checkpoint[1]} = MOUSE_POS;"
+                f"TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cx{temp_selected_checkpoint[1]}, TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cy{temp_selected_checkpoint[1]} = snap_point_to_grid((TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cx{temp_selected_checkpoint[1]}, TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cy{temp_selected_checkpoint[1]}));"
+            )
+
+            calculate_track_points()
+
+
+        if temp_mouse_down_point and temp_mouse_down_info:
+            if KEY_PRESSED[pg.K_LALT]:
+                _temp_checkpoint_0 = MOUSE_POS
+                _temp_checkpoint_1 = (temp_mouse_down_point[0] + (temp_mouse_down_point[0] - MOUSE_POS[0]), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - MOUSE_POS[1]))
+            else:
+                _temp_checkpoint_0 = snap_point_to_grid(MOUSE_POS)
+                _temp_checkpoint_1 = snap_point_to_grid((temp_mouse_down_point[0] + (temp_mouse_down_point[0] - snap_n_to_grid(MOUSE_POS[0])), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - snap_n_to_grid(MOUSE_POS[1]))))
+
+            TRACK_TURN_POINTS.append(TurnPoint(temp_mouse_down_point, _temp_checkpoint_0, _temp_checkpoint_1, temp_mouse_down_info))
+            calculate_track_points()
+
+            pg.draw.line(WIN, "red", temp_mouse_down_point, _temp_checkpoint_0)
+            pg.draw.line(WIN, "red", temp_mouse_down_point, _temp_checkpoint_1)
+
+            pg.draw.circle(WIN, "red", _temp_checkpoint_0, 4)
+            pg.draw.circle(WIN, "red", _temp_checkpoint_1, 4)
+
+            if "asphalt" in temp_mouse_down_info:
+                pg.draw.circle(WIN, "aqua", temp_mouse_down_point, 2)
+            elif "dirt" in temp_mouse_down_info:
+                pg.draw.circle(WIN, "orange", temp_mouse_down_point, 2)
+
+            del _temp_checkpoint_0, _temp_checkpoint_1
+
+
+        if KEY_PRESSED[pg.K_LCTRL]:
+            for p in TRACK_TURN_POINTS:
+                pg.draw.line(WIN, "green", p.xy, (p.cx0, p.cy0))
+                pg.draw.line(WIN, "green", p.xy, (p.cx1, p.cy1))
+                pg.draw.circle(WIN, "lime", (p.cx0, p.cy0), 6)
+                pg.draw.circle(WIN, "lime", (p.cx1, p.cy1), 6)
+    # ------------------------------------------------------------------ CURRENT_MODE in ["d", "track-design"]
 
 
     pg.display.flip()
