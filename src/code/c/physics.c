@@ -7,16 +7,17 @@
 
 void init(float _slipstream_effectiveness);
 
-double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double tyreType, double driversBrakingSkill, double referenceTargetSpeed, double mass, double downforce, double drag, double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken, double ultimateAccelerationMultiplier3000, double maxSpeed);
+double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, double tyreType, double driversBrakingSkill, double referenceTargetSpeed, double mass, double downforce, double drag, double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken, double ultimateAccelerationMultiplier3000, double maxSpeed, int gear);
 double braking(double distanceToTurn, double driversBrakingSkill, double tyreWear, double referenceTargetSpeed, double mass, double downforce);
 double realTargetSpeed(double referenceTargetSpeed, double mass, double downforce);
-double acceleration(double drag, double tyreWear, double tyreType, double mass, double downforce, double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double speed, float wasOvertaken, double ultimateAccelerationMultiplier3000);
+double acceleration(double drag, double tyreWear, double tyreType, double mass, double downforce, double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double speed, float wasOvertaken, double ultimateAccelerationMultiplier3000, int gear);
 double maxSpeed(double drag, double mass, double downforce);
 
 double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, /*double currentSpeed,*/ float wasOvertaken);
 double dirtyAir(double distanceToCarAhead, double downforceOfCarAhead, double speedOfCarAhead);
 
 double handleTyreWear(double tyreWear, int tyreType, double speed, double targetSpeed);
+double tyreEfficiency(int tyreType, double tyreWear);
 
 
 const int FPS = 60;
@@ -56,7 +57,8 @@ double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTur
                    double referenceTargetSpeed, double mass, double downforce, double drag,
                    double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken,
                    double ultimateAccelerationMultiplier3000,
-                   double maxSpeed)
+                   double maxSpeed,
+                   int gear)
 {
     gettimeofday(&t1, NULL);
     srand(t1.tv_usec * t1.tv_sec);
@@ -67,11 +69,11 @@ double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTur
     wasOvertaken = 0;
 
     if (alreadyTurning) {
-        return (min(maxSpeed, (min(realTargetSpeed(referenceTargetSpeed, mass, downforce), currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, currentSpeed, wasOvertaken, ultimateAccelerationMultiplier3000)))) + dirtyAir(distanceToCarAhead, downforceOfCarAhead, speedOfCarAhead) - (rand() % 1001 / 1000)) / 2 / FPS;
+        return (min(maxSpeed, (min(realTargetSpeed(referenceTargetSpeed, mass, downforce), currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, currentSpeed, wasOvertaken, ultimateAccelerationMultiplier3000, gear)))) + dirtyAir(distanceToCarAhead, downforceOfCarAhead, speedOfCarAhead) - (rand() % 1001 / 1000)) / 2 / FPS;
     }
 
     double s1 = min(maxSpeed, braking(distanceToTurn, driversBrakingSkill, tyreWear, referenceTargetSpeed, mass, downforce));
-    double s2 = min(maxSpeed, currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, currentSpeed, wasOvertaken, ultimateAccelerationMultiplier3000));
+    double s2 = min(maxSpeed, currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, currentSpeed, wasOvertaken, ultimateAccelerationMultiplier3000, gear));
 
     return (min(s1, s2) - (rand() % 1001 / 1000)) / 2 / FPS;
 }
@@ -80,7 +82,8 @@ double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTur
 double handleQualiSpeed(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, int tyreType, double driversBrakingSkill,
                         double referenceTargetSpeed, double mass, double downforce, double drag,
                         double ultimateAccelerationMultiplier3000,
-                        double maxSpeed)
+                        double maxSpeed,
+                        int gear)
 {
     gettimeofday(&t1, NULL);
     srand(t1.tv_usec * t1.tv_sec);
@@ -88,11 +91,11 @@ double handleQualiSpeed(int alreadyTurning, double currentSpeed, double distance
     currentSpeed *= 2 * FPS;
 
     if (alreadyTurning) {
-        return (min(maxSpeed, (min(realTargetSpeed(referenceTargetSpeed, mass, downforce), currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, 0, 0, 0, currentSpeed, 0, ultimateAccelerationMultiplier3000)))) - (rand() % 1001 / 1000)) / 2 / FPS;
+        return (min(maxSpeed, (min(realTargetSpeed(referenceTargetSpeed, mass, downforce), currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, 0, 0, 0, currentSpeed, 0, ultimateAccelerationMultiplier3000, gear)))) - (rand() % 1001 / 1000)) / 2 / FPS;
     }
 
     double s1 = min(maxSpeed, braking(distanceToTurn, driversBrakingSkill, tyreWear, referenceTargetSpeed, mass, downforce));
-    double s2 = min(maxSpeed, currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, 0, 0, 0, currentSpeed, 0, ultimateAccelerationMultiplier3000));
+    double s2 = min(maxSpeed, currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, 0, 0, 0, currentSpeed, 0, ultimateAccelerationMultiplier3000, gear));
 
     return (min(s1, s2) - (rand() % 1001 / 1000)) / 2 / FPS;
 }
@@ -115,12 +118,22 @@ double realTargetSpeed(double referenceTargetSpeed, double mass, double downforc
 
 double acceleration(double drag, double tyreWear, double tyreType, double mass, double downforce,
                     double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double speed, float wasOvertaken,
-                    double ultimateAccelerationMultiplier3000) // TODO: delete `double speed`
+                    double ultimateAccelerationMultiplier3000,
+                    int gear) // TODO: delete `double speed`
 {
     // return (23 - (drag - 2 * pow(2 + tyreWear, 2)) - (mass / 360) - (downforce / 4)) / 2 / FPS;
     // return ((23 - (drag - 2 * pow(2 + tyreWear, 2)) - (90 * downforce + mass) / 360) - ((downforce + (2 * (tyreType * tyreType))) / 4) /*+ slipstream(distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, speed, wasOvertaken)*/) / 2 / FPS;
     // return ((23 - (drag - 2 * pow(2 + tyreWear, 2)) - (90 * downforce + mass) / 360) - ((downforce + (2 * (tyreType * tyreType))) / 4)) * slipstreamMultiplier(distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, wasOvertaken) * ultimateAccelerationMultiplier3000 / 2 / FPS;
-    return (50 - (drag - 2 * pow(2 + tyreWear, 2)) - (mass / 100) - ((downforce + (2 * (tyreType * tyreType))) / 4)) * slipstreamMultiplier(distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, wasOvertaken) * ultimateAccelerationMultiplier3000 / 2 / FPS;
+    // return (50 - (drag - 2 * pow(2 + tyreWear, 2)) - (mass / 100) - ((downforce + (2 * (tyreType * tyreType))) / 4)) * slipstreamMultiplier(distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, wasOvertaken) * ultimateAccelerationMultiplier3000 / 2 / FPS;
+    double result = ((60 - (tyreType * tyreType)) - ((gear - 1) / 4) + (((drag - (downforce / 2)) - (mass / 100)) / tyreEfficiency(tyreType, tyreWear)));
+
+    if (result > 0) return result / 2 / FPS;
+    else return 0; // retirement
+}
+
+double tyreEfficiency(int tyreType, double tyreWear)
+{
+    return min(((sqrt((tyreType / 10) + 1) * tyreType + 1) * tyreWear) / (tyreType + 1),  1);
 }
 
 

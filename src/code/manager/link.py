@@ -17,12 +17,13 @@ physics.init.restype = None
 #                    double referenceTargetSpeed, double mass, double downforce, double drag,
 #                    double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, float wasOvertaken,
 #                    double ultimateAccelerationMultiplier3000,
-#                    double maxSpeed)
-physics.handleSpeed.argtypes = [ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_float, ctypes.c_double, ctypes.c_double]
+#                    double maxSpeed,
+#                    int gear)
+physics.handleSpeed.argtypes = [ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_float, ctypes.c_double, ctypes.c_double, ctypes.c_int]
 physics.handleSpeed.restype = ctypes.c_double
 
-def calculate_speed(alreadyTurning: int, currentSpeed: float, distanceToTurn: float, tyreWear: float, tyreType: float, driversBrakingSkill: float, referenceTargetSpeed: float, mass: float, downforce: float, drag: float, distanceToCarAhead: float, speedOfCarAhead: float, downforceOfCarAhead: float, wasOvertaken: float, ultimateAccelerationMultiplier3000: float, maxSpeed: float) -> float:
-    return physics.handleSpeed(ctypes.c_int(alreadyTurning), ctypes.c_double(currentSpeed), ctypes.c_double(distanceToTurn), ctypes.c_double(tyreWear), ctypes.c_double(tyreType), ctypes.c_double(driversBrakingSkill), ctypes.c_double(referenceTargetSpeed), ctypes.c_double(mass), ctypes.c_double(downforce), ctypes.c_double(drag), ctypes.c_double(distanceToCarAhead), ctypes.c_double(speedOfCarAhead), ctypes.c_double(downforceOfCarAhead), ctypes.c_float(wasOvertaken), ctypes.c_double(ultimateAccelerationMultiplier3000), ctypes.c_double(maxSpeed))
+def calculate_speed(alreadyTurning: int, currentSpeed: float, distanceToTurn: float, tyreWear: float, tyreType: float, driversBrakingSkill: float, referenceTargetSpeed: float, mass: float, downforce: float, drag: float, distanceToCarAhead: float, speedOfCarAhead: float, downforceOfCarAhead: float, wasOvertaken: float, ultimateAccelerationMultiplier3000: float, maxSpeed: float, gear: int) -> float:
+    return physics.handleSpeed(ctypes.c_int(alreadyTurning), ctypes.c_double(currentSpeed), ctypes.c_double(distanceToTurn), ctypes.c_double(tyreWear), ctypes.c_double(tyreType), ctypes.c_double(driversBrakingSkill), ctypes.c_double(referenceTargetSpeed), ctypes.c_double(mass), ctypes.c_double(downforce), ctypes.c_double(drag), ctypes.c_double(distanceToCarAhead), ctypes.c_double(speedOfCarAhead), ctypes.c_double(downforceOfCarAhead), ctypes.c_float(wasOvertaken), ctypes.c_double(ultimateAccelerationMultiplier3000), ctypes.c_double(maxSpeed), ctypes.c_int(gear))
 
 
 # double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, double downforceOfCarAhead, double speed, float wasOvertaken)
@@ -52,12 +53,13 @@ def max_speed(drag: float, mass: float, downforce: float) -> float:
 # double handleQualiSpeed(int alreadyTurning, double currentSpeed, double distanceToTurn, double tyreWear, int tyreType, double driversBrakingSkill,
 #                         double referenceTargetSpeed, double mass, double downforce, double drag,
 #                         double ultimateAccelerationMultiplier3000,
-#                         double maxSpeed)
-physics.handleQualiSpeed.argtypes = [ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double]
+#                         double maxSpeed,
+#                         int gear)
+physics.handleQualiSpeed.argtypes = [ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_int, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_double, ctypes.c_int]
 physics.handleQualiSpeed.restype = ctypes.c_double
 
-def calculate_quali_speed(alreadyTurning: int, currentSpeed: float, distanceToTurn: float, tyreWear: float, tyreType: int, driversBrakingSkill: float, referenceTargetSpeed: float, mass: float, downforce: float, drag: float, ultimateAccelerationMultiplier3000: float, maxSpeed: float):
-    return physics.handleQualiSpeed(alreadyTurning, currentSpeed, distanceToTurn, tyreWear, tyreType, driversBrakingSkill, referenceTargetSpeed, mass, downforce, drag, ultimateAccelerationMultiplier3000, maxSpeed)
+def calculate_quali_speed(alreadyTurning: int, currentSpeed: float, distanceToTurn: float, tyreWear: float, tyreType: int, driversBrakingSkill: float, referenceTargetSpeed: float, mass: float, downforce: float, drag: float, ultimateAccelerationMultiplier3000: float, maxSpeed: float, gear: int):
+    return physics.handleQualiSpeed(alreadyTurning, currentSpeed, distanceToTurn, tyreWear, tyreType, driversBrakingSkill, referenceTargetSpeed, mass, downforce, drag, ultimateAccelerationMultiplier3000, maxSpeed, gear)
 
 # calculations.process_coordinates.argtypes = (ctypes.POINTER(ctypes.c_float * 2), ctypes.c_int)
 # calculations.process_coordinates.restype = None

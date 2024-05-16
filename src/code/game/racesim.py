@@ -126,8 +126,8 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
     all_tracks = [[]]
     all_tracks_points_scaled = []
     for n, t in enumerate(ALL_TRACKS):
-        n -= 1
-        if n == -1: continue
+        n -= 3
+        if n < 0: continue
         for p in ALL_TRACKS[t]['track']:
             if len(all_tracks) < n + 1:
                 all_tracks.append([])

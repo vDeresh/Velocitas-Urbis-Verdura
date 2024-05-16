@@ -5,7 +5,9 @@
         "teams": "json",
         "tracks": "json",
         ".manifest": "json",
-        "**/tracks/**": "json"
+        "**/tracks/**": "json",
+        "**/**.vvtrack": "txt",
+        "cmath": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"
 }

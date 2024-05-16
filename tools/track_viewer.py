@@ -23,6 +23,14 @@ if sys.argv[2] != 'rallycross':
     for x, y, *_ in PITLANE:
         PITLANE_POINTS.append((x, y))
 
+    drs_zone = []
+    for n, p in enumerate(TRACK):
+        if "drs-start" in p[2]:
+            for p2 in TRACK[n:] + TRACK[:n]:
+                drs_zone.append(p2[0 : 2])
+                if "drs-end" in p2[2]:
+                    break
+
 
 import pygame as pg
 
@@ -40,7 +48,9 @@ if sys.argv[2] != 'rallycross':
 
         WIN.fill("white")
         pg.draw.lines(WIN, "black",  True,  TRACK_POINTS,   1)
-        pg.draw.lines(WIN, "gray10", False, PITLANE_POINTS, 1)
+
+        if len(PITLANE_POINTS):
+            pg.draw.lines(WIN, "gray10", False, PITLANE_POINTS, 1)
 
         for n, p in enumerate(PITLANE_POINTS):
             if "speed-limit-start" in PITLANE[n][2] or "speed-limit-end" in PITLANE[n][2]:
@@ -58,7 +68,7 @@ if sys.argv[2] != 'rallycross':
                 pg.draw.circle(WIN, "red",  (p[0], p[1]), 6)
 
             if "turn-start" in TRACK[n][2]:
-                pg.draw.circle(WIN, "lime", (p[0], p[1]), 6)
+                pg.draw.circle(WIN, "lime", (p[0], p[1]), 5)
                 WIN.blit(FONT.render(str(p), False, "darkred"), (p[0], p[1]))
 
             if "timer" in TRACK[n][2]:
@@ -73,16 +83,8 @@ if sys.argv[2] != 'rallycross':
             pg.draw.circle(WIN, "darkred", (p[0], p[1]), 2)
             # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
 
-
-        drs_zone = []
-        for n, p in enumerate(TRACK):
-            if "drs-start" in p[2]:
-                for p2 in TRACK[n:] + TRACK[:n]:
-                    drs_zone.append(p2[0 : 2])
-                    if "drs-end" in p2[2]:
-                        break
-
-        pg.draw.lines(WIN, "lime", False, drs_zone, 2)
+        if len(drs_zone):
+            pg.draw.lines(WIN, "lime", False, drs_zone, 2)
 
         pg.display.flip()
 

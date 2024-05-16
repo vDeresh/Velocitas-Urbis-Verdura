@@ -4,9 +4,13 @@ import curses.textpad
 import sys
 import json
 from os import path
+import os
 
 from threading import Thread
 import curses, _curses
+
+
+print(path.abspath(""))
 
 
 SETTINGS = {
@@ -21,6 +25,75 @@ SETTINGS = {
         'scale': 1
     }
 }
+
+
+class TurnPoint:
+    def __init__(self, xy: tuple[int, int], c0: tuple[int, int], c1: tuple[int, int], tags: list, bnop: None | int = None) -> None:
+        self.x: int = xy[0]
+        self.y: int = xy[1]
+        self.cx0: int = c0[0]
+        self.cy0: int = c0[1]
+        self.cx1: int = c1[0]
+        self.cy1: int = c1[1]
+        self.tags: list = tags
+        self.index: int = len(TRACK) - 1
+
+        if bnop:
+            self.bnop: int = bnop
+        else:
+            self.bnop: int = SETTINGS['EDITOR']['current-bezier-num-of-points']
+
+
+    @property
+    def xy(self) -> tuple[int, int]:
+        return self.x, self.y
+
+
+TRACK_TURN_POINTS: list[TurnPoint] = []
+TRACK: list[list] = []
+TRACK_POINTS: list[tuple[int, int]] = []
+
+BACKGROUND_IMG: None | pg.Surface = None
+
+
+def load_track_save(file_name: str) -> bool:
+    name: list = file_name.split(".")
+
+    if name[-1] != "vvtrack":
+        name.append("vvtrack")
+
+    try:
+        with open(path.abspath(path.join("src", "data", "tracks", ".".join(name))), "r") as file:
+            lines = file.readlines()
+        del file
+    except FileNotFoundError:
+        print("Could not find", path.abspath(path.join("src", "data", "tracks", ".".join(name))))
+        return False
+
+    lines_copy = lines.copy()
+    lines = []
+
+    for line in lines_copy:
+        if (not line.isspace()) and (line != ""):
+            lines.append(line.removesuffix("\n").split(" "))
+
+    if not lines[0][0] in ["1.0"]: # supported versions
+        print(f"This save is outdated, use an older version of editor. (save's version: {lines[0]})")
+        return False
+
+    # try:
+    for line in lines[3:]: # {tp.x} {tp.y} {tp.cx0} {tp.cy0} {tp.cx1} {tp.cy1} {tp.tags} {tp.bnop}
+        TRACK_TURN_POINTS.append(TurnPoint((int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (int(line[4]), int(line[5])), eval(line[6]), int(line[7])))
+    # except ValueError:
+    #     print("This file probably has incorrect syntax.", "(" + path.abspath(path.join("src", "data", "tracks", ".".join(name))) + ")")
+    #     return False
+
+    print("Save loaded.", "(" + path.abspath(path.join("src", "data", "tracks", ".".join(name))) + ")")
+    return True
+
+if len(sys.argv) > 1:
+    if not load_track_save(sys.argv[1]):
+        exit()
 
 
 def round_half_up(n) -> int:
@@ -90,27 +163,6 @@ def show():
         return json.load(file)[sys.argv[2]]
 
 
-class TurnPoint:
-    def __init__(self, xy: tuple[int, int], c0: tuple[int, int], c1: tuple[int, int], tags: list, bnop: None | int = None) -> None:
-        self.x: int = xy[0]
-        self.y: int = xy[1]
-        self.cx0: int = c0[0]
-        self.cy0: int = c0[1]
-        self.cx1: int = c1[0]
-        self.cy1: int = c1[1]
-        self.tags: list = tags
-        self.index: int = len(TRACK) - 1
-
-        if bnop:
-            self.bnop: int = bnop
-        else:
-            self.bnop: int = SETTINGS['EDITOR']['current-bezier-num-of-points']
-
-
-    @property
-    def xy(self) -> tuple[int, int]:
-        return self.x, self.y
-
 
 def compute_bezier_points(vertices, numPoints: None | int = None) -> list[tuple[int, int]]:
     if not numPoints:
@@ -179,10 +231,6 @@ def compute_bezier_points(vertices, numPoints: None | int = None) -> list[tuple[
     return result
 
 
-TRACK_TURN_POINTS: list[TurnPoint] = []
-TRACK: list[list] = []
-TRACK_POINTS: list[tuple[int, int]] = []
-
 
 def is_similar(p1, p2, _range: int = 2) -> bool:
     for n in range(-_range, _range):
@@ -202,6 +250,7 @@ def is_similar(p1, p2, _range: int = 2) -> bool:
 
 def calculate_track_points():
     if len(TRACK_TURN_POINTS) < 2:
+        TRACK.clear()
         return
 
     TRACK.clear()
@@ -284,7 +333,7 @@ def tag_track():
 
 
 
-def terminal(stdscr: _curses.window) -> None: # window - 122x24
+def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window - 122x24
     curses.curs_set(0)
     stdscr.nodelay(True)
 
@@ -296,6 +345,11 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
     command: list[str]
 
     while 1:
+        if SHARED['terminal-output'] != "":
+            TERMINAL_OUTPUT = SHARED['terminal-output']
+            SHARED['terminal-output'] = ""
+
+
         stdscr.clear()
 
         curses.textpad.rectangle(stdscr, 0, 1, 5, 45)
@@ -343,9 +397,12 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
         stdscr.addstr(7, 48, "snap") # <*objects>
         stdscr.addstr(7, 53, "<*objects>", curses.A_BLINK)
 
-        stdscr.addstr(7, 48, "move") # <x> <y>
-        stdscr.addstr(7, 53, "<x>", curses.A_BLINK)
-        stdscr.addstr(7, 57, "<y>", curses.A_BLINK)
+        stdscr.addstr(8, 48, "move") # <x> <y>
+        stdscr.addstr(8, 53, "<x>", curses.A_BLINK)
+        stdscr.addstr(8, 57, "<y>", curses.A_BLINK)
+
+        stdscr.addstr(9, 48, "del") # <index>
+        stdscr.addstr(9, 52, "<index>", curses.A_BLINK)
 
 
         curses.textpad.rectangle(stdscr, 11, 1, 13, 122)
@@ -363,12 +420,12 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
                 curses.curs_set(1)
 
                 textbox.edit()
-                command = textbox.gather().lower().split()
+                command = textbox.gather().split()
 
                 if not len(command):
                     continue
 
-                match command[0]:
+                match command[0].lower():
                     case "bnop": # <n> <*objects>
                         if 3 >= len(command) >= 2:
                             if command[1].isdigit() and int(command[1]) > 1:
@@ -429,13 +486,16 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
                     case "snap": # <*objects>
                         if SETTINGS['EDITOR']['grid-size']:
                             if len(command) <= 2:
+                                if len(command) >= 2:
+                                    command[1] = command[1].lower()
+
                                 for n, p in enumerate(TRACK_TURN_POINTS):
                                     _cache_turn_point_xy = p.xy
 
-                                    if (len(command[1]) < 2) or (command[1] in ["g", "global"]) or (command[1] in ["p", "turn-points"]):
+                                    if (len(command) < 2) or (command[1] in ["g", "global"]) or (command[1] in ["p", "turn-points"]):
                                         TRACK_TURN_POINTS[n].x, TRACK_TURN_POINTS[n].y = snap_point_to_grid(p.xy)
 
-                                    if (len(command[1]) < 2) or (command[1] in ["g", "global"]) or (command[1] in ["c", "turn-checkpoints"]):
+                                    if (len(command) < 2) or (command[1] in ["g", "global"]) or (command[1] in ["c", "turn-checkpoints"]):
                                         TRACK_TURN_POINTS[n].cx0 += TRACK_TURN_POINTS[n].x -_cache_turn_point_xy[0]
                                         TRACK_TURN_POINTS[n].cy0 += TRACK_TURN_POINTS[n].y -_cache_turn_point_xy[1]
 
@@ -453,7 +513,9 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
 
                     case "move":
                         if len(command) == 3:
-                            if command[1].isdigit() and command[2].isdigit():
+                            try:
+                                int(command[1]); int(command[2])
+
                                 for tp in TRACK_TURN_POINTS:
                                     tp.x += int(command[1])
                                     tp.y += int(command[2])
@@ -466,10 +528,22 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
                                 else:
                                     del tp
                                 TERMINAL_OUTPUT = f"MOVE: Moved the track by [{int(command[1])}, {int(command[2])}]."
-                            else:
+                            except ValueError:
                                 TERMINAL_OUTPUT = f"[!] MOVE: Parameters must be integers."
                         else:
                             TERMINAL_OUTPUT = f"[!] MOVE: This command requires 2 parameters ({len(command) - 1} provided)."
+
+                        calculate_track_points()
+
+                    case "del":
+                        if len(command) == 2 and command[1].isdigit():
+                                if int(command[1]) < len(TRACK_TURN_POINTS):
+                                    TRACK_TURN_POINTS.pop(int(command[1]))
+                                    TERMINAL_OUTPUT = f"DEL: The point with index {int(command[1])} has been removed."
+                                else:
+                                    TERMINAL_OUTPUT = f"[!] DEL: There are {len(TRACK_TURN_POINTS)} turn-points."
+                        else:
+                            TERMINAL_OUTPUT = "[!] DEL: Parameter must be a positive integer."
 
                         calculate_track_points()
 
@@ -483,20 +557,42 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
                         else:
                             TERMINAL_OUTPUT = f"[!] UPDATE: This command takes no parameters."
 
-                    case "save": # <track name> <racing type> {tag} [*author(s)]
-                        if len(command) < 2 + 1:
-                            TERMINAL_OUTPUT = f"[!] SAVE: This command takes atleast 2 parameters ({len(command) - 1} provided)."
-                            continue
-                        if not command[2] in ["formula", "rallycross"]:
-                            TERMINAL_OUTPUT = f"[!] SAVE: <racing type> parameter is not valid ('{command[2]}' provided)."
+                    case "save": # {project} <track name> <racing type> {tag} [*author(s)]
+                        if len(command) < 4 + 1:
+                            TERMINAL_OUTPUT = f"[!] SAVE: This command takes atleast 4 parameters ({len(command) - 1} provided)."
                             continue
 
-                        path_to_file = path.abspath(path.join("src", "data", "tracks", command[1]))
+                        if (command[1].isdigit()) and (int(command[1]) in [0, 1]):
+                            _project = int(command[1])
+                        else:
+                            TERMINAL_OUTPUT = f"[!] SAVE: {{project}} parameter is not valid ('{command[3]}' provided)."
+                            continue
+
+                        _track_name  = command[2]
+
+                        if command[3] in ["formula", "rallycross"]:
+                            _racing_type = command[3]
+                        else:
+                            TERMINAL_OUTPUT = f"[!] SAVE: <racing type> parameter is not valid ('{command[3]}' provided)."
+                            continue
+
+                        if (command[4].isdigit()) and (int(command[4]) in [0, 1]):
+                            _tag = int(command[4])
+
+                        _authors = [command[n] for n in range(5, len(command))]
+
+                        path_to_file = path.abspath(path.join("src", "data", "tracks", _track_name))
 
 
-                        if (command[3].isdigit()) and (int(command[3]) in [0, 1]):
-                            if int(command[3]):
-                                tag_track()
+                        if _project:
+                            with open(path_to_file + ".vvtrack", "w") as file:
+                                file.write(f"1.0\n{_track_name}\n{_authors}\n")
+                                file.writelines([f"{tp.x} {tp.y} {tp.cx0} {tp.cy0} {tp.cx1} {tp.cy1} {tp.tags} {tp.bnop}\n" for tp in TRACK_TURN_POINTS])
+                            del file
+
+
+                        if _tag:
+                            tag_track()
 
 
                         _temp_fist_turn = True
@@ -523,7 +619,7 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
                                 else:
                                     final_track.append(p)
                         else:
-                            del n, p, tp, _temp_fist_turn, _temp_p2
+                            del _temp_fist_turn
 
 
                         while 1:
@@ -531,16 +627,14 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
                                 with open(path_to_file, "r") as file:
                                     final_file: dict = json.load(file)
 
-                                    if not command[2] in final_file['allowed-racing-types']:
-                                        final_file['allowed-racing-types'].append(command[2])
+                                    if not _racing_type in final_file['allowed-racing-types']:
+                                        final_file['allowed-racing-types'].append(_racing_type)
 
-                                    if len(command) > 4:
-                                        for n in range(4, len(command)):
-                                            if command[n] not in final_file['authors']:
-                                                final_file['authors'].append(command[n])
+                                    if len(_authors):
+                                        final_file['authors'].extend(_authors)
 
                                     final_file.update({
-                                        command[2]: {
+                                        _racing_type: {
                                             "features": {
                                                 "pit-lane": 0,
                                                 "drs": 0
@@ -566,17 +660,18 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
                                     })
 
                                 with open(path_to_file, "w") as file:
-                                    json.dump(final_file, file, indent=None)
+                                    json.dump(final_file, file)
 
                                 with open(path_to_file, "r+") as file:
                                     content = file.read()
+                                    content = content.replace("{", "{\n", 1)
                                     content = content.replace("]], ", "]],\n").replace("\n", "\n    ")
                                     content = content.replace("[[", "[\n    [", 1)
                                     file.seek(0)
                                     file.write(content)
                                     file.truncate()
 
-                                TERMINAL_OUTPUT = f"SAVE: Track saved as '{command[1]}' ({command[2]}) by {command[4]}."
+                                TERMINAL_OUTPUT = f"SAVE: Track saved as '{_track_name}' ({_racing_type}) by {_authors}."
                                 del final_track, final_file, path_to_file
                                 break
 
@@ -597,7 +692,16 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
 
                     case "help":
                         if len(command) > 1:
-                            match command[1]:
+                            match command[1].lower():
+                                case "del":
+                                    TERMINAL_OUTPUT = """Command `del` deletes specified turn-point.
+
+    syntax:
+        del <index>
+
+    parameters:
+        <index> - turn-point index (first turn-point has index 0 and every other turn-point has index one bigger than previous)
+"""
                                 case "move":
                                     TERMINAL_OUTPUT = """Command `move` moves whole track by a specified vector.
 
@@ -705,7 +809,9 @@ def terminal(stdscr: _curses.window) -> None: # window - 122x24
             curses.curs_set(0)
 
 
-_thread_terminal = Thread(target=curses.wrapper, args=[terminal], name="thread-terminal", daemon=True)
+SHARED: dict[str, str] = {'terminal-output': ""}
+
+_thread_terminal = Thread(target=curses.wrapper, args=[terminal, SHARED], name="thread-terminal", daemon=True)
 _thread_terminal.start()
 
 
@@ -721,6 +827,8 @@ temp_selected_checkpoint: None | tuple[int, int] = None
 
 _current_surface_type = "asphalt"
 
+calculate_track_points()
+
 while 1:
     MOUSE_POS     = pg.mouse.get_pos()
     MOUSE_PRESSED = pg.mouse.get_pressed()
@@ -730,6 +838,17 @@ while 1:
         if e.type == pg.QUIT:
             pg.quit()
             exit()
+
+        if e.type == pg.DROPFILE:
+            try:
+                BACKGROUND_IMG = pg.transform.scale(pg.image.load(e.file), (1000, 1000)).convert()
+            except pg.error as error:
+                if 'Unsupported image format' in error.args:
+                    SHARED['terminal-output'] = "[!] Unsupported image format."
+                else:
+                    raise error
+            except FileNotFoundError:
+                pass
 
         if e.type == pg.MOUSEMOTION:
             if KEY_PRESSED[pg.K_LALT]:
@@ -789,7 +908,10 @@ while 1:
             calculate_track_points()
 
 
-    WIN.fill("white")
+    if BACKGROUND_IMG != None:
+        WIN.blit(BACKGROUND_IMG, (0, 0))
+    else:
+        WIN.fill("white")
 
 
     if SETTINGS['EDITOR']['grid-size']:

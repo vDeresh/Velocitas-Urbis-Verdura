@@ -16,24 +16,33 @@ _racing_allowed      = "-ra"  in sys.argv
 # _console_only        = "-co"  in sys.argv
 _half_of_the_grid    = "-h"   in sys.argv
 _shuffle_grid        = "-sg"  in sys.argv
+_one_driver          = "-od"  in sys.argv
+_tires               = 0
 # _laps                = None
 # _fps                 = 0 # for simulation
 # _pit                 = False
 
-for np, p in enumerate(sys.argv):
-    if p == "--fps":
-        _fps = int(sys.argv[np + 1])
-        break
+# for np, p in enumerate(sys.argv):
+#     if p == "--fps":
+#         _fps = int(sys.argv[np + 1])
+#         break
+
+# for np, p in enumerate(sys.argv):
+#     if p == "--pit":
+#         _pit = int(sys.argv[np + 1])
+#         break
+
+# for np, p in enumerate(sys.argv):
+#     if p == "--laps":
+#         _laps = int(sys.argv[np + 1])
+#         break
 
 for np, p in enumerate(sys.argv):
-    if p == "--pit":
-        _pit = int(sys.argv[np + 1])
+    if p == "-t":
+        _tires = int(sys.argv[np + 1])
         break
-
-for np, p in enumerate(sys.argv):
-    if p == "--laps":
-        _laps = int(sys.argv[np + 1])
-        break
+else:
+    del np, p
 
 
 from src.code.game.racesim import simulation, qualifications
@@ -52,6 +61,9 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
 
     if _half_of_the_grid:
         DRIVERS = DRIVERS[::2]
+
+    if _one_driver:
+        DRIVERS = [DRIVERS[0]]
 
     if _shuffle_grid:
         shuffle(DRIVERS)
@@ -87,7 +99,7 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
 
 
     for n, driver in enumerate(DRIVERS):
-        driver.init(TRACK, n + 1, 0)
+        driver.init(TRACK, n + 1, _tires)
         if _same_starting_point:
             driver.set_pos(TRACK_POINTS[0][0], TRACK_POINTS[0][1])
         else:
@@ -119,8 +131,8 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
     all_tracks = [[]]
     all_tracks_points_scaled = []
     for n, t in enumerate(ALL_TRACKS):
-        n -= 1
-        if n == -1: continue
+        n -= 3
+        if n < 0: continue
         for p in ALL_TRACKS[t]['track']:
             if len(all_tracks) < n + 1:
                 all_tracks.append([])
@@ -211,9 +223,7 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
             for n, d in enumerate(DRIVERS):
                 WIN.blit(FONT_2.render(str(round(d.time_difference, 3)), True, "white"), (0, 16 * (n + 1)))
         else:
-            print()
             for n, d in enumerate(DRIVERS):
-                print(d.name)
                 if isinf(d.quali_best_lap_time):
                     WIN.blit(FONT_2.render(f"{d.number:02} > NO TIME SET", True, "white"), (0, 16 * (n + 1)))
                 else:
@@ -233,7 +243,7 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
 # _racing_class_name = "Aper 1"
 _racing_category_name = "Volo"
 _racing_class_name = "CAT-B"
-_race_track_name = "sc1"
+_race_track_name = "ft1t"
 
 simulation_interface(_racing_category_name, _racing_class_name, _race_track_name, main_mgr.ready_drivers(_racing_category_name, _racing_class_name))
 

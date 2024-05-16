@@ -104,12 +104,12 @@ class Driver:
 
     def calculate_speed(self, drivers: list, ultimateAccelerationMultiplier3000: float) -> float: # track_points: list
         if self.distance_to_next_turn:
-            return link.calculate_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.tyre_type, self.skills['braking'], self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.downforce, self.team.car_stats['drag'], self.distance_to_next_driver, drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], 0, ultimateAccelerationMultiplier3000, self.max_speed)
+            return link.calculate_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.tyre_type, self.skills['braking'], self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.downforce, self.team.car_stats['drag'], self.distance_to_next_driver, drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], 0, ultimateAccelerationMultiplier3000, self.max_speed, self.gear)
         return self.speed
 
     def calculate_quali_speed(self, ultimateAccelerationMultiplier3000: float) -> float:
         if self.distance_to_next_turn:
-            return link.calculate_quali_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.tyre_type, self.skills['braking'], self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.downforce, self.team.car_stats['drag'], ultimateAccelerationMultiplier3000, self.max_speed)
+            return link.calculate_quali_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.tyre_type, self.skills['braking'], self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.downforce, self.team.car_stats['drag'], ultimateAccelerationMultiplier3000, self.max_speed, self.gear)
         return self.speed
 
     # def slipstream_multiplier(self, drivers: list) -> float:
