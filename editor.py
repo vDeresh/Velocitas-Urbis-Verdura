@@ -124,6 +124,21 @@ def closest_point(to: tuple[int, int]) -> None | int:
     min_d = float("inf")
     point = 0
 
+    for n, p in enumerate(TRACK):
+        d = pg.Vector2(to).distance_to((p[0], p[1]))
+        if d < min_d:
+            min_d = d
+            point = n
+
+    if min_d < 8:
+        return point
+    else:
+        return None
+
+def closest_turn_point(to: tuple[int, int]) -> None | int:
+    min_d = float("inf")
+    point = 0
+
     for n, p in enumerate(TRACK_TURN_POINTS):
         d = pg.Vector2(to).distance_to(p.xy)
         if d < min_d:
@@ -135,7 +150,7 @@ def closest_point(to: tuple[int, int]) -> None | int:
     else:
         return None
 
-def closest_checkpoint(to: tuple[int, int]) -> None | tuple[int, int]:
+def closest_turn_checkpoint(to: tuple[int, int]) -> None | tuple[int, int]:
     min_d = float("inf")
     point = 0
     checkpoint = 0
@@ -558,8 +573,16 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                         if len(command) > 1:
                             command[1] = command[1].lower()
 
-                            if command[1] in ["d", "track-desing", "t", "tagging"]:
-                                CURRENT_MODE = command[1]
+                            if command[1] in ["d", "track-design"]:
+                                CURRENT_MODE = "track-design"
+                                TERMINAL_OUTPUT = f"MODE: Changed mode to {CURRENT_MODE}."
+                            elif command[1] in ["t", "tagging"]:
+                                CURRENT_MODE = "tagging"
+                                TERMINAL_OUTPUT = f"MODE: Changed mode to {CURRENT_MODE}."
+                            else:
+                                TERMINAL_OUTPUT = f"[!] MODE: Parameter should be 'd'/'track-design'/'t'/'tagging' (Provided {command[1]})."
+                        else:
+                            TERMINAL_OUTPUT = "[!] MODE: This command requires 1 parameter."
 
                     case "clear":
                         TERMINAL_OUTPUT = ""
@@ -569,7 +592,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                             calculate_track_points()
                             TERMINAL_OUTPUT = "UPDATE: Updated track."
                         else:
-                            TERMINAL_OUTPUT = f"[!] UPDATE: This command takes no parameters."
+                            TERMINAL_OUTPUT = "[!] UPDATE: This command requires no parameters."
 
                     case "save": # {project} <track name> <racing type> {tag} [*author(s)]
                         if len(command) < 4 + 1:
@@ -715,7 +738,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
 
     parameters:
         <mode>
-        ├ 'd', 'track-desing'
+        ├ 'd', 'track-design'
         └ 't', 'tagging'
 """
                                 case "del":
@@ -847,8 +870,9 @@ WIN = pg.display.set_mode((1000, 1000), pg.SCALED)
 temp_mouse_down_point: None | tuple[int, int] = None
 temp_mouse_down_info:  None | list            = None
 
-temp_selected_point:      None | int = None
+temp_selected_turn_point: None | int             = None
 temp_selected_checkpoint: None | tuple[int, int] = None
+temp_selected_point:      None | int             = None
 
 _current_surface_type = "asphalt"
 
@@ -877,15 +901,15 @@ while 1:
 
         if e.type == pg.MOUSEMOTION:
             if KEY_PRESSED[pg.K_LALT]:
-                if temp_selected_point:
-                    TRACK_TURN_POINTS[temp_selected_point].x += e.rel[0]
-                    TRACK_TURN_POINTS[temp_selected_point].y += e.rel[1]
+                if temp_selected_turn_point:
+                    TRACK_TURN_POINTS[temp_selected_turn_point].x += e.rel[0]
+                    TRACK_TURN_POINTS[temp_selected_turn_point].y += e.rel[1]
 
-                    TRACK_TURN_POINTS[temp_selected_point].cx0 += e.rel[0]
-                    TRACK_TURN_POINTS[temp_selected_point].cy0 += e.rel[1]
+                    TRACK_TURN_POINTS[temp_selected_turn_point].cx0 += e.rel[0]
+                    TRACK_TURN_POINTS[temp_selected_turn_point].cy0 += e.rel[1]
 
-                    TRACK_TURN_POINTS[temp_selected_point].cx1 += e.rel[0]
-                    TRACK_TURN_POINTS[temp_selected_point].cy1 += e.rel[1]
+                    TRACK_TURN_POINTS[temp_selected_turn_point].cx1 += e.rel[0]
+                    TRACK_TURN_POINTS[temp_selected_turn_point].cy1 += e.rel[1]
 
                     calculate_track_points()
 
@@ -900,26 +924,30 @@ while 1:
             if temp_mouse_down_info and temp_mouse_down_point:
                 continue
 
-            if KEY_PRESSED[pg.K_LSHIFT]:
+            if CURRENT_MODE == "track-design":
+                if KEY_PRESSED[pg.K_LSHIFT]:
+                    temp_selected_turn_point = closest_turn_point(MOUSE_POS)
+
+                elif KEY_PRESSED[pg.K_LCTRL]:
+                    temp_selected_checkpoint = closest_turn_checkpoint(MOUSE_POS)
+
+                else:
+                    if e.button == 1:
+                        temp_mouse_down_info = ["asphalt"]
+                        if KEY_PRESSED[pg.K_LALT]:
+                            temp_mouse_down_point = e.pos
+                        else:
+                            temp_mouse_down_point = snap_point_to_grid(e.pos)
+
+                    elif e.button == 3:
+                        temp_mouse_down_info = ["dirt"]
+                        if KEY_PRESSED[pg.K_LALT]:
+                            temp_mouse_down_point = e.pos
+                        else:
+                            temp_mouse_down_point = snap_point_to_grid(e.pos)
+
+            elif CURRENT_MODE == "tagging":
                 temp_selected_point = closest_point(MOUSE_POS)
-
-            elif KEY_PRESSED[pg.K_LCTRL]:
-                temp_selected_checkpoint = closest_checkpoint(MOUSE_POS)
-
-            else:
-                if e.button == 1:
-                    temp_mouse_down_info = ["asphalt"]
-                    if KEY_PRESSED[pg.K_LALT]:
-                        temp_mouse_down_point = e.pos
-                    else:
-                        temp_mouse_down_point = snap_point_to_grid(e.pos)
-
-                elif e.button == 3:
-                    temp_mouse_down_info = ["dirt"]
-                    if KEY_PRESSED[pg.K_LALT]:
-                        temp_mouse_down_point = e.pos
-                    else:
-                        temp_mouse_down_point = snap_point_to_grid(e.pos)
 
         if e.type == pg.MOUSEBUTTONUP:
             if temp_mouse_down_point and temp_mouse_down_info:
@@ -928,9 +956,8 @@ while 1:
                         TRACK_TURN_POINTS.append(TurnPoint(temp_mouse_down_point, MOUSE_POS, (temp_mouse_down_point[0] + (temp_mouse_down_point[0] - MOUSE_POS[0]), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - MOUSE_POS[1])), temp_mouse_down_info))
                     else:
                         TRACK_TURN_POINTS.append(TurnPoint(temp_mouse_down_point, snap_point_to_grid(MOUSE_POS), snap_point_to_grid((temp_mouse_down_point[0] + (temp_mouse_down_point[0] - snap_n_to_grid(MOUSE_POS[0])), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - snap_n_to_grid(MOUSE_POS[1])))), temp_mouse_down_info))
-
-            temp_selected_point = temp_selected_checkpoint = temp_mouse_down_point = temp_mouse_down_info = None
-            calculate_track_points()
+                calculate_track_points()
+            temp_selected_turn_point = temp_selected_checkpoint = temp_mouse_down_point = temp_mouse_down_info = temp_selected_point = None
 
 
     if BACKGROUND_IMG != None:
@@ -963,28 +990,35 @@ while 1:
                 pg.draw.line(WIN, "orange2", TRACK_POINTS[n], TRACK_POINTS[0])
 
 
-    for p in TRACK_TURN_POINTS:
-        if "asphalt" in p.tags:
-            pg.draw.circle(WIN, "aqua", p.xy, 6)
-        elif "dirt" in p.tags:
-            pg.draw.circle(WIN, "orange", p.xy, 6)
-
     for p in TRACK:
         if "timer" in p[2]:
-            pg.draw.circle(WIN, "yellow", p[0:2], 4)
+            pg.draw.circle(WIN, "yellow", p[0:2], 7)
+
+        if "turn-start" in p[2]:
+            pg.draw.circle(WIN, "lime", p[0:2], 6)
+
+        if "turn-end" in p[2]:
+            pg.draw.circle(WIN, "red", p[0:2], 5)
+
         pg.draw.circle(WIN, "darkred", p[0:2], 2)
+
+    for p in TRACK_TURN_POINTS:
+        if "asphalt" in p.tags:
+            pg.draw.circle(WIN, "aqua", p.xy, 4)
+        elif "dirt" in p.tags:
+            pg.draw.circle(WIN, "orange", p.xy, 4)
     # ------------------------------------------------------------------------------------------------ drawing
 
 
-    if CURRENT_MODE in ["d", "track-design"]: # ------------------------ CURRENT_MODE in ["d", "track-design"]
-        if (temp_selected_point) and (not KEY_PRESSED[pg.K_LALT]):
-            TRACK_TURN_POINTS[temp_selected_point].cx0, TRACK_TURN_POINTS[temp_selected_point].cy0 = TRACK_TURN_POINTS[temp_selected_point].cx0 - (TRACK_TURN_POINTS[temp_selected_point].x - MOUSE_POS[0]), TRACK_TURN_POINTS[temp_selected_point].cy0 - (TRACK_TURN_POINTS[temp_selected_point].y - MOUSE_POS[1])
-            TRACK_TURN_POINTS[temp_selected_point].cx1, TRACK_TURN_POINTS[temp_selected_point].cy1 = TRACK_TURN_POINTS[temp_selected_point].cx1 - (TRACK_TURN_POINTS[temp_selected_point].x - MOUSE_POS[0]), TRACK_TURN_POINTS[temp_selected_point].cy1 - (TRACK_TURN_POINTS[temp_selected_point].y - MOUSE_POS[1])
-            TRACK_TURN_POINTS[temp_selected_point].x,   TRACK_TURN_POINTS[temp_selected_point].y   = MOUSE_POS
+    if CURRENT_MODE == "track-design": # -------------------------------------- CURRENT_MODE == "track-design"
+        if (temp_selected_turn_point) and (not KEY_PRESSED[pg.K_LALT]):
+            TRACK_TURN_POINTS[temp_selected_turn_point].cx0, TRACK_TURN_POINTS[temp_selected_turn_point].cy0 = TRACK_TURN_POINTS[temp_selected_turn_point].cx0 - (TRACK_TURN_POINTS[temp_selected_turn_point].x - MOUSE_POS[0]), TRACK_TURN_POINTS[temp_selected_turn_point].cy0 - (TRACK_TURN_POINTS[temp_selected_turn_point].y - MOUSE_POS[1])
+            TRACK_TURN_POINTS[temp_selected_turn_point].cx1, TRACK_TURN_POINTS[temp_selected_turn_point].cy1 = TRACK_TURN_POINTS[temp_selected_turn_point].cx1 - (TRACK_TURN_POINTS[temp_selected_turn_point].x - MOUSE_POS[0]), TRACK_TURN_POINTS[temp_selected_turn_point].cy1 - (TRACK_TURN_POINTS[temp_selected_turn_point].y - MOUSE_POS[1])
+            TRACK_TURN_POINTS[temp_selected_turn_point].x,   TRACK_TURN_POINTS[temp_selected_turn_point].y   = MOUSE_POS
 
-            TRACK_TURN_POINTS[temp_selected_point].x,   TRACK_TURN_POINTS[temp_selected_point].y   = snap_point_to_grid(TRACK_TURN_POINTS[temp_selected_point].xy)
-            TRACK_TURN_POINTS[temp_selected_point].cx0, TRACK_TURN_POINTS[temp_selected_point].cy0 = snap_point_to_grid((TRACK_TURN_POINTS[temp_selected_point].cx0, TRACK_TURN_POINTS[temp_selected_point].cy0))
-            TRACK_TURN_POINTS[temp_selected_point].cx1, TRACK_TURN_POINTS[temp_selected_point].cy1 = snap_point_to_grid((TRACK_TURN_POINTS[temp_selected_point].cx1, TRACK_TURN_POINTS[temp_selected_point].cy1))
+            TRACK_TURN_POINTS[temp_selected_turn_point].x,   TRACK_TURN_POINTS[temp_selected_turn_point].y   = snap_point_to_grid(TRACK_TURN_POINTS[temp_selected_turn_point].xy)
+            TRACK_TURN_POINTS[temp_selected_turn_point].cx0, TRACK_TURN_POINTS[temp_selected_turn_point].cy0 = snap_point_to_grid((TRACK_TURN_POINTS[temp_selected_turn_point].cx0, TRACK_TURN_POINTS[temp_selected_turn_point].cy0))
+            TRACK_TURN_POINTS[temp_selected_turn_point].cx1, TRACK_TURN_POINTS[temp_selected_turn_point].cy1 = snap_point_to_grid((TRACK_TURN_POINTS[temp_selected_turn_point].cx1, TRACK_TURN_POINTS[temp_selected_turn_point].cy1))
 
             calculate_track_points()
 
@@ -1029,8 +1063,47 @@ while 1:
                 pg.draw.line(WIN, "green", p.xy, (p.cx1, p.cy1))
                 pg.draw.circle(WIN, "lime", (p.cx0, p.cy0), 6)
                 pg.draw.circle(WIN, "lime", (p.cx1, p.cy1), 6)
-    # ------------------------------------------------------------------ CURRENT_MODE in ["d", "track-design"]
+    # ------------------------------------------------------------------------- CURRENT_MODE == "track-design"
+    elif CURRENT_MODE == "tagging": # ---------------------------------------------- CURRENT_MODE == "tagging"
+        if temp_selected_point:
+            if KEY_PRESSED[pg.K_LCTRL]:
+                for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
+                    if "turn-start" in TRACK[n][2]:
+                        TRACK[temp_selected_point][2].insert(0, "turn-end")
+                        break
 
+                    elif "turn-end" in TRACK[n][2]:
+                        TRACK[temp_selected_point][2].insert(0, "turn-start")
+                        break
+                else:
+                    TRACK[temp_selected_point][2].insert(0, "turn-start")
+
+            elif KEY_PRESSED[pg.K_LALT]:
+                    if "turn-start" in TRACK[temp_selected_point][2]:
+                        TRACK[temp_selected_point][2].remove("turn-start")
+
+                        for n, p in enumerate(TRACK[temp_selected_point:]):
+                            n += temp_selected_point
+
+                            if "turn-end" in TRACK[n][2]:
+                                TRACK[n][2].remove("turn-end")
+                                break
+
+                    if "turn-end" in TRACK[temp_selected_point][2]:
+                        TRACK[temp_selected_point][2].remove("turn-end")
+
+                        for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
+                            if "turn-start" in TRACK[n][2]:
+                                TRACK[n][2].remove("turn-start")
+                                break
+
+            else:
+                if "timer" in TRACK[temp_selected_point][2]:
+                    TRACK[temp_selected_point][2].remove("timer")
+                else:
+                    TRACK[temp_selected_point][2].insert(0, "timer")
+
+            temp_selected_point = None
 
     pg.display.flip()
 
