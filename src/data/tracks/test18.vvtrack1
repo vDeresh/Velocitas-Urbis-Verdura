@@ -1,0 +1,12 @@
+2.0
+test18
+['Deresh']
+[(0, ['timer', 'asphalt', 'meta', 'asphalt', 'timer', 'meta', 'asphalt', 'timer', 'meta']), (4, ['turn-start']), (5, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (10, ['timer']), (13, ['turn-end']), (16, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (20, ['timer']), (21, ['turn-start']), (22, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (29, ['turn-end', 'acceleration-start-point']), (30, ['timer']), (31, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (40, ['timer']), (44, ['acceleration-start-point']), (46, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (47, ['turn-start']), (48, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (50, ['timer']), (59, ['turn-end', 'acceleration-start-point']), (60, ['timer']), (61, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (69, ['turn-start']), (70, ['timer', 'braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (74, ['turn-end', 'acceleration-start-point']), (75, ['turn-start']), (76, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (79, ['turn-end']), (80, ['timer']), (82, ['turn-start']), (83, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (87, ['turn-end']), (89, ['acceleration-start-point']), (90, ['timer', 'turn-start']), (91, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (93, ['turn-end']), (97, ['turn-start']), (98, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (100, ['timer']), (103, ['turn-end']), (104, ['acceleration-start-point'])]
+247 246 295 230 199 262 ['asphalt'] 16
+318 313 312 441 324 185 ['asphalt'] 16
+409 517 532 514 286 520 ['asphalt'] 16
+661 439 722 420 600 458 ['asphalt'] 16
+786 533 763 661 809 405 ['asphalt'] 16
+634 823 537 842 731 804 ['asphalt'] 16
+346 805 221 662 471 948 ['asphalt'] 16
+171 511 232 317 110 705 ['asphalt'] 16

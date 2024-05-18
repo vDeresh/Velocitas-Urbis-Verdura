@@ -1,0 +1,11 @@
+2.0
+test20
+['Deresh']
+[(0, ['asphalt', 'timer', 'meta']), (4, ['turn-start']), (10, ['timer']), (12, ['turn-end']), (15, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (20, ['timer']), (24, ['turn-start']), (27, ['acceleration-start-point']), (29, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (30, ['timer']), (33, ['turn-end']), (40, ['timer']), (42, ['acceleration-start-point']), (44, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (47, ['turn-start']), (50, ['timer']), (56, ['turn-end']), (57, ['acceleration-start-point']), (59, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (60, ['timer']), (65, ['turn-start']), (70, ['timer']), (72, ['turn-end', 'acceleration-start-point']), (74, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (80, ['timer']), (81, ['turn-start']), (87, ['acceleration-start-point']), (88, ['turn-end'])]
+318 221 411 222 225 220 ['asphalt'] 16
+400 265 414 368 386 162 ['asphalt'] 16
+519 422 531 471 507 373 ['asphalt'] 16
+392 568 349 616 435 520 ['asphalt'] 16
+412 640 591 663 233 617 ['asphalt'] 16
+593 701 424 757 762 645 ['asphalt'] 16
+213 766 250 572 176 960 ['asphalt'] 16

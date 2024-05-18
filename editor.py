@@ -52,50 +52,11 @@ class TurnPoint:
 TRACK_TURN_POINTS: list[TurnPoint] = []
 TRACK: list[list] = []
 TRACK_POINTS: list[tuple[int, int]] = []
+TRACK_POINTS_TAGS: list[tuple[int, list]] = []
 
 BACKGROUND_IMG: None | pg.Surface = None
 
 CURRENT_MODE: str = "track-design"
-
-
-def load_track_save(file_name: str) -> bool:
-    name: list = file_name.split(".")
-
-    if name[-1] != "vvtrack":
-        name.append("vvtrack")
-
-    try:
-        with open(path.abspath(path.join("src", "data", "tracks", ".".join(name))), "r") as file:
-            lines = file.readlines()
-        del file
-    except FileNotFoundError:
-        print("Could not find", path.abspath(path.join("src", "data", "tracks", ".".join(name))))
-        return False
-
-    lines_copy = lines.copy()
-    lines = []
-
-    for line in lines_copy:
-        if (not line.isspace()) and (line != ""):
-            lines.append(line.removesuffix("\n").split(" "))
-
-    if not lines[0][0] in ["1.0"]: # supported versions
-        print(f"This save is outdated, use an older version of editor. (save's version: {lines[0]})")
-        return False
-
-    # try:
-    for line in lines[3:]: # {tp.x} {tp.y} {tp.cx0} {tp.cy0} {tp.cx1} {tp.cy1} {tp.tags} {tp.bnop}
-        TRACK_TURN_POINTS.append(TurnPoint((int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (int(line[4]), int(line[5])), eval(line[6]), int(line[7])))
-    # except ValueError:
-    #     print("This file probably has incorrect syntax.", "(" + path.abspath(path.join("src", "data", "tracks", ".".join(name))) + ")")
-    #     return False
-
-    print("Save loaded.", "(" + path.abspath(path.join("src", "data", "tracks", ".".join(name))) + ")")
-    return True
-
-if len(sys.argv) > 1:
-    if not load_track_save(sys.argv[1]):
-        exit()
 
 
 def round_half_up(n) -> int:
@@ -248,6 +209,16 @@ def compute_bezier_points(vertices, numPoints: None | int = None) -> list[tuple[
     return result
 
 
+def calculate_max_cornering_speed(point: int):
+    section1: pg.Vector2 = pg.Vector2(TRACK[point]) - TRACK[point - 1]
+    section2: pg.Vector2
+
+    for n, p in enumerate(TRACK[point:]):
+        if "acceleration-start-point" in p[2]:
+            n += point
+            section2 = pg.Vector2(TRACK[n]) - TRACK[n - 1]
+            break
+
 
 def is_similar(p1, p2, _range: int = 2) -> bool:
     for n in range(-_range, _range):
@@ -269,6 +240,11 @@ def calculate_track_points():
     if len(TRACK_TURN_POINTS) < 2:
         TRACK.clear()
         return
+
+    TRACK_POINTS_TAGS.clear()
+    for n, p in enumerate(TRACK):
+        if len(p[2]):
+            TRACK_POINTS_TAGS.append((n, p[2]))
 
     TRACK.clear()
     for n in range(len(TRACK_TURN_POINTS) - 1):
@@ -325,6 +301,11 @@ def calculate_track_points():
         TRACK.clear()
         TRACK.extend(temp_TRACK)
 
+    for pt in TRACK_POINTS_TAGS:
+        for tag in pt[1]:
+            if not tag in TRACK[pt[0]][2]:
+                TRACK[pt[0]][2].append(tag)
+
 
 def tag_track():
     if not len(TRACK):
@@ -332,18 +313,16 @@ def tag_track():
 
     for n, p in enumerate(TRACK):
         if "timer" in p[2]:
-            if "asphalt" in TRACK[n][2]:
-                TRACK[n][2].clear()
-                TRACK[n][2].append("asphalt")
+            TRACK[n][2].remove("timer")
 
-            elif "dirt" in TRACK[n][2]:
-                TRACK[n][2].clear()
-                TRACK[n][2].append("dirt")
+    for pt in TRACK_POINTS_TAGS:
+        TRACK[pt[0]][2].extend(pt[1])
 
-            else:
-                TRACK[n][2].clear()
 
-    TRACK[0][2].insert(0, "meta")
+    if not "meta" in TRACK[0][2]:
+        TRACK[0][2].insert(0, "meta")
+
+
     for n, p in enumerate(TRACK):
         if (not n % SETTINGS['EDITOR']['timer-tag-frequency']) or ("drs-start" in p[2]) or ("drs-end" in p[2]):
             TRACK[n][2].insert(0, "timer")
@@ -401,14 +380,15 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
         stdscr.addstr(3, 53, "<n>", curses.A_BLINK)
         stdscr.addstr(3, 57, "<*objects>", curses.A_BLINK)
 
-        stdscr.addstr(4, 48, "save") # <track name> <racing type> [*author(s)]
-        stdscr.addstr(4, 53, "<track name>", curses.A_BLINK)
-        stdscr.addstr(4, 66, "<racing type>", curses.A_BLINK)
-        stdscr.addstr(4, 80, "{tag}", curses.A_BLINK)
-        stdscr.addstr(4, 86, "[*author(s)]", curses.A_BLINK)
+        stdscr.addstr(4, 48, "save") # {project} <track name> <racing type> [*author(s)]
+        stdscr.addstr(4, 53, "{project}", curses.A_BLINK)
+        stdscr.addstr(4, 63, "<track name>", curses.A_BLINK)
+        stdscr.addstr(4, 76, "<racing type>", curses.A_BLINK)
+        stdscr.addstr(4, 90, "{tag}", curses.A_BLINK)
+        stdscr.addstr(4, 96, "[*author(s)]", curses.A_BLINK)
 
         stdscr.addstr(5, 48, "tag") # <*frequency>
-        stdscr.addstr(5, 52, "<*frequency>", curses.A_BLINK)
+        stdscr.addstr(5, 53, "<*frequency>", curses.A_BLINK)
 
         stdscr.addstr(6, 48, "grid") # <size>
         stdscr.addstr(6, 53, "<size>", curses.A_BLINK)
@@ -421,7 +401,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
         stdscr.addstr(8, 57, "<y>", curses.A_BLINK)
 
         stdscr.addstr(9, 48, "del") # <index>
-        stdscr.addstr(9, 52, "<index>", curses.A_BLINK)
+        stdscr.addstr(9, 53, "<index>", curses.A_BLINK)
 
         # stdscr.addstr(9, 48, "mode") # <mode> TODO
         # stdscr.addstr(9, 53, "<mode>", curses.A_BLINK)
@@ -432,7 +412,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
         stdscr.addstr(12, 3, ">")
 
         stdscr.addstr(15, 3, TERMINAL_OUTPUT)
-        curses.textpad.rectangle(stdscr, 14, 1, 27, 122)
+        curses.textpad.rectangle(stdscr, 14, 1, 28, 122)
         stdscr.addstr(14, 2, " Output ")
 
         stdscr.refresh()
@@ -619,44 +599,55 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                         _authors = [command[n] for n in range(5, len(command))]
 
                         path_to_file = path.abspath(path.join("src", "data", "tracks", _track_name))
-
-
-                        if _project:
-                            with open(path_to_file + ".vvtrack", "w") as file:
-                                file.write(f"1.0\n{_track_name}\n{_authors}\n")
-                                file.writelines([f"{tp.x} {tp.y} {tp.cx0} {tp.cy0} {tp.cx1} {tp.cy1} {tp.tags} {tp.bnop}\n" for tp in TRACK_TURN_POINTS])
-                            del file
+                        save_number = 0
 
 
                         if _tag:
                             tag_track()
 
+                        calculate_track_points()
 
-                        _temp_fist_turn = True
-                        final_track: list[list] = []
-                        for n, p in enumerate(TRACK):
-                            for tp in TRACK_TURN_POINTS:
-                                if tp.index == n:
-                                    if _temp_fist_turn:
-                                        final_track.append([tp.x, tp.y, ["turn-start"]])
-                                        _temp_fist_turn = False
-                                    elif n == len(TRACK) - 1:
-                                        final_track[n - 1][2].append("acceleration-start-point")
-                                        final_track.append([tp.x, tp.y, ["turn-end", "lap-end"]])
-                                    else:
-                                        final_track[n - 1][2].append("acceleration-start-point")
-                                        final_track.append([tp.x, tp.y, ["turn-end", "turn-start"]])
+
+                        if _project:
+                            while 1:
+                                try:
+                                    with open(path_to_file + (("-" + str(save_number)) if save_number else "") + ".vvtrack", "r") as file:
+                                        save_number += 1
+                                except FileNotFoundError:
                                     break
-                            else:
-                                if len(final_track) and "turn-start" in final_track[n - 1][2]:
-                                    _temp_p2: list = p[2]
-                                    _temp_p2.append("braking-finish-point")
-                                    _temp_p2.append({"reference-target-speed": 0, "overtaking-risk": 1.0})
-                                    final_track.append([p[0], p[1], _temp_p2])
-                                else:
-                                    final_track.append(p)
-                        else:
-                            del _temp_fist_turn
+
+                            with open(path_to_file + (("-" + str(save_number)) if save_number else "") + ".vvtrack", "w") as file:
+                                file.write(f"2.0\n{_track_name}\n{_authors}\n")
+                                file.write(f"{TRACK_POINTS_TAGS}\n")
+                                file.writelines([f"{tp.x} {tp.y} {tp.cx0} {tp.cy0} {tp.cx1} {tp.cy1} {tp.tags} {tp.bnop}\n" for tp in TRACK_TURN_POINTS])
+                            del file
+
+
+                        # _temp_fist_turn = True
+                        # final_track: list[list] = []
+                        # for n, p in enumerate(TRACK):
+                        #     for tp in TRACK_TURN_POINTS:
+                        #         if tp.index == n:
+                        #             if _temp_fist_turn:
+                        #                 final_track.append([tp.x, tp.y, ["turn-start"]])
+                        #                 _temp_fist_turn = False
+                        #             elif n == len(TRACK) - 1:
+                        #                 final_track[n - 1][2].append("acceleration-start-point")
+                        #                 final_track.append([tp.x, tp.y, ["turn-end", "lap-end"]])
+                        #             else:
+                        #                 final_track[n - 1][2].append("acceleration-start-point")
+                        #                 final_track.append([tp.x, tp.y, ["turn-end", "turn-start"]])
+                        #             break
+                        #     else:
+                        #         if len(final_track) and "turn-start" in final_track[n - 1][2]:
+                        #             _temp_p2: list = p[2]
+                        #             _temp_p2.append("braking-finish-point")
+                        #             _temp_p2.append({"reference-target-speed": 0, "overtaking-risk": 1.0})
+                        #             final_track.append([p[0], p[1], _temp_p2])
+                        #         else:
+                        #             final_track.append(p)
+                        # else:
+                        #     del _temp_fist_turn
 
 
                         while 1:
@@ -692,7 +683,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
 
                                             "pit-lane": [],
 
-                                            "track": final_track
+                                            "track": TRACK
                                         }
                                     })
 
@@ -709,7 +700,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                                     file.truncate()
 
                                 TERMINAL_OUTPUT = f"SAVE: Track saved as '{_track_name}' ({_racing_type}) by {_authors}."
-                                del final_track, final_file, path_to_file
+                                del final_file, path_to_file
                                 break
 
                             except (FileNotFoundError, json.decoder.JSONDecodeError):
@@ -764,13 +755,15 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                                     TERMINAL_OUTPUT = """Command `save` saves track to a specified file.
 
     syntax:
-        save <track name> <racing type> [*author(s)]
+        save {project} <track name> <racing type> {tag} [*author(s)]
 
     parameters:
+        {project}     - bool (0 or 1) indicating if this track should be saved to a vvtrack file
         <track name>  - name of the track and the file in which it will be saved with no spaces
         <racing type> - racing type to create or update in a given file
         ├ 'formula'
         └ 'rallycross'
+        {tag}         - bool (0 or 1) indicating if this track should be automatically tagged
         [*author(s)]  - authors' names split with spaces
 """
 
@@ -859,10 +852,6 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
 
 SHARED: dict[str, str] = {'terminal-output': ""}
 
-_thread_terminal = Thread(target=curses.wrapper, args=[terminal, SHARED], name="thread-terminal", daemon=True)
-_thread_terminal.start()
-
-
 
 WIN = pg.display.set_mode((1000, 1000), pg.SCALED)
 
@@ -876,9 +865,141 @@ temp_selected_point:      None | int             = None
 
 _current_surface_type = "asphalt"
 
-calculate_track_points()
 
-while 1:
+
+
+# -------------------------------------------------------------------------------------------------------------------------------- Starting
+def load_track_save(file_name: str) -> bool:
+    name: list = file_name.split(".")
+
+    if name[-1] != "vvtrack":
+        name.append("vvtrack")
+
+    try:
+        with open(path.abspath(path.join("src", "data", "tracks", ".".join(name))), "r") as file:
+            lines = file.readlines()
+        del file
+    except FileNotFoundError:
+        print("Could not find", path.abspath(path.join("src", "data", "tracks", ".".join(name))))
+        return False
+
+    lines_copy = lines.copy()
+    lines = []
+
+    for line in lines_copy:
+        if line != "\n":
+            lines.append(line.removesuffix("\n"))
+
+
+    if not lines[0] in ["2.0"]: # supported versions
+        print(f"This save is outdated, use an older version of editor. (save's version: {lines[0]})")
+        return False
+
+
+    lines_copy = lines.copy()
+    lines.clear()
+    for n, line in enumerate(lines_copy):
+        if n <= 2:
+            lines.append(line)
+        elif n == 3:
+            lines.append(eval(line))
+        else:
+            lines.append(line.split(" "))
+
+
+    TRACK.clear()
+    TRACK_POINTS.clear()
+    TRACK_POINTS_TAGS.clear()
+    TRACK_TURN_POINTS.clear()
+
+
+    try:
+        TRACK_POINTS_TAGS.extend(lines[3])
+        for line in lines[4:]: # {tp.x} {tp.y} {tp.cx0} {tp.cy0} {tp.cx1} {tp.cy1} {tp.tags} {tp.bnop}
+            TRACK_TURN_POINTS.append(TurnPoint((int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (int(line[4]), int(line[5])), eval(line[6]), int(line[7])))
+
+    except (ValueError, TypeError):
+        print("This file probably has incorrect syntax.", "(" + path.abspath(path.join("src", "data", "tracks", ".".join(name))) + ")")
+        return False
+
+
+    TRACK.clear()
+    for n in range(len(TRACK_TURN_POINTS) - 1):
+        point1 = TRACK_TURN_POINTS[n]
+        point2 = TRACK_TURN_POINTS[n + 1]
+
+        control_points = [(point1.x, point1.y), (point1.cx0, point1.cy0), (point2.cx1, point2.cy1), (point2.x, point2.y)]
+
+        for x, y in compute_bezier_points(control_points, point1.bnop):
+            TRACK.append([x, y, point1.tags])
+
+    TRACK_POINTS.clear()
+    temp_TRACK = []
+    for n, p in enumerate(TRACK):
+        if (n == 0) or (not is_similar(p[0:2], TRACK[n - 1][0:2])): # (p != TRACK_POINTS[n - 1]):
+            TRACK_POINTS.append(tuple(p[0:2]))
+
+            if n == 0:
+                temp_TRACK.append([p[0], p[1], p[2] + ["timer", "meta"]])
+            else:
+                temp_TRACK.append(p)
+    else:
+        TRACK.clear()
+        TRACK.extend(temp_TRACK)
+
+    temp_TRACK = []
+    _temp_current_surface_type = ""
+    for n, p in enumerate(TRACK):
+        if (n > 0) and (_temp_current_surface_type in p[2]):
+            temp_p2 = p[2].copy()
+            temp_p2.remove(_temp_current_surface_type)
+            temp_TRACK.append([p[0], p[1], temp_p2])
+        else:
+            temp_TRACK.append(p)
+
+        if "asphalt" in p[2]: _temp_current_surface_type = "asphalt"
+        elif "dirt" in p[2]: _temp_current_surface_type = "dirt"
+    else:
+        TRACK.clear()
+        TRACK.extend(temp_TRACK)
+
+    temp_TRACK = []
+    for n, p in enumerate(TRACK[:len(TRACK) - 1]):
+        temp_p2 = p[2]
+
+        if "asphalt" in TRACK[n + 1][2]:
+            temp_p2.insert(0, "asphalt")
+        elif "dirt" in TRACK[n + 1][2]:
+            temp_p2.insert(0, "dirt")
+
+        temp_TRACK.append([p[0], p[1], temp_p2])
+    else:
+        temp_TRACK.append(TRACK[-1])
+        TRACK.clear()
+        TRACK.extend(temp_TRACK)
+
+    for pt in TRACK_POINTS_TAGS:
+        for tag in pt[1]:
+            if not tag in TRACK[pt[0]][2]:
+                TRACK[pt[0]][2].append(tag)
+
+    print("Save loaded.", "(" + path.abspath(path.join("src", "data", "tracks", ".".join(name))) + ")")
+    return True
+
+if len(sys.argv) > 1:
+    if not load_track_save(sys.argv[1]):
+        exit()
+
+_thread_terminal = Thread(target=curses.wrapper, args=[terminal, SHARED], name="thread-terminal", daemon=True)
+_thread_terminal.start()
+
+calculate_track_points()
+# -------------------------------------------------------------------------------------------------------------------------------- starting
+
+
+
+
+while 1: # ---------------------------------------------------------------------------------------------------------------------- Main loop
     MOUSE_POS     = pg.mouse.get_pos()
     MOUSE_PRESSED = pg.mouse.get_pressed()
     KEY_PRESSED   = pg.key.get_pressed()
@@ -992,13 +1113,21 @@ while 1:
 
     for p in TRACK:
         if "timer" in p[2]:
-            pg.draw.circle(WIN, "yellow", p[0:2], 7)
+            pg.draw.circle(WIN, "yellow2", p[0:2], 7)
+            pg.draw.circle(WIN, "yellow3", p[0:2], 7, 1)
 
         if "turn-start" in p[2]:
             pg.draw.circle(WIN, "lime", p[0:2], 6)
 
         if "turn-end" in p[2]:
-            pg.draw.circle(WIN, "red", p[0:2], 5)
+            pg.draw.circle(WIN, "red", p[0:2], 6)
+
+        if "braking-finish-point" in p[2]:
+            pg.draw.circle(WIN, "pink", p[0:2], 5)
+
+        if "acceleration-start-point" in p[2]:
+            pg.draw.circle(WIN, "green", p[0:2], 5)
+
 
         pg.draw.circle(WIN, "darkred", p[0:2], 2)
 
@@ -1067,23 +1196,42 @@ while 1:
     elif CURRENT_MODE == "tagging": # ---------------------------------------------- CURRENT_MODE == "tagging"
         if temp_selected_point:
             if KEY_PRESSED[pg.K_LCTRL]:
-                for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
-                    if "turn-start" in TRACK[n][2]:
-                        TRACK[temp_selected_point][2].insert(0, "turn-end")
-                        break
+                if not ("turn-start" in TRACK[temp_selected_point][2]) and not ("turn-end" in TRACK[temp_selected_point][2]):
+                    for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
+                        if "turn-start" in TRACK[n][2]:
+                            TRACK[temp_selected_point][2].insert(0, "turn-end")
+                            break
 
-                    elif "turn-end" in TRACK[n][2]:
+                        elif "turn-end" in TRACK[n][2]:
+                            TRACK[temp_selected_point][2].insert(0, "turn-start")
+                            break
+                    else:
                         TRACK[temp_selected_point][2].insert(0, "turn-start")
-                        break
-                else:
-                    TRACK[temp_selected_point][2].insert(0, "turn-start")
+
+            elif KEY_PRESSED[pg.K_LSHIFT]:
+                if not ("braking-finish-point" in TRACK[temp_selected_point][2]) and not ("acceleration-start-point" in TRACK[temp_selected_point][2]):
+                    for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
+                        if "braking-finish-point" in TRACK[n][2]:
+                            TRACK[temp_selected_point][2].insert(0, "acceleration-start-point")
+                            break
+
+                        elif "acceleration-start-point" in TRACK[n][2]:
+                            TRACK[temp_selected_point][2].insert(0, "braking-finish-point")
+                            TRACK[temp_selected_point][2].append({"reference-target-speed": 0, "overtaking-risk": 1.0})
+                            break
+                    else:
+                        TRACK[temp_selected_point][2].insert(0, "braking-finish-point")
+                        TRACK[temp_selected_point][2].append({"reference-target-speed": 0, "overtaking-risk": 1.0})
 
             elif KEY_PRESSED[pg.K_LALT]:
                     if "turn-start" in TRACK[temp_selected_point][2]:
                         TRACK[temp_selected_point][2].remove("turn-start")
 
-                        for n, p in enumerate(TRACK[temp_selected_point:]):
+                        for n, p in enumerate(TRACK[temp_selected_point + 1:]):
                             n += temp_selected_point
+
+                            if "turn-start" in TRACK[n][2]:
+                                break
 
                             if "turn-end" in TRACK[n][2]:
                                 TRACK[n][2].remove("turn-end")
@@ -1093,8 +1241,36 @@ while 1:
                         TRACK[temp_selected_point][2].remove("turn-end")
 
                         for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
+                            if "turn-end" in TRACK[n][2]:
+                                break
+
                             if "turn-start" in TRACK[n][2]:
                                 TRACK[n][2].remove("turn-start")
+                                break
+
+
+                    if "braking-finish-point" in TRACK[temp_selected_point][2]:
+                        TRACK[temp_selected_point][2].remove("braking-finish-point")
+
+                        for n, p in enumerate(TRACK[temp_selected_point + 1:]):
+                            n += temp_selected_point
+
+                            if "braking-finish-point" in TRACK[n][2]:
+                                break
+
+                            if "acceleration-start-point" in TRACK[n][2]:
+                                TRACK[n][2].remove("acceleration-start-point")
+                                break
+
+                    if "acceleration-start-point" in TRACK[temp_selected_point][2]:
+                        TRACK[temp_selected_point][2].remove("acceleration-start-point")
+
+                        for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
+                            if "acceleration-start-point" in TRACK[n][2]:
+                                break
+
+                            if "braking-finish-point" in TRACK[n][2]:
+                                TRACK[n][2].remove("braking-finish-point")
                                 break
 
             else:
@@ -1104,8 +1280,10 @@ while 1:
                     TRACK[temp_selected_point][2].insert(0, "timer")
 
             temp_selected_point = None
+    # ------------------------------------------------------------------------------ CURRENT_MODE == "tagging"
 
     pg.display.flip()
 
     if temp_mouse_down_point:
         TRACK_TURN_POINTS.pop()
+# ------------------------------------------------------------------------------------------------------------------------------- main loop

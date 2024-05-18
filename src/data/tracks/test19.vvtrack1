@@ -1,0 +1,10 @@
+2.0
+test19
+['Deresh']
+[(0, ['asphalt', 'timer', 'meta']), (5, ['turn-start']), (10, ['timer']), (13, ['turn-end']), (16, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (20, ['timer']), (22, ['turn-start']), (28, ['turn-end']), (29, ['acceleration-start-point']), (30, ['timer']), (31, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (37, ['turn-start']), (40, ['timer']), (44, ['turn-end', 'acceleration-start-point']), (46, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (50, ['timer']), (53, ['turn-start']), (59, ['turn-end', 'acceleration-start-point']), (60, ['turn-start', 'timer']), (61, ['braking-finish-point', {'reference-target-speed': 0, 'overtaking-risk': 1.0}]), (64, ['turn-end']), (66, ['turn-start']), (70, ['timer']), (73, ['turn-end']), (74, ['acceleration-start-point'])]
+306 119 391 97 221 141 ['asphalt'] 16
+448 187 397 295 499 79 ['asphalt'] 16
+443 419 618 448 268 390 ['asphalt'] 16
+640 494 462 575 818 413 ['asphalt'] 16
+248 602 168 511 328 693 ['asphalt'] 16
+149 438 223 294 75 582 ['asphalt'] 16
