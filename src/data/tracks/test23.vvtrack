@@ -1,0 +1,9 @@
+2.0
+test23
+['Deresh']
+[(0, ['asphalt', 'timer', 'meta']), (46, ['braking-finish-point', {'reference-target-speed': ((722, 439), (722, 439)), 'overtaking-risk': 1.0}]), (51, ['acceleration-start-point'])]
+322 373 399 348 245 398 ['asphalt'] 16
+416 404 360 450 472 358 ['asphalt'] 16
+433 574 638 547 228 601 ['asphalt'] 16
+716 484 597 307 835 661 ['asphalt'] 16
+822 642 751 723 893 561 ['asphalt'] 16

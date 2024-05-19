@@ -101,12 +101,12 @@ def closest_turn_point(to: tuple[int, int]) -> None | int:
     point = 0
 
     for n, p in enumerate(TRACK_TURN_POINTS):
-        d = pg.Vector2(to).distance_to(p.xy)
+        d = pg.Vector2(to).distance_squared_to(p.xy)
         if d < min_d:
             min_d = d
             point = n
 
-    if min_d < 8:
+    if min_d < 8 ** 2:
         return point
     else:
         return None
@@ -209,15 +209,35 @@ def compute_bezier_points(vertices, numPoints: None | int = None) -> list[tuple[
     return result
 
 
-def calculate_max_cornering_speed(point: int):
-    section1: pg.Vector2 = pg.Vector2(TRACK[point]) - TRACK[point - 1]
+def calculate_max_cornering_speed(point2: int):
+    section1: pg.Vector2 = pg.Vector2(TRACK_POINTS[point2]) - TRACK_POINTS[point2 - 1]
     section2: pg.Vector2
 
-    for n, p in enumerate(TRACK[point:]):
-        if "acceleration-start-point" in p[2]:
-            n += point
-            section2 = pg.Vector2(TRACK[n]) - TRACK[n - 1]
+    point1 = -1
+    top_point = -1
+    top_point_len = float("inf")
+
+
+    for n, p in reversed(list(enumerate(TRACK[:point2]))):
+        if "braking-finish-point" in p[2]:
+            point1 = n
+            section2 = pg.Vector2(TRACK_POINTS[n]) - TRACK_POINTS[n + 1]
             break
+
+
+    for n, p in enumerate(TRACK_POINTS[point1:]):
+        n += point1
+
+        if "acceleration-start-point" in TRACK[n][2]:
+            break
+
+        if (_temp_len_1 := pg.Vector2(p).distance_squared_to(TRACK_POINTS[n + 1])) < top_point_len:
+            top_point_len = _temp_len_1
+            top_point = n
+
+    print(top_point)
+
+    pg.draw.line(WIN, "red", TRACK_POINTS[point1], TRACK_POINTS[point2])
 
 
 def is_similar(p1, p2, _range: int = 2) -> bool:
@@ -350,58 +370,62 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
 
         stdscr.clear()
 
-        curses.textpad.rectangle(stdscr, 0, 1, 5, 45)
+        curses.textpad.rectangle(stdscr, 0, 1, 5, 56)
         stdscr.addstr(0, 2, " Track info ")
         stdscr.addstr(1, 3, f"amount of points:.. {len(TRACK_POINTS)}")
-        stdscr.addstr(2, 3, f"track length:...... {sum([pg.Vector2(TRACK_POINTS[n]).distance_to(TRACK_POINTS[n + 1]) for n in range(len(TRACK_POINTS) - 1)]) * SETTINGS['TRACK']['scale']}")
+        stdscr.addstr(2, 3, f"track length:...... {SHARED['track-length']}")
 
         if len(TRACK_POINTS) >= 3:
-            stdscr.addstr(3, 3, f"starting direction: {pg.Vector2(TRACK_POINTS[0][0] - TRACK_POINTS[-1][0], TRACK_POINTS[0][1] - TRACK_POINTS[-1][1]).normalize()}")
+            if TRACK_POINTS[0] != TRACK_POINTS[-1]:
+                stdscr.addstr(3, 3, f"starting direction: {SHARED['starting-direction']}")
+            else:
+                stdscr.addstr(3, 3, f"first point cannot be the same as last point")
         else:
-            stdscr.addstr(3, 3, f"starting direction: (not enough points)")
+            stdscr.addstr(3, 3, f"not enough points to calculate the starting direction")
 
         stdscr.addstr(4, 3, f"scale:............. {SETTINGS['TRACK']['scale']}")
 
 
-        curses.textpad.rectangle(stdscr, 6, 1, 10, 45)
+        curses.textpad.rectangle(stdscr, 6, 1, 10, 56)
         stdscr.addstr(6, 2, " Editor info ")
         stdscr.addstr(7, 3, f"bnop:............... {SETTINGS['EDITOR']['current-bezier-num-of-points']}")
         stdscr.addstr(8, 3, f"timer tag frequency: {SETTINGS['EDITOR']['timer-tag-frequency']}")
         stdscr.addstr(9, 3, f"grid {"size:.......... " + str(SETTINGS['EDITOR']['grid-size']) if SETTINGS['EDITOR']['grid-size'] else "disabled"}")
 
 
-        curses.textpad.rectangle(stdscr, 0, 46, 10, 122) # TODO add `move` command to move whole track
-        stdscr.addstr(0, 47, " Help ")
-        stdscr.addstr(1, 48, "help")
-        stdscr.addstr(1, 53, "<command>", curses.A_VERTICAL)
-        stdscr.addstr(2, 48, "update")
+        curses.textpad.rectangle(stdscr, 0, 57, 10, 122) # TODO add `move` command to move whole track
+        stdscr.addstr(0, 58, " Help ")
+        stdscr.addstr(1, 59, "help")
+        stdscr.addstr(1, 64, "<command>", curses.A_VERTICAL)
 
-        stdscr.addstr(3, 48, "bnop") # <n> <*objects>
-        stdscr.addstr(3, 53, "<n>", curses.A_BLINK)
-        stdscr.addstr(3, 57, "<*objects>", curses.A_BLINK)
+        stdscr.addstr(2, 59, "update")
 
-        stdscr.addstr(4, 48, "save") # {project} <track name> <racing type> [*author(s)]
-        stdscr.addstr(4, 53, "{project}", curses.A_BLINK)
-        stdscr.addstr(4, 63, "<track name>", curses.A_BLINK)
-        stdscr.addstr(4, 76, "<racing type>", curses.A_BLINK)
-        stdscr.addstr(4, 90, "{tag}", curses.A_BLINK)
-        stdscr.addstr(4, 96, "[*author(s)]", curses.A_BLINK)
+        stdscr.addstr(3, 59, "bnop") # <n> <*objects>
+        stdscr.addstr(3, 64, "<n>", curses.A_BLINK)
+        stdscr.addstr(3, 68, "<*objects>", curses.A_BLINK)
 
-        stdscr.addstr(5, 48, "tag") # <*frequency>
-        stdscr.addstr(5, 53, "<*frequency>", curses.A_BLINK)
+        stdscr.addstr(4,  59, "save") # {project} <track name> <racing type> [*author(s)]
+        stdscr.addstr(4,  64, "{project}", curses.A_BLINK)
+        stdscr.addstr(4,  74, "<track name>", curses.A_BLINK)
+        stdscr.addstr(4,  87, "<racing type>", curses.A_BLINK)
+        stdscr.addstr(4, 101, "{tag}", curses.A_BLINK)
+        stdscr.addstr(4, 107, "[*author(s)]", curses.A_BLINK)
 
-        stdscr.addstr(6, 48, "grid") # <size>
-        stdscr.addstr(6, 53, "<size>", curses.A_BLINK)
+        stdscr.addstr(5, 59, "tag") # <*frequency>
+        stdscr.addstr(5, 64, "<*frequency>", curses.A_BLINK)
 
-        stdscr.addstr(7, 48, "snap") # <*objects>
-        stdscr.addstr(7, 53, "<*objects>", curses.A_BLINK)
+        stdscr.addstr(6, 59, "grid") # <size>
+        stdscr.addstr(6, 64, "<size>", curses.A_BLINK)
 
-        stdscr.addstr(8, 48, "move") # <x> <y>
-        stdscr.addstr(8, 53, "<x>", curses.A_BLINK)
-        stdscr.addstr(8, 57, "<y>", curses.A_BLINK)
+        stdscr.addstr(7, 59, "snap") # <*objects>
+        stdscr.addstr(7, 64, "<*objects>", curses.A_BLINK)
 
-        stdscr.addstr(9, 48, "del") # <index>
-        stdscr.addstr(9, 53, "<index>", curses.A_BLINK)
+        stdscr.addstr(8, 59, "move") # <x> <y>
+        stdscr.addstr(8, 64, "<x>", curses.A_BLINK)
+        stdscr.addstr(8, 68, "<y>", curses.A_BLINK)
+
+        stdscr.addstr(9, 59, "del") # <index>
+        stdscr.addstr(9, 64, "<index>", curses.A_BLINK)
 
         # stdscr.addstr(9, 48, "mode") # <mode> TODO
         # stdscr.addstr(9, 53, "<mode>", curses.A_BLINK)
@@ -623,33 +647,6 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                             del file
 
 
-                        # _temp_fist_turn = True
-                        # final_track: list[list] = []
-                        # for n, p in enumerate(TRACK):
-                        #     for tp in TRACK_TURN_POINTS:
-                        #         if tp.index == n:
-                        #             if _temp_fist_turn:
-                        #                 final_track.append([tp.x, tp.y, ["turn-start"]])
-                        #                 _temp_fist_turn = False
-                        #             elif n == len(TRACK) - 1:
-                        #                 final_track[n - 1][2].append("acceleration-start-point")
-                        #                 final_track.append([tp.x, tp.y, ["turn-end", "lap-end"]])
-                        #             else:
-                        #                 final_track[n - 1][2].append("acceleration-start-point")
-                        #                 final_track.append([tp.x, tp.y, ["turn-end", "turn-start"]])
-                        #             break
-                        #     else:
-                        #         if len(final_track) and "turn-start" in final_track[n - 1][2]:
-                        #             _temp_p2: list = p[2]
-                        #             _temp_p2.append("braking-finish-point")
-                        #             _temp_p2.append({"reference-target-speed": 0, "overtaking-risk": 1.0})
-                        #             final_track.append([p[0], p[1], _temp_p2])
-                        #         else:
-                        #             final_track.append(p)
-                        # else:
-                        #     del _temp_fist_turn
-
-
                         while 1:
                             try:
                                 with open(path_to_file, "r") as file:
@@ -850,7 +847,11 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
             curses.curs_set(0)
 
 
-SHARED: dict[str, str] = {'terminal-output': ""}
+SHARED: dict = {
+    'terminal-output': "",
+    'track-length': 0,
+    'starting-direction': [0, 0]
+}
 
 
 WIN = pg.display.set_mode((1000, 1000), pg.SCALED)
@@ -1000,6 +1001,16 @@ calculate_track_points()
 
 
 while 1: # ---------------------------------------------------------------------------------------------------------------------- Main loop
+    SHARED['track-length'] = sum([pg.Vector2(TRACK_POINTS[n]).distance_to(TRACK_POINTS[n + 1]) for n in range(len(TRACK_POINTS) - 1)]) * SETTINGS['TRACK']['scale']
+
+    if len(TRACK_POINTS) >= 3:
+        if TRACK_POINTS[0] != TRACK_POINTS[1]:
+            SHARED['starting-direction'] = pg.Vector2(TRACK_POINTS[0][0] - TRACK_POINTS[-1][0], TRACK_POINTS[0][1] - TRACK_POINTS[-1][1]).normalize()
+        else:
+            SHARED['starting-direction'] = None
+    else:
+        SHARED['starting-direction'] = None
+
     MOUSE_POS     = pg.mouse.get_pos()
     MOUSE_PRESSED = pg.mouse.get_pressed()
     KEY_PRESSED   = pg.key.get_pressed()
@@ -1042,7 +1053,7 @@ while 1: # ---------------------------------------------------------------------
                     calculate_track_points()
 
         if e.type == pg.MOUSEBUTTONDOWN:
-            if temp_mouse_down_info and temp_mouse_down_point:
+            if (temp_mouse_down_info != None) and (temp_mouse_down_point != None):
                 continue
 
             if CURRENT_MODE == "track-design":
@@ -1071,7 +1082,7 @@ while 1: # ---------------------------------------------------------------------
                 temp_selected_point = closest_point(MOUSE_POS)
 
         if e.type == pg.MOUSEBUTTONUP:
-            if temp_mouse_down_point and temp_mouse_down_info:
+            if (temp_mouse_down_point != None) and (temp_mouse_down_info != None):
                 if ((e.button == 1) and ("asphalt" in temp_mouse_down_info)) or ((e.button == 3) and ("dirt" in temp_mouse_down_info)):
                     if KEY_PRESSED[pg.K_LALT]:
                         TRACK_TURN_POINTS.append(TurnPoint(temp_mouse_down_point, MOUSE_POS, (temp_mouse_down_point[0] + (temp_mouse_down_point[0] - MOUSE_POS[0]), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - MOUSE_POS[1])), temp_mouse_down_info))
@@ -1140,7 +1151,7 @@ while 1: # ---------------------------------------------------------------------
 
 
     if CURRENT_MODE == "track-design": # -------------------------------------- CURRENT_MODE == "track-design"
-        if (temp_selected_turn_point) and (not KEY_PRESSED[pg.K_LALT]):
+        if (temp_selected_turn_point != None) and (not KEY_PRESSED[pg.K_LALT]):
             TRACK_TURN_POINTS[temp_selected_turn_point].cx0, TRACK_TURN_POINTS[temp_selected_turn_point].cy0 = TRACK_TURN_POINTS[temp_selected_turn_point].cx0 - (TRACK_TURN_POINTS[temp_selected_turn_point].x - MOUSE_POS[0]), TRACK_TURN_POINTS[temp_selected_turn_point].cy0 - (TRACK_TURN_POINTS[temp_selected_turn_point].y - MOUSE_POS[1])
             TRACK_TURN_POINTS[temp_selected_turn_point].cx1, TRACK_TURN_POINTS[temp_selected_turn_point].cy1 = TRACK_TURN_POINTS[temp_selected_turn_point].cx1 - (TRACK_TURN_POINTS[temp_selected_turn_point].x - MOUSE_POS[0]), TRACK_TURN_POINTS[temp_selected_turn_point].cy1 - (TRACK_TURN_POINTS[temp_selected_turn_point].y - MOUSE_POS[1])
             TRACK_TURN_POINTS[temp_selected_turn_point].x,   TRACK_TURN_POINTS[temp_selected_turn_point].y   = MOUSE_POS
@@ -1152,7 +1163,7 @@ while 1: # ---------------------------------------------------------------------
             calculate_track_points()
 
 
-        if (temp_selected_checkpoint) and (not KEY_PRESSED[pg.K_LALT]):
+        if (temp_selected_checkpoint != None) and (not KEY_PRESSED[pg.K_LALT]):
             exec(
                 f"TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cx{temp_selected_checkpoint[1]}, TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cy{temp_selected_checkpoint[1]} = MOUSE_POS;"
                 f"TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cx{temp_selected_checkpoint[1]}, TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cy{temp_selected_checkpoint[1]} = snap_point_to_grid((TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cx{temp_selected_checkpoint[1]}, TRACK_TURN_POINTS[temp_selected_checkpoint[0]].cy{temp_selected_checkpoint[1]}));"
@@ -1161,7 +1172,7 @@ while 1: # ---------------------------------------------------------------------
             calculate_track_points()
 
 
-        if temp_mouse_down_point and temp_mouse_down_info:
+        if (temp_mouse_down_point != None) and (temp_mouse_down_info != None):
             if KEY_PRESSED[pg.K_LALT]:
                 _temp_checkpoint_0 = MOUSE_POS
                 _temp_checkpoint_1 = (temp_mouse_down_point[0] + (temp_mouse_down_point[0] - MOUSE_POS[0]), temp_mouse_down_point[1] + (temp_mouse_down_point[1] - MOUSE_POS[1]))
@@ -1194,7 +1205,7 @@ while 1: # ---------------------------------------------------------------------
                 pg.draw.circle(WIN, "lime", (p.cx1, p.cy1), 6)
     # ------------------------------------------------------------------------- CURRENT_MODE == "track-design"
     elif CURRENT_MODE == "tagging": # ---------------------------------------------- CURRENT_MODE == "tagging"
-        if temp_selected_point:
+        if temp_selected_point != None:
             if KEY_PRESSED[pg.K_LCTRL]:
                 if not ("turn-start" in TRACK[temp_selected_point][2]) and not ("turn-end" in TRACK[temp_selected_point][2]):
                     for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
@@ -1213,15 +1224,15 @@ while 1: # ---------------------------------------------------------------------
                     for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
                         if "braking-finish-point" in TRACK[n][2]:
                             TRACK[temp_selected_point][2].insert(0, "acceleration-start-point")
+                            TRACK[n][2].append({"reference-target-speed": calculate_max_cornering_speed(temp_selected_point), "overtaking-risk": 1.0})
                             break
 
                         elif "acceleration-start-point" in TRACK[n][2]:
                             TRACK[temp_selected_point][2].insert(0, "braking-finish-point")
-                            TRACK[temp_selected_point][2].append({"reference-target-speed": 0, "overtaking-risk": 1.0})
                             break
                     else:
                         TRACK[temp_selected_point][2].insert(0, "braking-finish-point")
-                        TRACK[temp_selected_point][2].append({"reference-target-speed": 0, "overtaking-risk": 1.0})
+                        # TRACK[temp_selected_point][2].append({"reference-target-speed": calculate_max_cornering_speed(temp_selected_point), "overtaking-risk": 1.0})
 
             elif KEY_PRESSED[pg.K_LALT]:
                     if "turn-start" in TRACK[temp_selected_point][2]:
@@ -1272,6 +1283,10 @@ while 1: # ---------------------------------------------------------------------
                             if "braking-finish-point" in TRACK[n][2]:
                                 TRACK[n][2].remove("braking-finish-point")
                                 break
+
+                    for tag in TRACK[temp_selected_point][2]:
+                        if (tag != "asphalt") and (tag != "dirt"):
+                            TRACK[temp_selected_point][2].remove(tag)
 
             else:
                 if "timer" in TRACK[temp_selected_point][2]:
