@@ -210,32 +210,40 @@ def compute_bezier_points(vertices, numPoints: None | int = None) -> list[tuple[
 
 
 def calculate_max_cornering_speed(point2: int):
-    section1: pg.Vector2 = pg.Vector2(TRACK_POINTS[point2]) - TRACK_POINTS[point2 - 1]
-    section2: pg.Vector2
+    section1: pg.Vector2
+    section2: pg.Vector2 = TRACK_POINTS[point2 - 1] - pg.Vector2(TRACK_POINTS[point2])
 
     point1 = -1
-    top_point = -1
-    top_point_len = float("inf")
+    # top_point = -1
+    # top_point_len = float("inf")
+    turn_length = 0
 
 
     for n, p in reversed(list(enumerate(TRACK[:point2]))):
+        turn_length += pg.Vector2(TRACK_POINTS[n]).distance_to(TRACK_POINTS[n + 1])
+
         if "braking-finish-point" in p[2]:
             point1 = n
-            section2 = pg.Vector2(TRACK_POINTS[n]) - TRACK_POINTS[n + 1]
+            section1 = TRACK_POINTS[n + 1] - pg.Vector2(TRACK_POINTS[n])
             break
 
 
-    for n, p in enumerate(TRACK_POINTS[point1:]):
-        n += point1
+    # for n, p in enumerate(TRACK_POINTS[point1:]):
+    #     n += point1
 
-        if "acceleration-start-point" in TRACK[n][2]:
-            break
+    #     if "acceleration-start-point" in TRACK[n][2]:
+    #         break
 
-        if (_temp_len_1 := pg.Vector2(p).distance_squared_to(TRACK_POINTS[n + 1])) < top_point_len:
-            top_point_len = _temp_len_1
-            top_point = n
+    #     if (_temp_len_1 := pg.Vector2(p).distance_squared_to(TRACK_POINTS[n + 1])) < top_point_len:
+    #         top_point_len = _temp_len_1
+    #         top_point = n
 
-    print(top_point)
+    # print(top_point)
+
+
+    angle = section1.angle_to(section2)
+
+    result = angle * turn_length
 
     pg.draw.line(WIN, "red", TRACK_POINTS[point1], TRACK_POINTS[point2])
 
