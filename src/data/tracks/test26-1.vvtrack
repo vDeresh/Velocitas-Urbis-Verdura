@@ -1,0 +1,16 @@
+2.0
+test26
+['Deresh']
+[(0, ['braking-finish-point', 'asphalt', 'timer', 'meta', {'reference-target-speed': 49689423896.340706, 'overtaking-risk': 1.0}]), (3, ['acceleration-start-point']), (12, ['braking-finish-point', {'reference-target-speed': 25192365426.107937, 'overtaking-risk': 1.0}]), (14, ['acceleration-start-point']), (26, [{'reference-target-speed': 13950703945.088299, 'overtaking-risk': 1.0}]), (27, ['braking-finish-point', {'reference-target-speed': 16917497913.28258, 'overtaking-risk': 1.0}]), (29, ['acceleration-start-point']), (38, ['braking-finish-point', {'reference-target-speed': 3983793698.383708, 'overtaking-risk': 1.0}]), (41, ['acceleration-start-point']), (55, ['braking-finish-point', {'reference-target-speed': 85270778740.4602, 'overtaking-risk': 1.0}]), (56, [{'reference-target-speed': 42512592802.15499, 'overtaking-risk': 1.0}]), (58, ['acceleration-start-point']), (69, ['braking-finish-point', {'reference-target-speed': 301635848.1487018, 'overtaking-risk': 1.0}]), (73, ['acceleration-start-point']), (95, ['braking-finish-point', {'reference-target-speed': 18650630725.152733, 'overtaking-risk': 1.0}]), (99, ['acceleration-start-point']), (112, ['braking-finish-point', {'reference-target-speed': 15520258843.280111, 'overtaking-risk': 1.0}]), (114, ['acceleration-start-point']), (126, ['braking-finish-point', {'reference-target-speed': 41548909438.86612, 'overtaking-risk': 1.0}]), (129, ['acceleration-start-point']), (142, ['braking-finish-point', {'reference-target-speed': 14286814390.638084, 'overtaking-risk': 1.0}]), (145, ['acceleration-start-point'])]
+314 107 305 55 318 132 ['asphalt'] 16
+537 135 567 267 507 3 ['asphalt'] 16
+679 392 755 292 603 492 ['asphalt'] 16
+772 371 647 502 897 240 ['asphalt'] 16
+540 580 791 602 289 558 ['asphalt'] 16
+853 624 680 645 1026 603 ['asphalt'] 16
+470 729 375 684 565 774 ['asphalt'] 16
+308 746 247 811 369 681 ['asphalt'] 16
+155 745 71 643 239 847 ['asphalt'] 16
+223 593 378 593 68 593 ['asphalt'] 16
+376 487 355 357 397 617 ['asphalt'] 16
+332 219 323 158 341 280 ['asphalt'] 16

@@ -5,6 +5,7 @@ import sys
 import json
 from os import path
 import os
+import math
 
 from threading import Thread
 import curses, _curses
@@ -241,11 +242,12 @@ def calculate_max_cornering_speed(point2: int):
     # print(top_point)
 
 
-    angle = section1.angle_to(section2)
+    angle = abs(section1.angle_to(section2))
 
-    result = angle * turn_length
+    result = math.sqrt(angle * turn_length * max(2, pow(angle, 4) / pow(160, 3.65)))
 
     pg.draw.line(WIN, "red", TRACK_POINTS[point1], TRACK_POINTS[point2])
+    return result
 
 
 def is_similar(p1, p2, _range: int = 2) -> bool:
@@ -1270,6 +1272,9 @@ while 1: # ---------------------------------------------------------------------
 
                     if "braking-finish-point" in TRACK[temp_selected_point][2]:
                         TRACK[temp_selected_point][2].remove("braking-finish-point")
+                        try:
+                            TRACK[temp_selected_point][2].pop()
+                        except IndexError: pass
 
                         for n, p in enumerate(TRACK[temp_selected_point + 1:]):
                             n += temp_selected_point
