@@ -5,6 +5,13 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Track editor",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "editor.py",
+            "args": "${command:pickArgs}"
+        },
+        {
             "name": "Simulator",
             "type": "debugpy",
             "request": "launch",

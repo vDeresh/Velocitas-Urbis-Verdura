@@ -212,7 +212,7 @@ def compute_bezier_points(vertices, numPoints: None | int = None) -> list[tuple[
 
 def calculate_max_cornering_speed(point2: int):
     section1: pg.Vector2
-    section2: pg.Vector2 = TRACK_POINTS[point2 - 1] - pg.Vector2(TRACK_POINTS[point2])
+    section2: pg.Vector2 = TRACK_POINTS[point2 + 1] - pg.Vector2(TRACK_POINTS[point2])
 
     point1 = -1
     # top_point = -1
@@ -225,7 +225,7 @@ def calculate_max_cornering_speed(point2: int):
 
         if "braking-finish-point" in p[2]:
             point1 = n
-            section1 = TRACK_POINTS[n + 1] - pg.Vector2(TRACK_POINTS[n])
+            section1 = TRACK_POINTS[n - 1] - pg.Vector2(TRACK_POINTS[n])
             break
 
 
@@ -242,9 +242,20 @@ def calculate_max_cornering_speed(point2: int):
     # print(top_point)
 
 
-    angle = abs(section1.angle_to(section2))
+    # angle = abs(section1.angle_to(section2))
+
+    dot = section1.x * section2.x + section1.y * section2.y
+
+    vm1 = math.sqrt((section1.x * section1.x) + (section1.y * section1.y))
+    vm2 = math.sqrt((section2.x * section2.x) + (section2.y * section2.y))
+
+    angle = math.acos(dot / (vm1 * vm2))
+    angle *= 180 / math.pi
+
 
     result = math.sqrt(angle * turn_length * max(2, pow(angle, 4) / pow(160, 3.65)))
+
+    SHARED['terminal-output'] = f"angle: {angle}\n   turn length: {turn_length}\n   c: {max(2, pow(angle, 4) / pow(160, 3.65))}\n   result: {result}"
 
     pg.draw.line(WIN, "red", TRACK_POINTS[point1], TRACK_POINTS[point2])
     return result
@@ -440,6 +451,8 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
         # stdscr.addstr(9, 48, "mode") # <mode> TODO
         # stdscr.addstr(9, 53, "<mode>", curses.A_BLINK)
 
+        # mode
+
 
         curses.textpad.rectangle(stdscr, 11, 1, 13, 122)
         stdscr.addstr(11, 2, " Command line ")
@@ -566,20 +579,31 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                                 TERMINAL_OUTPUT = f"MOVE: Moved the track by [{int(command[1])}, {int(command[2])}]."
                             except ValueError:
                                 TERMINAL_OUTPUT = f"[!] MOVE: Parameters must be integers."
+
+                        elif len(command) == 2:
+                            if command[1] in ["c", "center"]:
+                                pass
+
                         else:
-                            TERMINAL_OUTPUT = f"[!] MOVE: This command requires 2 parameters ({len(command) - 1} provided)."
+                            TERMINAL_OUTPUT = f"[?] MOVE: Type `help mode` to get help about this command's parameters."
 
                         calculate_track_points()
 
                     case "del":
-                        if len(command) == 2 and command[1].isdigit():
-                                if int(command[1]) < len(TRACK_TURN_POINTS):
-                                    TRACK_TURN_POINTS.pop(int(command[1]))
-                                    TERMINAL_OUTPUT = f"DEL: The point with index {int(command[1])} has been removed."
-                                else:
-                                    TERMINAL_OUTPUT = f"[!] DEL: There are {len(TRACK_TURN_POINTS)} turn-points."
+                        if len(TRACK_TURN_POINTS):
+                            if len(command) == 2:
+                                try:
+                                    if abs(int(command[1])) < len(TRACK_TURN_POINTS):
+                                        TRACK_TURN_POINTS.pop(int(command[1]))
+                                        TERMINAL_OUTPUT = f"DEL: The turn-point with index {(len(TRACK_TURN_POINTS) + 1 + int(command[1])) if int(command[1]) < 0 else int(command[1])} has been removed."
+                                    else:
+                                        TERMINAL_OUTPUT = f"[!] DEL: Parameter must be an integer in range <{-len(TRACK_TURN_POINTS) + 1}, {len(TRACK_TURN_POINTS) - 1}>."
+                                except ValueError:
+                                    TERMINAL_OUTPUT = f"[!] DEL: Parameter must be an integer in range <{-len(TRACK_TURN_POINTS) + 1}, {len(TRACK_TURN_POINTS) - 1}>."
+                            else:
+                                TERMINAL_OUTPUT = f"[?] DEL: Parameter must be an integer in range <{-len(TRACK_TURN_POINTS) + 1}, {len(TRACK_TURN_POINTS) - 1}>."
                         else:
-                            TERMINAL_OUTPUT = "[!] DEL: Parameter must be a positive integer."
+                            TERMINAL_OUTPUT = "[!] DEL: There are no turn-points to delete."
 
                         calculate_track_points()
 
@@ -594,9 +618,9 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                                 CURRENT_MODE = "tagging"
                                 TERMINAL_OUTPUT = f"MODE: Changed mode to {CURRENT_MODE}."
                             else:
-                                TERMINAL_OUTPUT = f"[!] MODE: Parameter should be 'd'/'track-design'/'t'/'tagging' (Provided {command[1]})."
+                                TERMINAL_OUTPUT = "[!] MODE: Type `help mode` to get help about this command's parameters."
                         else:
-                            TERMINAL_OUTPUT = "[!] MODE: This command requires 1 parameter."
+                            TERMINAL_OUTPUT = "[?] MODE: Type `help mode` to get help about this command's parameters."
 
                     case "clear":
                         TERMINAL_OUTPUT = ""
@@ -739,6 +763,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
         ├ 'd', 'track-design'
         └ 't', 'tagging'
 """
+
                                 case "del":
                                     TERMINAL_OUTPUT = """Command `del` deletes specified turn-point.
 
@@ -746,18 +771,21 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
         del <index>
 
     parameters:
-        <index> - turn-point index (first turn-point has index 0 and every other turn-point has index one bigger than previous)
+        <index> - turn-point index (first turn-point has index 0)
 """
+
                                 case "move":
                                     TERMINAL_OUTPUT = """Command `move` moves whole track by a specified vector.
 
     syntax:
         move <x> <y>
+        move 'center'
 
     parameters:
         <x> - number of pixels by which to move the track in x axis
         <y> - number of pixels by which to move the track in y axis
 """
+
                                 case "save": # <track name> <racing type> [*author(s)]
                                     TERMINAL_OUTPUT = """Command `save` saves track to a specified file.
 
@@ -822,10 +850,15 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
 
     parameters:
         <n>        - number of points
+        ├ int
+        └ 'd', 'default'     - changes bnop to default value (16)
         <*objects> - objects to which the change will be applied
         ├ 'global, 'g'       - changes the global bnop setting (default)
         ├ 'all', 'a'         - changes bnop setting for whole current track but does not change the global bnop setting
-        └ 'next-curve', 'nc' - temporarily changes the bnop setting (only for the next curve) but does not affect rest of the track nor the global bnop setting
+        ├ 'last-curve', 'lc' - temporarily changes the bnop setting (only for the last curve) but does not affect rest
+        │                      of the track nor the global bnop setting
+        └ 'next-curve', 'nc' - temporarily changes the bnop setting (only for the next curve) but does not affect rest
+                               of the track nor the global bnop setting
 """
 
                                 case "update":
@@ -1295,6 +1328,9 @@ while 1: # ---------------------------------------------------------------------
 
                             if "braking-finish-point" in TRACK[n][2]:
                                 TRACK[n][2].remove("braking-finish-point")
+                                try:
+                                    TRACK[temp_selected_point][2].pop()
+                                except IndexError: pass
                                 break
 
                     for tag in TRACK[temp_selected_point][2]:

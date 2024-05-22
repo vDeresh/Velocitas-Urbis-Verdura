@@ -1,0 +1,14 @@
+2.0
+test30
+['Deresh']
+[(0, ['asphalt', 'timer', 'meta']), (9, ['braking-finish-point', {'reference-target-speed': 64.19682375700944, 'overtaking-risk': 1.0}, {'reference-target-speed': 54.316044693228406, 'overtaking-risk': 1.0}, {'reference-target-speed': 64.19682375700944, 'overtaking-risk': 1.0}, {'reference-target-speed': 64.19682375700944, 'overtaking-risk': 1.0}]), (10, [{'reference-target-speed': 60.48141648864221, 'overtaking-risk': 1.0}, {'reference-target-speed': 46.57960797117602, 'overtaking-risk': 1.0}, {'reference-target-speed': 60.48141648864221, 'overtaking-risk': 1.0}, {'reference-target-speed': 46.57960797117602, 'overtaking-risk': 1.0}, {'reference-target-speed': 60.48141648864221, 'overtaking-risk': 1.0}]), (13, ['acceleration-start-point']), (26, ['braking-finish-point', {'reference-target-speed': 69.4120724384583, 'overtaking-risk': 1.0}]), (28, ['acceleration-start-point']), (40, ['braking-finish-point', {'reference-target-speed': 68.23198547561505, 'overtaking-risk': 1.0}]), (43, ['acceleration-start-point']), (54, [{'reference-target-speed': 159.61556253770917, 'overtaking-risk': 1.0}]), (56, ['braking-finish-point', {'reference-target-speed': 143.38854854766595, 'overtaking-risk': 1.0}, {'reference-target-speed': 141.33863409287198, 'overtaking-risk': 1.0}, {'reference-target-speed': 112.03962576621754, 'overtaking-risk': 1.0}, {'reference-target-speed': 141.33863409287198, 'overtaking-risk': 1.0}]), (58, ['acceleration-start-point']), (79, [{'reference-target-speed': 20.247831701939795, 'overtaking-risk': 1.0}]), (80, ['braking-finish-point', {'reference-target-speed': 15.999067105715769, 'overtaking-risk': 1.0}]), (83, ['acceleration-start-point']), (98, ['braking-finish-point', {'reference-target-speed': 74.67872149580583, 'overtaking-risk': 1.0}]), (101, ['acceleration-start-point']), (121, ['braking-finish-point', {'reference-target-speed': 89.27862245644651, 'overtaking-risk': 1.0}]), (124, ['acceleration-start-point']), (129, ['braking-finish-point', {'reference-target-speed': 155.76497808136216, 'overtaking-risk': 1.0}]), (131, ['acceleration-start-point'])]
+368 307 398 259 338 355 ['asphalt'] 16
+459 245 483 362 435 128 ['asphalt'] 16
+457 473 600 470 314 476 ['asphalt'] 16
+685 440 685 564 685 316 ['asphalt'] 16
+637 688 547 734 727 642 ['asphalt'] 16
+332 749 195 732 469 766 ['asphalt'] 16
+325 757 422 775 228 739 ['asphalt'] 16
+420 883 292 888 548 878 ['asphalt'] 16
+109 725 108 605 110 845 ['asphalt'] 16
+267 555 335 387 199 723 ['asphalt'] 16

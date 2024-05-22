@@ -243,7 +243,7 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
 # _racing_class_name = "Aper 1"
 _racing_category_name = "Volo"
 _racing_class_name = "CAT-B"
-_race_track_name = "ft1t"
+_race_track_name = "cyce"
 
 simulation_interface(_racing_category_name, _racing_class_name, _race_track_name, main_mgr.ready_drivers(_racing_category_name, _racing_class_name))
 
