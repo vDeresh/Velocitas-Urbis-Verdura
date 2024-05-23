@@ -4,7 +4,7 @@ import curses.textpad
 import sys
 import json
 from os import path
-import os
+# import os
 import math
 
 from threading import Thread
@@ -18,8 +18,8 @@ SETTINGS = {
     'EDITOR': {
         # 'global-bezier-num-of-points': 16,
         'current-bezier-num-of-points': 16,
-        'timer-tag-frequency': 10,
-        'grid-size': 0
+        'grid-size': 0,
+        'current-tag': "turns"
     },
 
     'TRACK': {
@@ -58,6 +58,12 @@ TRACK_POINTS_TAGS: list[tuple[int, list]] = []
 BACKGROUND_IMG: None | pg.Surface = None
 
 CURRENT_MODE: str = "track-design"
+
+
+pg.display.init()
+pg.font.init()
+
+FONT_1 = pg.sysfont.SysFont("", 24)
 
 
 def round_half_up(n) -> int:
@@ -144,9 +150,9 @@ def show():
 
 
 def compute_bezier_points(vertices, numPoints: None | int = None) -> list[tuple[int, int]]:
-    if not numPoints:
+    if numPoints == None:
         # numPoints = SETTINGS['EDITOR']['global -bezier-num-of-points']
-        numPoints = SETTINGS['EDITOR']['current-bezier-num-of-points']
+        numPoints = int(SETTINGS['EDITOR']['current-bezier-num-of-points'])
 
     result = []
 
@@ -348,25 +354,31 @@ def calculate_track_points():
                 TRACK[pt[0]][2].append(tag)
 
 
-def tag_track():
+def tag_track(timer_tag_frequency: None | int):
     if not len(TRACK):
         return
 
-    for n, p in enumerate(TRACK):
-        if "timer" in p[2]:
-            TRACK[n][2].remove("timer")
+    if timer_tag_frequency != None:
+        for n, p in enumerate(TRACK):
+            if "timer" in p[2]:
+                TRACK[n][2].remove("timer")
 
     for pt in TRACK_POINTS_TAGS:
-        TRACK[pt[0]][2].extend(pt[1])
+        for tag in pt[1]:
+            if not tag in TRACK[pt[0]][2]:
+                TRACK[pt[0]][2].insert(0, tag)
 
 
     if not "meta" in TRACK[0][2]:
         TRACK[0][2].insert(0, "meta")
 
 
-    for n, p in enumerate(TRACK):
-        if (not n % SETTINGS['EDITOR']['timer-tag-frequency']) or ("drs-start" in p[2]) or ("drs-end" in p[2]):
-            TRACK[n][2].insert(0, "timer")
+    if timer_tag_frequency != None:
+        for n, p in enumerate(TRACK):
+            if (not n % timer_tag_frequency) or ("drs-start" in p[2]) or ("drs-end" in p[2]):
+                TRACK[n][2].insert(0, "timer")
+
+    calculate_track_points()
 
 
 
@@ -376,7 +388,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
     curses.curs_set(0)
     stdscr.nodelay(True)
 
-    textbox_win = curses.newwin(1, 117, 12, 5)
+    textbox_win = curses.newwin(1, 117, 14, 5)
     textbox = curses.textpad.Textbox(textbox_win)
 
     TERMINAL_OUTPUT = ""
@@ -391,7 +403,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
 
         stdscr.clear()
 
-        curses.textpad.rectangle(stdscr, 0, 1, 5, 56)
+        curses.textpad.rectangle(stdscr, 0, 1, 6, 56)
         stdscr.addstr(0, 2, " Track info ")
         stdscr.addstr(1, 3, f"amount of points:.. {len(TRACK_POINTS)}")
         stdscr.addstr(2, 3, f"track length:...... {SHARED['track-length']}")
@@ -405,16 +417,17 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
             stdscr.addstr(3, 3, f"not enough points to calculate the starting direction")
 
         stdscr.addstr(4, 3, f"scale:............. {SETTINGS['TRACK']['scale']}")
+        stdscr.addstr(5, 3, f"number of timers:.. {sum([int('timer' in tags) for _, tags in TRACK_POINTS_TAGS])}")
 
 
-        curses.textpad.rectangle(stdscr, 6, 1, 10, 56)
-        stdscr.addstr(6, 2, " Editor info ")
-        stdscr.addstr(7, 3, f"bnop:............... {SETTINGS['EDITOR']['current-bezier-num-of-points']}")
-        stdscr.addstr(8, 3, f"timer tag frequency: {SETTINGS['EDITOR']['timer-tag-frequency']}")
-        stdscr.addstr(9, 3, f"grid {"size:.......... " + str(SETTINGS['EDITOR']['grid-size']) if SETTINGS['EDITOR']['grid-size'] else "disabled"}")
+        curses.textpad.rectangle(stdscr, 7, 1, 12, 56)
+        stdscr.addstr( 7, 2, " Editor info ")
+        stdscr.addstr( 8, 3, f"bnop:............... {SETTINGS['EDITOR']['current-bezier-num-of-points']}")
+        stdscr.addstr( 9, 3, f"grid {"size:.......... " + str(SETTINGS['EDITOR']['grid-size']) if SETTINGS['EDITOR']['grid-size'] else "disabled"}")
+        stdscr.addstr(10, 3, f"mode:............... {CURRENT_MODE} {f"({SETTINGS['EDITOR']['current-tag']})" if CURRENT_MODE == "tagging" else ""}")
 
 
-        curses.textpad.rectangle(stdscr, 0, 57, 10, 122) # TODO add `move` command to move whole track
+        curses.textpad.rectangle(stdscr, 0, 57, 12, 122) # TODO add `move` command to move whole track
         stdscr.addstr(0, 58, " Help ")
         stdscr.addstr(1, 59, "help")
         stdscr.addstr(1, 64, "<command>", curses.A_VERTICAL)
@@ -429,8 +442,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
         stdscr.addstr(4,  64, "{project}", curses.A_BLINK)
         stdscr.addstr(4,  74, "<track name>", curses.A_BLINK)
         stdscr.addstr(4,  87, "<racing type>", curses.A_BLINK)
-        stdscr.addstr(4, 101, "{tag}", curses.A_BLINK)
-        stdscr.addstr(4, 107, "[*author(s)]", curses.A_BLINK)
+        stdscr.addstr(4, 101, "[*author(s)]", curses.A_BLINK)
 
         stdscr.addstr(5, 59, "tag") # <*frequency>
         stdscr.addstr(5, 64, "<*frequency>", curses.A_BLINK)
@@ -448,19 +460,20 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
         stdscr.addstr(9, 59, "del") # <index>
         stdscr.addstr(9, 64, "<index>", curses.A_BLINK)
 
-        # stdscr.addstr(9, 48, "mode") # <mode> TODO
-        # stdscr.addstr(9, 53, "<mode>", curses.A_BLINK)
+        stdscr.addstr(10, 59, "mode") # <mode>
+        stdscr.addstr(10, 64, "<mode>", curses.A_BLINK)
 
-        # mode
+        stdscr.addstr(11, 59, "scale") # <scale>
+        stdscr.addstr(11, 65, "<scale>", curses.A_BLINK)
 
 
-        curses.textpad.rectangle(stdscr, 11, 1, 13, 122)
-        stdscr.addstr(11, 2, " Command line ")
-        stdscr.addstr(12, 3, ">")
+        curses.textpad.rectangle(stdscr, 13, 1, 15, 122)
+        stdscr.addstr(13, 2, " Command line ")
+        stdscr.addstr(14, 3, ">")
 
-        stdscr.addstr(15, 3, TERMINAL_OUTPUT)
-        curses.textpad.rectangle(stdscr, 14, 1, 28, 122)
-        stdscr.addstr(14, 2, " Output ")
+        stdscr.addstr(17, 3, TERMINAL_OUTPUT)
+        curses.textpad.rectangle(stdscr, 16, 1, 31, 122)
+        stdscr.addstr(16, 2, " Output ")
 
         stdscr.refresh()
 
@@ -475,7 +488,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                     continue
 
                 match command[0].lower():
-                    case "bnop": # <n> <*objects>
+                    case "bnop": # <n> <*object>
                         if 3 >= len(command) >= 2:
                             if command[1].isdigit() and int(command[1]) > 1:
                                 if len(command) == 3:
@@ -489,7 +502,11 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                                         TERMINAL_OUTPUT = f"BNOP: Set to {SETTINGS['EDITOR']['current-bezier-num-of-points']}."
 
                                     else:
-                                        TERMINAL_OUTPUT = f"[!] BNOP: Invalid <*objects> parameter ('{command[1]}' provided)."
+                                        try:
+                                            TRACK_TURN_POINTS[int(command[2])].bnop = int(command[1])
+                                            TERMINAL_OUTPUT = f"BNOP: Turn-point {int(command[2])} bnop set to {TRACK_TURN_POINTS[int(command[2])].bnop}."
+                                        except ValueError:
+                                            TERMINAL_OUTPUT = f"[!] BNOP: Invalid <*object> parameter ('{command[2]}' provided)."
                                 else:
                                     TRACK_TURN_POINTS[-1].bnop = int(command[1])
                                     SETTINGS['EDITOR'].update({'current-bezier-num-of-points': int(command[1])})
@@ -507,20 +524,31 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
 
                         calculate_track_points()
 
-                    case "tag": # <*frequency>
-                        TERMINAL_OUTPUT = ""
+                    case "tag": # <tag> <frequency>
+                        if 1 < len(command) <= 2 + 1:
+                            if command[1] == 'drs':
+                                SETTINGS['EDITOR'].update({'current-tag': "drs"})
 
-                        if len(command) == 2:
-                            if command[1].isdigit() and int(command[1]) > 1:
-                                SETTINGS['EDITOR'].update({'timer-tag-frequency': int(command[1])})
-                                TERMINAL_OUTPUT = f"TAG: Default tag frequency was to {SETTINGS['EDITOR']['timer-tag-frequency']}.\n   "
+                            elif command[1] == 'turns':
+                                SETTINGS['EDITOR'].update({'current-tag': "turns"})
+
+                            elif command[1] == 'braking':
+                                SETTINGS['EDITOR'].update({'current-tag': "braking"})
+
+                            elif command[1] == 'timer':
+                                if len(command) == 2 + 1:
+                                    if command[2].isdigit() and int(command[2]) > 1:
+                                        tag_track(timer_tag_frequency=int(command[2]))
+                                        TERMINAL_OUTPUT = "TAG: Track tagged."
+                                    else:
+                                        TERMINAL_OUTPUT = "[?] TAG: Type `help mode` to get help about this command's syntax."
+                                else:
+                                    SETTINGS['EDITOR'].update({'current-tag': "timer"})
+
                             else:
-                                TERMINAL_OUTPUT = f"[!] TAG: Parameter must be a number bigger than 1 ('{command[1]}' provided)."
-                        elif len(command) > 2:
-                            TERMINAL_OUTPUT = f"[!] TAG: This command takes 1 (optional) parameter ({len(command) - 1} provided)."
-
-                        tag_track()
-                        TERMINAL_OUTPUT += "TAG: Track tagged."
+                                TERMINAL_OUTPUT = "[?] TAG: Type `help mode` to get help about this command's syntax."
+                        elif len(command) > 2 + 1:
+                            TERMINAL_OUTPUT = f"[!] TAG: This command takes 2 parameters ({len(command) - 1} provided)."
 
                     case "grid": # <size>
                         if len(command) == 2:
@@ -585,7 +613,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                                 pass
 
                         else:
-                            TERMINAL_OUTPUT = f"[?] MOVE: Type `help mode` to get help about this command's parameters."
+                            TERMINAL_OUTPUT = f"[?] MOVE: Type `help mode` to get help about this command's syntax."
 
                         calculate_track_points()
 
@@ -614,7 +642,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                             if command[1] in ["d", "track-design"]:
                                 CURRENT_MODE = "track-design"
                                 TERMINAL_OUTPUT = f"MODE: Changed mode to {CURRENT_MODE}."
-                            elif command[1] in ["t", "tagging"]:
+                            elif command[1] in ["t", "tag", "tagging"]:
                                 CURRENT_MODE = "tagging"
                                 TERMINAL_OUTPUT = f"MODE: Changed mode to {CURRENT_MODE}."
                             else:
@@ -632,7 +660,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                         else:
                             TERMINAL_OUTPUT = "[!] UPDATE: This command requires no parameters."
 
-                    case "save": # {project} <track name> <racing type> {tag} [*author(s)]
+                    case "save": # {project} <track name> <racing type> [*author(s)]
                         if len(command) < 4 + 1:
                             TERMINAL_OUTPUT = f"[!] SAVE: This command takes atleast 4 parameters ({len(command) - 1} provided)."
                             continue
@@ -651,17 +679,11 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                             TERMINAL_OUTPUT = f"[!] SAVE: <racing type> parameter is not valid ('{command[3]}' provided)."
                             continue
 
-                        if (command[4].isdigit()) and (int(command[4]) in [0, 1]):
-                            _tag = int(command[4])
-
-                        _authors = [command[n] for n in range(5, len(command))]
+                        _authors = [command[n] for n in range(4, len(command))]
 
                         path_to_file = path.abspath(path.join("src", "data", "tracks", _track_name))
                         save_number = 0
 
-
-                        if _tag:
-                            tag_track()
 
                         calculate_track_points()
 
@@ -761,7 +783,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
     parameters:
         <mode>
         ├ 'd', 'track-design'
-        └ 't', 'tagging'
+        └ 't', 'tag', 'tagging'
 """
 
                                 case "del":
@@ -778,8 +800,8 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                                     TERMINAL_OUTPUT = """Command `move` moves whole track by a specified vector.
 
     syntax:
-        move <x> <y>
-        move 'center'
+        1. move <x> <y>
+        2. move 'center'
 
     parameters:
         <x> - number of pixels by which to move the track in x axis
@@ -798,7 +820,6 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
         <racing type> - racing type to create or update in a given file
         ├ 'formula'
         └ 'rallycross'
-        {tag}         - bool (0 or 1) indicating if this track should be automatically tagged
         [*author(s)]  - authors' names split with spaces
 """
 
@@ -832,29 +853,34 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
         <size> - cell side length in pixels
 """
 
-                                case "tag": # <*frequency>
-                                    TERMINAL_OUTPUT = """Command `tag` allows the user to auto-tag points and change the default 'timer' tag frequency.\n   If the <*frequency> parameter is specified, the command will auto-tag points and change default 'timer' tag frequency.
+                                case "tag": # <tag> <frequency>
+                                    TERMINAL_OUTPUT = """Command `tag` allows the user to change current tag in tagging mode or auto-tag 'timer' tag.
 
     syntax:
-        tag <*frequency>
+        1. tag <tag>
+        2. tag <tag> <frequency>
 
-    parameters:
-        <*frequency> - number of points between each 'timer' tag
+    1. parameters:
+        <tag> - type of tag to set
+
+    2. parameters:
+        <tag> - type of tag to set
+        └ 'timer'
+        <frequency> - number of points between each tag
 """
 
-                                case "bnop": # <n> <*objects>
+                                case "bnop": # <n> <*object>
                                     TERMINAL_OUTPUT = """Command `bnop` allows the user to set the number of points in curves.
 
     syntax:
-        bnop <n> <*objects>
+        bnop <n> <*object>
 
     parameters:
         <n>        - number of points
         ├ int
         └ 'd', 'default'     - changes bnop to default value (16)
-        <*objects> - objects to which the change will be applied
-        ├ 'global, 'g'       - changes the global bnop setting (default)
-        ├ 'all', 'a'         - changes bnop setting for whole current track but does not change the global bnop setting
+        <*object> - objects to which the change will be applied
+        ├ int                - index of any turn-point
         ├ 'last-curve', 'lc' - temporarily changes the bnop setting (only for the last curve) but does not affect rest
         │                      of the track nor the global bnop setting
         └ 'next-curve', 'nc' - temporarily changes the bnop setting (only for the next curve) but does not affect rest
@@ -908,6 +934,7 @@ temp_selected_checkpoint: None | tuple[int, int] = None
 temp_selected_point:      None | int             = None
 
 _current_surface_type = "asphalt"
+_draw_drs = False
 
 
 
@@ -1152,7 +1179,16 @@ while 1: # ---------------------------------------------------------------------
         if "asphalt" in p[2]: _current_surface_type = "asphalt"
         elif "dirt" in p[2]: _current_surface_type = "dirt"
 
-        if _current_surface_type == "asphalt":
+        if (not _draw_drs) and ("drs-start" in p[2]): _draw_drs = True
+        if (    _draw_drs) and ("drs-end"   in p[2]): _draw_drs = False
+
+        if _draw_drs:
+            if n != len(TRACK_POINTS) - 1:
+                pg.draw.line(WIN, "lime", TRACK_POINTS[n], TRACK_POINTS[n + 1])
+            else:
+                pg.draw.line(WIN, "lime", TRACK_POINTS[n], TRACK_POINTS[0])
+
+        elif _current_surface_type == "asphalt":
             if n != len(TRACK_POINTS) - 1:
                 pg.draw.line(WIN, "black", TRACK_POINTS[n], TRACK_POINTS[n + 1])
             else:
@@ -1167,20 +1203,26 @@ while 1: # ---------------------------------------------------------------------
 
     for p in TRACK:
         if "timer" in p[2]:
-            pg.draw.circle(WIN, "yellow2", p[0:2], 7)
-            pg.draw.circle(WIN, "yellow3", p[0:2], 7, 1)
+            pg.draw.circle(WIN, "#ffff00", p[0:2], 7)
+            pg.draw.circle(WIN, "#cccc00", p[0:2], 7, 1)
 
         if "turn-start" in p[2]:
-            pg.draw.circle(WIN, "lime", p[0:2], 6)
+            pg.draw.circle(WIN, "#44ff44", p[0:2], 6)
 
         if "turn-end" in p[2]:
-            pg.draw.circle(WIN, "red", p[0:2], 6)
+            pg.draw.circle(WIN, "#ff4444", p[0:2], 6)
 
         if "braking-finish-point" in p[2]:
-            pg.draw.circle(WIN, "pink", p[0:2], 5)
+            pg.draw.circle(WIN, "#ffccff", p[0:2], 5)
 
         if "acceleration-start-point" in p[2]:
-            pg.draw.circle(WIN, "green", p[0:2], 5)
+            pg.draw.circle(WIN, "#aaafff", p[0:2], 5)
+
+        if "drs-start" in p[2]:
+            pg.draw.circle(WIN, "#22ff66", p[0:2], 4)
+
+        if "drs-end" in p[2]:
+            pg.draw.circle(WIN, "#00dd55", p[0:2], 4)
 
 
         pg.draw.circle(WIN, "darkred", p[0:2], 2)
@@ -1249,35 +1291,8 @@ while 1: # ---------------------------------------------------------------------
     # ------------------------------------------------------------------------- CURRENT_MODE == "track-design"
     elif CURRENT_MODE == "tagging": # ---------------------------------------------- CURRENT_MODE == "tagging"
         if temp_selected_point != None:
-            if KEY_PRESSED[pg.K_LCTRL]:
-                if not ("turn-start" in TRACK[temp_selected_point][2]) and not ("turn-end" in TRACK[temp_selected_point][2]):
-                    for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
-                        if "turn-start" in TRACK[n][2]:
-                            TRACK[temp_selected_point][2].insert(0, "turn-end")
-                            break
-
-                        elif "turn-end" in TRACK[n][2]:
-                            TRACK[temp_selected_point][2].insert(0, "turn-start")
-                            break
-                    else:
-                        TRACK[temp_selected_point][2].insert(0, "turn-start")
-
-            elif KEY_PRESSED[pg.K_LSHIFT]:
-                if not ("braking-finish-point" in TRACK[temp_selected_point][2]) and not ("acceleration-start-point" in TRACK[temp_selected_point][2]):
-                    for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
-                        if "braking-finish-point" in TRACK[n][2]:
-                            TRACK[temp_selected_point][2].insert(0, "acceleration-start-point")
-                            TRACK[n][2].append({"reference-target-speed": calculate_max_cornering_speed(temp_selected_point), "overtaking-risk": 1.0})
-                            break
-
-                        elif "acceleration-start-point" in TRACK[n][2]:
-                            TRACK[temp_selected_point][2].insert(0, "braking-finish-point")
-                            break
-                    else:
-                        TRACK[temp_selected_point][2].insert(0, "braking-finish-point")
-                        # TRACK[temp_selected_point][2].append({"reference-target-speed": calculate_max_cornering_speed(temp_selected_point), "overtaking-risk": 1.0})
-
-            elif KEY_PRESSED[pg.K_LALT]:
+            if KEY_PRESSED[pg.K_LALT]:
+                if SETTINGS['EDITOR']['current-tag'] == "turns":
                     if "turn-start" in TRACK[temp_selected_point][2]:
                         TRACK[temp_selected_point][2].remove("turn-start")
 
@@ -1302,7 +1317,7 @@ while 1: # ---------------------------------------------------------------------
                                 TRACK[n][2].remove("turn-start")
                                 break
 
-
+                elif SETTINGS['EDITOR']['current-tag'] == "braking":
                     if "braking-finish-point" in TRACK[temp_selected_point][2]:
                         TRACK[temp_selected_point][2].remove("braking-finish-point")
                         try:
@@ -1333,18 +1348,89 @@ while 1: # ---------------------------------------------------------------------
                                 except IndexError: pass
                                 break
 
-                    for tag in TRACK[temp_selected_point][2]:
-                        if (tag != "asphalt") and (tag != "dirt"):
-                            TRACK[temp_selected_point][2].remove(tag)
+                elif SETTINGS['EDITOR']['current-tag'] == "drs":
+                    if "drs-start" in TRACK[temp_selected_point][2]:
+                        TRACK[temp_selected_point][2].remove("drs-start")
+
+                        for n, p in enumerate(TRACK[temp_selected_point + 1:]):
+                            n += temp_selected_point
+
+                            if "drs-start" in TRACK[n][2]:
+                                break
+
+                            if "drs-end" in TRACK[n][2]:
+                                TRACK[n][2].remove("drs-end")
+                                break
+
+                    if "drs-end" in TRACK[temp_selected_point][2]:
+                        TRACK[temp_selected_point][2].remove("drs-end")
+
+                        for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
+                            if "drs-end" in TRACK[n][2]:
+                                break
+
+                            if "drs-start" in TRACK[n][2]:
+                                TRACK[n][2].remove("drs-start")
+                                break
 
             else:
-                if "timer" in TRACK[temp_selected_point][2]:
-                    TRACK[temp_selected_point][2].remove("timer")
-                else:
-                    TRACK[temp_selected_point][2].insert(0, "timer")
+                match SETTINGS['EDITOR']['current-tag']:
+                    case "turns":
+                        if not ("turn-start" in TRACK[temp_selected_point][2]) and not ("turn-end" in TRACK[temp_selected_point][2]):
+                            for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
+                                if "turn-start" in TRACK[n][2]:
+                                    TRACK[temp_selected_point][2].insert(0, "turn-end")
+                                    break
 
+                                elif "turn-end" in TRACK[n][2]:
+                                    TRACK[temp_selected_point][2].insert(0, "turn-start")
+                                    break
+                            else:
+                                TRACK[temp_selected_point][2].insert(0, "turn-start")
+
+                    case "braking":
+                        if not ("braking-finish-point" in TRACK[temp_selected_point][2]) and not ("acceleration-start-point" in TRACK[temp_selected_point][2]):
+                            for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
+                                if "braking-finish-point" in TRACK[n][2]:
+                                    TRACK[temp_selected_point][2].insert(0, "acceleration-start-point")
+                                    TRACK[n][2].append({"reference-target-speed": calculate_max_cornering_speed(temp_selected_point), "overtaking-risk": 1.0})
+                                    break
+
+                                elif "acceleration-start-point" in TRACK[n][2]:
+                                    TRACK[temp_selected_point][2].insert(0, "braking-finish-point")
+                                    break
+                            else:
+                                TRACK[temp_selected_point][2].insert(0, "braking-finish-point")
+
+                    case "drs":
+                        if not ("drs-start" in TRACK[temp_selected_point][2]) and not ("drs-end" in TRACK[temp_selected_point][2]):
+                            for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
+                                if "drs-start" in TRACK[n][2]:
+                                    TRACK[temp_selected_point][2].insert(0, "drs-end")
+                                    break
+
+                                elif "drs-end" in TRACK[n][2]:
+                                    TRACK[temp_selected_point][2].insert(0, "drs-start")
+                                    break
+                            else:
+                                TRACK[temp_selected_point][2].insert(0, "drs-start")
+
+                    case "timer":
+                        if "timer" in TRACK[temp_selected_point][2]:
+                            TRACK[temp_selected_point][2].remove("timer")
+                        else:
+                            TRACK[temp_selected_point][2].insert(0, "timer")
+
+            calculate_track_points()
             temp_selected_point = None
     # ------------------------------------------------------------------------------ CURRENT_MODE == "tagging"
+
+
+    # Info ---------------------------------------------------------------------------------------------------
+    if (pointn := closest_point(MOUSE_POS)) != None:
+        _temp_render_point_index = FONT_1.render(str(pointn), True, "azure", "azure4")
+        WIN.blit(_temp_render_point_index, (MOUSE_POS[0] - _temp_render_point_index.get_width(), MOUSE_POS[1] - _temp_render_point_index.get_height()))
+    # --------------------------------------------------------------------------------------------------- info
 
     pg.display.flip()
 
