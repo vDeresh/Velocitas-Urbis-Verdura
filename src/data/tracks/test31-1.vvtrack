@@ -1,0 +1,14 @@
+2.0
+test31
+['Deresh']
+[(0, ['asphalt', 'timer', 'meta']), (6, ['turn-start']), (11, ['braking-finish-point', {'reference-target-speed': 52.4002, 'overtaking-risk': 0.3676}]), (13, ['acceleration-start-point']), (15, ['turn-end']), (23, ['turn-start']), (25, ['braking-finish-point', {'reference-target-speed': 73.8417, 'overtaking-risk': 0.4208}]), (27, ['acceleration-start-point']), (29, ['turn-end']), (38, ['turn-start']), (40, ['braking-finish-point', {'reference-target-speed': 65.6435, 'overtaking-risk': 0.4773}]), (42, ['acceleration-start-point']), (44, ['turn-end']), (53, ['turn-start']), (55, ['braking-finish-point', {'reference-target-speed': 91.2908, 'overtaking-risk': 0.4683}]), (58, ['acceleration-start-point']), (59, ['turn-end']), (65, ['turn-start']), (67, ['braking-finish-point', {'reference-target-speed': 100.1562, 'overtaking-risk': 0.172}]), (69, ['acceleration-start-point']), (72, ['turn-end']), (78, ['turn-start']), (82, ['braking-finish-point', {'reference-target-speed': 58.4817, 'overtaking-risk': 0.3976}]), (85, ['acceleration-start-point']), (88, ['turn-end']), (95, ['turn-start']), (97, ['braking-finish-point', {'reference-target-speed': 212.0572, 'overtaking-risk': 0.193}]), (100, ['acceleration-start-point']), (102, ['turn-end']), (104, ['drs-start']), (121, ['drs-end', 'turn-start']), (123, ['braking-finish-point', {'reference-target-speed': 85.8807, 'overtaking-risk': 0.3362}]), (125, ['acceleration-start-point']), (126, ['turn-end'])]
+254 160 276 138 232 182 ['asphalt'] 16
+330 148 331 210 329 86 ['asphalt'] 16
+425 311 555 199 295 423 ['asphalt'] 16
+666 262 591 382 741 142 ['asphalt'] 16
+636 523 788 493 484 553 ['asphalt'] 16
+773 423 792 369 754 477 ['asphalt'] 16
+850 412 897 483 803 341 ['asphalt'] 16
+778 752 578 858 978 646 ['asphalt'] 16
+105 822 42 815 168 829 ['asphalt'] 8
+63 730 90 680 36 780 ['asphalt'] 16

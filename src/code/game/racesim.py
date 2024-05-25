@@ -109,17 +109,25 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
     }
 
 
-    drs_zone_points = []
+    drs_zones: list[list] = []
+    _temp_drs_zone_now = False
+    _temp_drs_zone_counter = -1
+
     for n, p in enumerate(TRACK):
         if "drs-start" in p[2]:
-            for p2 in TRACK[n:] + TRACK[:n]:
-                drs_zone_points.append(tuple(p2[0 : 2]))
-                if "drs-end" in p2[2]:
-                    del n, p, p2
-                    break
+            drs_zones.append([])
+            _temp_drs_zone_counter += 1
 
-    drs_zone_points_scaled = main_mgr.scale_track_points(drs_zone_points)
-    del drs_zone_points
+            _temp_drs_zone_now = True
+        elif "drs-end" in p[2]:
+            _temp_drs_zone_now = False
+
+        if _temp_drs_zone_now:
+            drs_zones[_temp_drs_zone_counter].append(tuple(p[0:2]))
+
+    drs_zones_scaled = [main_mgr.scale_track_points(drs_zone_points) for drs_zone_points in drs_zones]
+
+    del drs_zones, _temp_drs_zone_now, _temp_drs_zone_counter, n, p
 
 
     # For showing other tracks in this place ----
@@ -194,7 +202,8 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
 
         # pg.draw.lines(WIN, "lime", False, drs_zone_points_scaled)
         if track_features['drs']:
-            pg.draw.aalines(WIN, "lime", False, drs_zone_points_scaled)
+            for drs_zone_scaled in drs_zones_scaled:
+                pg.draw.aalines(WIN, "lime", False, drs_zone_scaled)
 
         pg.draw.rect(WIN, "red", (TRACK_POINTS_SCALED[0][0] - 1, TRACK_POINTS_SCALED[0][1] - 1, 3, 3), 2)
 

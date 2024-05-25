@@ -1,22 +1,25 @@
 import pygame as pg
+import curses.textpad, curses, _curses
 
-import curses.textpad
 import sys
+import os
 import json
-from os import path
-# import os
 import math
 
 from threading import Thread
-import curses, _curses
 
 
-print(path.abspath(""))
+# print(os.path.abspath(""))
+
+
+# Prepare directories ----------------------------------------------------------------------------------------
+if not os.path.exists(os.path.abspath("tracks")):
+    os.mkdir("tracks")
+# ---------------------------------------------------------------------------------------- prepare directories
 
 
 SETTINGS = {
     'EDITOR': {
-        # 'global-bezier-num-of-points': 16,
         'current-bezier-num-of-points': 16,
         'grid-size': 0,
         'current-tag': "turns"
@@ -144,7 +147,7 @@ def closest_turn_checkpoint(to: tuple[int, int]) -> None | tuple[int, int]:
 
 
 def show():
-    with open(path.abspath(path.join("src", "data", "tracks", sys.argv[1])), "r") as file:
+    with open(os.path.abspath(os.path.join("tracks", sys.argv[1])), "r") as file:
         return json.load(file)[sys.argv[2]]
 
 
@@ -216,13 +219,11 @@ def compute_bezier_points(vertices, numPoints: None | int = None) -> list[tuple[
     return result
 
 
-def calculate_max_cornering_speed(point2: int):
+def calculate_max_cornering_speed_and_overtaking_risk(point2: int) -> tuple[float, float]:
     section1: pg.Vector2
     section2: pg.Vector2 = TRACK_POINTS[point2 + 1] - pg.Vector2(TRACK_POINTS[point2])
 
     point1 = -1
-    # top_point = -1
-    # top_point_len = float("inf")
     turn_length = 0
 
 
@@ -234,21 +235,6 @@ def calculate_max_cornering_speed(point2: int):
             section1 = TRACK_POINTS[n - 1] - pg.Vector2(TRACK_POINTS[n])
             break
 
-
-    # for n, p in enumerate(TRACK_POINTS[point1:]):
-    #     n += point1
-
-    #     if "acceleration-start-point" in TRACK[n][2]:
-    #         break
-
-    #     if (_temp_len_1 := pg.Vector2(p).distance_squared_to(TRACK_POINTS[n + 1])) < top_point_len:
-    #         top_point_len = _temp_len_1
-    #         top_point = n
-
-    # print(top_point)
-
-
-    # angle = abs(section1.angle_to(section2))
 
     dot = section1.x * section2.x + section1.y * section2.y
 
@@ -262,9 +248,9 @@ def calculate_max_cornering_speed(point2: int):
     result = math.sqrt(angle * turn_length * max(2, pow(angle, 4) / pow(160, 3.65)))
 
     SHARED['terminal-output'] = f"angle: {angle}\n   turn length: {turn_length}\n   c: {max(2, pow(angle, 4) / pow(160, 3.65))}\n   result: {result}"
-
     pg.draw.line(WIN, "red", TRACK_POINTS[point1], TRACK_POINTS[point2])
-    return result
+
+    return round(result, 4), round(1 - angle / 180, 4)
 
 
 def is_similar(p1, p2, _range: int = 2) -> bool:
@@ -287,6 +273,13 @@ def calculate_track_points():
     if len(TRACK_TURN_POINTS) < 2:
         TRACK.clear()
         return
+
+    for n, p in enumerate(TRACK):
+        while sum(isinstance(x, dict) for x in p[2]) > 1:
+            if isinstance(p[2][-2], dict):
+                TRACK[n][2].pop(-2)
+            else:
+                break
 
     TRACK_POINTS_TAGS.clear()
     for n, p in enumerate(TRACK):
@@ -681,7 +674,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
 
                         _authors = [command[n] for n in range(4, len(command))]
 
-                        path_to_file = path.abspath(path.join("src", "data", "tracks", _track_name))
+                        path_to_file = os.path.abspath(os.path.join("tracks", _track_name))
                         save_number = 0
 
 
@@ -718,7 +711,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                                         _racing_type: {
                                             "features": {
                                                 "pit-lane": 0,
-                                                "drs": 0
+                                                "drs": any([("drs-end" in tags) for _, tags in TRACK_POINTS_TAGS])
                                             },
 
                                             "info": {
@@ -730,8 +723,8 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                                                 "pit-lane-entry-point": 0,
                                                 "pit-lane-exit-point": 0,
 
-                                                "timer-ids": [],
-                                                "timer-pos": []
+                                                "timer-ids": [n               for n, tags in TRACK_POINTS_TAGS if "timer" in tags],
+                                                "timer-pos": [TRACK_POINTS[n] for n, tags in TRACK_POINTS_TAGS if "timer" in tags]
                                             },
 
                                             "pit-lane": [],
@@ -947,11 +940,11 @@ def load_track_save(file_name: str) -> bool:
         name.append("vvtrack")
 
     try:
-        with open(path.abspath(path.join("src", "data", "tracks", ".".join(name))), "r") as file:
+        with open(os.path.abspath(os.path.join("tracks", ".".join(name))), "r") as file:
             lines = file.readlines()
         del file
     except FileNotFoundError:
-        print("Could not find", path.abspath(path.join("src", "data", "tracks", ".".join(name))))
+        print("Could not find", os.path.abspath(os.path.join("tracks", ".".join(name))))
         return False
 
     lines_copy = lines.copy()
@@ -990,7 +983,7 @@ def load_track_save(file_name: str) -> bool:
             TRACK_TURN_POINTS.append(TurnPoint((int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (int(line[4]), int(line[5])), eval(line[6]), int(line[7])))
 
     except (ValueError, TypeError):
-        print("This file probably has incorrect syntax.", "(" + path.abspath(path.join("src", "data", "tracks", ".".join(name))) + ")")
+        print("This file probably has incorrect syntax.", "(" + os.path.abspath(os.path.join("tracks", ".".join(name))) + ")")
         return False
 
 
@@ -1054,7 +1047,7 @@ def load_track_save(file_name: str) -> bool:
             if not tag in TRACK[pt[0]][2]:
                 TRACK[pt[0]][2].append(tag)
 
-    print("Save loaded.", "(" + path.abspath(path.join("src", "data", "tracks", ".".join(name))) + ")")
+    print("Save loaded.", "(" + os.path.abspath(os.path.join("tracks", ".".join(name))) + ")")
     return True
 
 if len(sys.argv) > 1:
@@ -1224,14 +1217,14 @@ while 1: # ---------------------------------------------------------------------
         if "drs-end" in p[2]:
             pg.draw.circle(WIN, "#00dd55", p[0:2], 4)
 
-
         pg.draw.circle(WIN, "darkred", p[0:2], 2)
+
 
     for p in TRACK_TURN_POINTS:
         if "asphalt" in p.tags:
-            pg.draw.circle(WIN, "aqua", p.xy, 4)
+            pg.draw.circle(WIN, "aqua", p.xy, 3)
         elif "dirt" in p.tags:
-            pg.draw.circle(WIN, "orange", p.xy, 4)
+            pg.draw.circle(WIN, "orange", p.xy, 3)
     # ------------------------------------------------------------------------------------------------ drawing
 
 
@@ -1393,7 +1386,8 @@ while 1: # ---------------------------------------------------------------------
                             for n, p in reversed(list(enumerate(TRACK[:temp_selected_point]))):
                                 if "braking-finish-point" in TRACK[n][2]:
                                     TRACK[temp_selected_point][2].insert(0, "acceleration-start-point")
-                                    TRACK[n][2].append({"reference-target-speed": calculate_max_cornering_speed(temp_selected_point), "overtaking-risk": 1.0})
+                                    _temp_rts_or_1 = calculate_max_cornering_speed_and_overtaking_risk(temp_selected_point)
+                                    TRACK[n][2].append({"reference-target-speed": _temp_rts_or_1[0], "overtaking-risk": _temp_rts_or_1[1]})
                                     break
 
                                 elif "acceleration-start-point" in TRACK[n][2]:
@@ -1428,7 +1422,30 @@ while 1: # ---------------------------------------------------------------------
 
     # Info ---------------------------------------------------------------------------------------------------
     if (pointn := closest_point(MOUSE_POS)) != None:
-        _temp_render_point_index = FONT_1.render(str(pointn), True, "azure", "azure4")
+        _temp_point_info = str(pointn) + "\n"
+
+        if "meta" in TRACK[pointn][2]:
+            _temp_point_info += "meta" + "\n"
+
+        if "turn-start" in TRACK[pointn][2]:
+            _temp_point_info += "turn-start" + "\n"
+
+        if "turn-end" in TRACK[pointn][2]:
+            _temp_point_info += "turn-end" + "\n"
+
+        if "braking-finish-point" in TRACK[pointn][2]:
+            _temp_point_info += "braking-finish-point:" + "\n" + str(TRACK[pointn][2][-1]) + "\n"
+
+        if "acceleration-start-point" in TRACK[pointn][2]:
+            _temp_point_info += "acceleration-start-point" + "\n"
+
+        if "drs-start" in TRACK[pointn][2]:
+            _temp_point_info += "drs-start" + "\n"
+
+        if "drs-end" in TRACK[pointn][2]:
+            _temp_point_info += "drs-end" + "\n"
+
+        _temp_render_point_index = FONT_1.render(_temp_point_info, True, "azure", "azure4")
         WIN.blit(_temp_render_point_index, (MOUSE_POS[0] - _temp_render_point_index.get_width(), MOUSE_POS[1] - _temp_render_point_index.get_height()))
     # --------------------------------------------------------------------------------------------------- info
 
