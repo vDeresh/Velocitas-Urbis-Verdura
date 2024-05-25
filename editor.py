@@ -375,7 +375,7 @@ def tag_track(timer_tag_frequency: None | int):
 
 
 
-def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window - 122x24
+def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window - 124x29
     global CURRENT_MODE
 
     curses.curs_set(0)
