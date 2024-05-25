@@ -1,0 +1,12 @@
+2.0
+trasa2
+['Klaudia', 'Deresh']
+[(0, ['asphalt', 'timer', 'meta', 'braking-finish-point', {'reference-target-speed': 29.2479, 'overtaking-risk': 0.9598}]), (1, ['acceleration-start-point', 'turn-start']), (2, ['braking-finish-point', {'reference-target-speed': 115.8178, 'overtaking-risk': 0.2617}]), (3, ['acceleration-start-point']), (4, ['turn-end']), (10, ['braking-finish-point', 'turn-start', {'reference-target-speed': 60.3885, 'overtaking-risk': 0.42}]), (11, ['acceleration-start-point']), (13, ['turn-end']), (24, ['turn-start']), (25, ['braking-finish-point', {'reference-target-speed': 18.2265, 'overtaking-risk': 0.9143}]), (26, ['acceleration-start-point']), (28, ['turn-end']), (32, ['turn-start']), (33, ['braking-finish-point', {'reference-target-speed': 220.9081, 'overtaking-risk': 0.3537}]), (36, ['acceleration-start-point']), (37, ['turn-end']), (41, ['turn-start']), (42, ['braking-finish-point', {'reference-target-speed': 140.3345, 'overtaking-risk': 0.2579}]), (43, ['acceleration-start-point']), (45, ['turn-end']), (51, ['turn-start']), (53, ['braking-finish-point', {'reference-target-speed': 93.6679, 'overtaking-risk': 0.3281}]), (55, ['acceleration-start-point']), (58, ['turn-end']), (63, ['braking-finish-point', {'reference-target-speed': 136.5019, 'overtaking-risk': 0.1529}]), (64, ['acceleration-start-point']), (65, ['turn-start']), (69, ['turn-end']), (70, ['braking-finish-point', {'reference-target-speed': 67.8723, 'overtaking-risk': 0.5233}]), (72, ['acceleration-start-point']), (73, ['turn-start']), (77, ['turn-end']), (78, ['turn-start']), (79, ['braking-finish-point', {'reference-target-speed': 254.0249, 'overtaking-risk': 0.1611}]), (81, ['acceleration-start-point']), (83, ['turn-end']), (86, ['turn-start']), (89, ['braking-finish-point', {'reference-target-speed': 239.5676, 'overtaking-risk': 0.1167}]), (90, ['acceleration-start-point']), (103, ['turn-end']), (104, ['braking-finish-point', {'reference-target-speed': 29.6448, 'overtaking-risk': 0.6513}]), (105, ['acceleration-start-point', 'turn-start'])]
+259 349 420 660 98 38 ['asphalt'] 16
+588 430 506 877 670 -17 ['asphalt'] 16
+302 828 899 795 -295 861 ['asphalt'] 16
+159 243 0 535 318 -49 ['asphalt'] 16
+229 513 326 379 132 647 ['asphalt'] 16
+335 582 119 523 551 641 ['asphalt'] 16
+481 142 814 221 148 63 ['asphalt'] 16
+777 654 777 668 777 640 ['asphalt'] 16

@@ -221,7 +221,10 @@ def compute_bezier_points(vertices, numPoints: None | int = None) -> list[tuple[
 
 def calculate_max_cornering_speed_and_overtaking_risk(point2: int) -> tuple[float, float]:
     section1: pg.Vector2
-    section2: pg.Vector2 = TRACK_POINTS[point2 + 1] - pg.Vector2(TRACK_POINTS[point2])
+    if point2 + 1 < len(TRACK_POINTS):
+        section2: pg.Vector2 = TRACK_POINTS[point2 + 1] - pg.Vector2(TRACK_POINTS[point2])
+    else:
+        section2: pg.Vector2 = TRACK_POINTS[0] - pg.Vector2(TRACK_POINTS[point2])
 
     point1 = -1
     turn_length = 0
