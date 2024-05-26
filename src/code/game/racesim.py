@@ -80,12 +80,12 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
         ALL_TRACKS = main_mgr.track_show(track_name)
 
         TRACK_POINTS = main_mgr.convert_track_to_points(TRACK)
-        TRACK_POINTS_SCALED = main_mgr.scale_track_points(TRACK_POINTS)
+        TRACK_POINTS_SCALED = main_mgr.scale_track_points(TRACK_POINTS, TRACK_INFO['scale'])
 
         if track_features['pit-lane']:
             PITLANE = main_mgr.track_show(track_name)[class_manifest['racing-type']]['pit-lane']
             PITLANE_POINTS = main_mgr.convert_track_to_points(PITLANE)
-            PITLANE_POINTS_SCALED = main_mgr.scale_track_points(PITLANE_POINTS)
+            PITLANE_POINTS_SCALED = main_mgr.scale_track_points(PITLANE_POINTS, TRACK_INFO['scale'])
         else:
             PITLANE = PITLANE_POINTS = PITLANE_POINTS_SCALED = []
     else:
@@ -125,7 +125,7 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
         if _temp_drs_zone_now:
             drs_zones[_temp_drs_zone_counter].append(tuple(p[0:2]))
 
-    drs_zones_scaled = [main_mgr.scale_track_points(drs_zone_points) for drs_zone_points in drs_zones]
+    drs_zones_scaled = [main_mgr.scale_track_points(drs_zone_points, TRACK_INFO['scale']) for drs_zone_points in drs_zones]
 
     del drs_zones, _temp_drs_zone_now, _temp_drs_zone_counter, n, p
 
@@ -146,7 +146,7 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
             for p in t:
                 temp_all_tracks_scaled.append(p[0 : 2])
 
-            all_tracks_points_scaled.append(main_mgr.scale_track_points(temp_all_tracks_scaled))
+            all_tracks_points_scaled.append(main_mgr.scale_track_points(temp_all_tracks_scaled, TRACK_INFO['scale']))
 
         del n, t, p, temp_all_tracks_scaled, all_tracks
     # -------------------------------------------

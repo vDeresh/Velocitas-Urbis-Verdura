@@ -1,0 +1,20 @@
+0.3
+test36
+['Deresh']
+[(0, ['asphalt', 'timer', 'meta']), (8, ['braking-finish-point', {'reference-target-speed': 61.1374, 'overtaking-risk': 0.5396}]), (12, ['acceleration-start-point']), (25, ['braking-finish-point', {'reference-target-speed': 60.6361, 'overtaking-risk': 0.5058}]), (27, ['acceleration-start-point']), (42, ['braking-finish-point', {'reference-target-speed': 63.7799, 'overtaking-risk': 0.319}]), (44, ['acceleration-start-point']), (57, ['braking-finish-point', {'reference-target-speed': 184.4369, 'overtaking-risk': 0.2115}]), (60, ['acceleration-start-point']), (69, ['braking-finish-point', {'reference-target-speed': 43.9489, 'overtaking-risk': 0.5703}]), (71, ['acceleration-start-point']), (78, ['braking-finish-point', {'reference-target-speed': 104.0045, 'overtaking-risk': 0.424}]), (81, ['acceleration-start-point']), (87, ['braking-finish-point', {'reference-target-speed': 182.6226, 'overtaking-risk': 0.1829}]), (89, ['acceleration-start-point']), (99, ['braking-finish-point', {'reference-target-speed': 153.497, 'overtaking-risk': 0.4389}]), (105, ['acceleration-start-point']), (114, ['braking-finish-point', {'reference-target-speed': 52.5734, 'overtaking-risk': 0.4823}]), (117, ['acceleration-start-point']), (130, ['braking-finish-point', {'reference-target-speed': 34.8785, 'overtaking-risk': 0.672}]), (132, ['acceleration-start-point']), (145, ['braking-finish-point', {'reference-target-speed': 24.3472, 'overtaking-risk': 0.7256}]), (146, ['acceleration-start-point']), (160, ['braking-finish-point', {'reference-target-speed': 22.6322, 'overtaking-risk': 0.7789}]), (162, ['acceleration-start-point']), (169, [{'reference-target-speed': 68.6382, 'overtaking-risk': 0.3592}]), (170, ['braking-finish-point', {'reference-target-speed': 65.8876, 'overtaking-risk': 0.4735}]), (174, ['acceleration-start-point']), (180, ['braking-finish-point', {'reference-target-speed': 60.5571, 'overtaking-risk': 0.3452}]), (182, ['acceleration-start-point']), (190, ['braking-finish-point', {'reference-target-speed': 53.9043, 'overtaking-risk': 0.3864}]), (192, ['acceleration-start-point']), (203, ['braking-finish-point', {'reference-target-speed': 36.7016, 'overtaking-risk': 0.7323}]), (206, ['acceleration-start-point'])]
+4.0
+311 227 395 218 227 236 ['asphalt'] 16
+418 251 395 344 441 158 ['asphalt'] 16
+454 449 562 342 346 556 ['asphalt'] 16
+621 250 662 269 580 231 ['asphalt'] 16
+653 524 566 599 740 449 ['asphalt'] 16
+609 640 781 595 437 685 ['asphalt'] 16
+569 816 419 813 719 819 ['asphalt'] 16
+265 720 263 595 267 845 ['asphalt'] 16
+285 570 225 560 345 580 ['asphalt'] 16
+183 500 297 515 69 485 ['asphalt'] 16
+347 527 277 496 417 558 ['asphalt'] 16
+209 445 286 458 132 432 ['asphalt'] 16
+252 391 192 361 312 421 ['asphalt'] 16
+261 289 205 266 317 312 ['asphalt'] 16
+180 231 278 232 82 230 ['asphalt'] 16

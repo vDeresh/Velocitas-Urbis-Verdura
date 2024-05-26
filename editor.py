@@ -222,9 +222,9 @@ def compute_bezier_points(vertices, numPoints: None | int = None) -> list[tuple[
 def calculate_max_cornering_speed_and_overtaking_risk(point2: int) -> tuple[float, float]:
     section1: pg.Vector2
     if point2 + 1 < len(TRACK_POINTS):
-        section2: pg.Vector2 = TRACK_POINTS[point2 + 1] - pg.Vector2(TRACK_POINTS[point2])
+        section2: pg.Vector2 = pg.Vector2(TRACK_POINTS[point2 + 1]) - pg.Vector2(TRACK_POINTS[point2])
     else:
-        section2: pg.Vector2 = TRACK_POINTS[0] - pg.Vector2(TRACK_POINTS[point2])
+        section2: pg.Vector2 = pg.Vector2(TRACK_POINTS[0]) - pg.Vector2(TRACK_POINTS[point2])
 
     point1 = -1
     turn_length = 0
@@ -646,6 +646,30 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                         else:
                             TERMINAL_OUTPUT = "[?] MODE: Type `help mode` to get help about this command's parameters."
 
+                    case "scale": # <scale>
+                        if len([1 for p in TRACK if "braking-finish-point" in p[2]]) == len([1 for p in TRACK if "acceleration-start-point" in p[2]]):
+                            if len(command) == 2:
+                                command[1] = command[1].lower()
+
+                                try:
+                                    if float(command[1]) > 0:
+                                        SETTINGS['TRACK']['scale'] = round_half_up(float(command[1]) * 10000) / 10000
+
+                                        for n, p in enumerate(TRACK):
+                                            if "braking-finish-point" in TRACK[n][2]:
+                                                _temp_rts_or_1 = calculate_max_cornering_speed_and_overtaking_risk(n)
+                                                TRACK[n][2][-1].update({"reference-target-speed": _temp_rts_or_1[0], "overtaking-risk": _temp_rts_or_1[1]})
+                                        else:
+                                            del n, p
+                                    else:
+                                        TERMINAL_OUTPUT = f"[!] SCALE: Parameter must be an integer bigger than 0. ({command[1]} provided)"
+                                except ValueError:
+                                    TERMINAL_OUTPUT = f"[!] SCALE: Parameter must be an integer bigger than 0. ({command[1]} provided)"
+                            else:
+                                TERMINAL_OUTPUT = "[?] SCALE: Type `help scale` to get help about this command's parameters."
+                        else:
+                            TERMINAL_OUTPUT = "[!] SCALE: You cannot use this command while the amount of the `braking-finish-points` and the `acceleration-start-point` is not equal."
+
                     case "clear":
                         TERMINAL_OUTPUT = ""
 
@@ -693,8 +717,16 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                                     break
 
                             with open(path_to_file + (("-" + str(save_number)) if save_number else "") + ".vvtrack", "w") as file:
-                                file.write(f"2.0\n{_track_name}\n{_authors}\n")
-                                file.write(f"{TRACK_POINTS_TAGS}\n")
+                                # file.write(f"0.3\n{_track_name}\n{_authors}\n")
+                                # file.write(f"{TRACK_POINTS_TAGS}\n")
+                                # file.write(f"{SETTINGS['TRACK']['scale']}\n")
+                                file.writelines([
+                                    str(0.3) + "\n",
+                                    str(_track_name) + "\n",
+                                    str(_authors) + "\n",
+                                    str(TRACK_POINTS_TAGS) + "\n",
+                                    str(SETTINGS['TRACK']['scale']) + "\n"
+                                ])
                                 file.writelines([f"{tp.x} {tp.y} {tp.cx0} {tp.cy0} {tp.cx1} {tp.cy1} {tp.tags} {tp.bnop}\n" for tp in TRACK_TURN_POINTS])
                             del file
 
@@ -718,6 +750,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                                             },
 
                                             "info": {
+                                                "scale": SETTINGS['TRACK']['scale'],
                                                 "length": sum([pg.Vector2(TRACK_POINTS[n]).distance_to(TRACK_POINTS[n + 1]) for n in range(len(TRACK_POINTS) - 1)]),
                                                 "starting-direction": list(pg.Vector2(TRACK_POINTS[0][0] - TRACK_POINTS[-1][0], TRACK_POINTS[0][1] - TRACK_POINTS[-1][1]).normalize()),
 
@@ -732,7 +765,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
 
                                             "pit-lane": [],
 
-                                            "track": TRACK
+                                            "track": [[int(p[0] * SETTINGS['TRACK']['scale']), int(p[1] * SETTINGS['TRACK']['scale']), p[2]] for p in TRACK]
                                         }
                                     })
 
@@ -744,6 +777,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                                     content = content.replace("{", "{\n", 1)
                                     content = content.replace("]], ", "]],\n").replace("\n", "\n    ")
                                     content = content.replace("[[", "[\n    [", 1)
+                                    content = content.replace('"track": [[', '"track":\n    [[')
                                     file.seek(0)
                                     file.write(content)
                                     file.truncate()
@@ -770,6 +804,16 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                     case "help":
                         if len(command) > 1:
                             match command[1].lower():
+                                case "scale": 
+                                    TERMINAL_OUTPUT = """Command `scale` sets the scale of the track.
+
+    syntax:
+        scale <scale>
+
+    parameters:
+        <scale> - an integer bigger than 0
+"""
+
                                 case "mode":
                                     TERMINAL_OUTPUT = """Command `mode` changes editor mode.
 
@@ -958,7 +1002,7 @@ def load_track_save(file_name: str) -> bool:
             lines.append(line.removesuffix("\n"))
 
 
-    if not lines[0] in ["2.0"]: # supported versions
+    if not lines[0] in ["0.3"]: # supported versions
         print(f"This save is outdated, use an older version of editor. (save's version: {lines[0]})")
         return False
 
@@ -966,7 +1010,7 @@ def load_track_save(file_name: str) -> bool:
     lines_copy = lines.copy()
     lines.clear()
     for n, line in enumerate(lines_copy):
-        if n <= 2:
+        if n <= 2 or n == 4:
             lines.append(line)
         elif n == 3:
             lines.append(eval(line))
@@ -981,8 +1025,10 @@ def load_track_save(file_name: str) -> bool:
 
 
     try:
+        SETTINGS['TRACK']['scale'] = float(lines[4])
+
         TRACK_POINTS_TAGS.extend(lines[3])
-        for line in lines[4:]: # {tp.x} {tp.y} {tp.cx0} {tp.cy0} {tp.cx1} {tp.cy1} {tp.tags} {tp.bnop}
+        for line in lines[5:]: # {tp.x} {tp.y} {tp.cx0} {tp.cy0} {tp.cx1} {tp.cy1} {tp.tags} {tp.bnop}
             TRACK_TURN_POINTS.append(TurnPoint((int(line[0]), int(line[1])), (int(line[2]), int(line[3])), (int(line[4]), int(line[5])), eval(line[6]), int(line[7])))
 
     except (ValueError, TypeError):

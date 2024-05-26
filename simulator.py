@@ -83,12 +83,12 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
         ALL_TRACKS = main_mgr.track_show(track_name)
 
         TRACK_POINTS = main_mgr.convert_track_to_points(TRACK)
-        TRACK_POINTS_SCALED = main_mgr.scale_track_points(TRACK_POINTS)
+        TRACK_POINTS_SCALED = main_mgr.scale_track_points(TRACK_POINTS, TRACK_INFO['scale'])
 
         if track_features['pit-lane']:
             PITLANE = main_mgr.track_show(track_name)[class_manifest['racing-type']]['pit-lane']
             PITLANE_POINTS = main_mgr.convert_track_to_points(PITLANE)
-            PITLANE_POINTS_SCALED = main_mgr.scale_track_points(PITLANE_POINTS)
+            PITLANE_POINTS_SCALED = main_mgr.scale_track_points(PITLANE_POINTS, TRACK_INFO['scale'])
         else:
             PITLANE = PITLANE_POINTS = PITLANE_POINTS_SCALED = []
     else:
@@ -130,7 +130,7 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
         if _temp_drs_zone_now:
             drs_zones[_temp_drs_zone_counter].append(tuple(p[0:2]))
 
-    drs_zones_scaled = [main_mgr.scale_track_points(drs_zone_points) for drs_zone_points in drs_zones]
+    drs_zones_scaled = [main_mgr.scale_track_points(drs_zone_points, TRACK_INFO['scale']) for drs_zone_points in drs_zones]
 
     del drs_zones, _temp_drs_zone_now, _temp_drs_zone_counter, n, p
 
@@ -151,7 +151,7 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
             for p in t:
                 temp_all_tracks_scaled.append(p[0 : 2])
 
-            all_tracks_points_scaled.append(main_mgr.scale_track_points(temp_all_tracks_scaled))
+            all_tracks_points_scaled.append(main_mgr.scale_track_points(temp_all_tracks_scaled, TRACK_INFO['scale']))
 
         del n, t, p, temp_all_tracks_scaled, all_tracks
     # -------------------------------------------
@@ -212,18 +212,18 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
         for driver in DRIVERS: # drawing drivers
             match driver.tyre_type:
                 case 0:
-                    pg.draw.circle(WIN, "#ff7a7a", driver.pos / 2, 2)
+                    pg.draw.circle(WIN, "#ff7a7a", driver.pos / 2 / TRACK_INFO['scale'], 2)
                 case 1:
-                    pg.draw.circle(WIN, "#c61010", driver.pos / 2, 2)
+                    pg.draw.circle(WIN, "#c61010", driver.pos / 2 / TRACK_INFO['scale'], 2)
                 case 2:
-                    pg.draw.circle(WIN, "#ffcf24", driver.pos / 2, 2)
+                    pg.draw.circle(WIN, "#ffcf24", driver.pos / 2 / TRACK_INFO['scale'], 2)
                 case 3:
-                    pg.draw.circle(WIN, "#f2f2f2", driver.pos / 2, 2)
+                    pg.draw.circle(WIN, "#f2f2f2", driver.pos / 2 / TRACK_INFO['scale'], 2)
                 case 4:
-                    pg.draw.circle(WIN, "#21ad46", driver.pos / 2, 2)
+                    pg.draw.circle(WIN, "#21ad46", driver.pos / 2 / TRACK_INFO['scale'], 2)
                 case 5:
-                    pg.draw.circle(WIN, "#0050d1", driver.pos / 2, 2)
-            pg.draw.circle(WIN, driver.team.color, driver.pos / 2, 1)
+                    pg.draw.circle(WIN, "#0050d1", driver.pos / 2 / TRACK_INFO['scale'], 2)
+            pg.draw.circle(WIN, driver.team.color, driver.pos / 2 / TRACK_INFO['scale'], 1)
 
 
         WIN.blit(FONT_2.render(str(SHARED['fps']), True, "white"), (0, 0))
@@ -252,7 +252,7 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
 # _racing_class_name = "Aper 1"
 _racing_category_name = "Volo"
 _racing_class_name = "CAT-B"
-_race_track_name = sys.argv[1] if len(sys.argv) > 1 else "st1t"
+_race_track_name = sys.argv[1] if len(sys.argv) > 1 else ""
 
 simulation_interface(_racing_category_name, _racing_class_name, _race_track_name, main_mgr.ready_drivers(_racing_category_name, _racing_class_name))
 
