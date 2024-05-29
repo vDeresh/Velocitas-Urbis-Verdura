@@ -252,7 +252,7 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
 # _racing_class_name = "Aper 1"
 _racing_category_name = "Volo"
 _racing_class_name = "CAT-B"
-_race_track_name = sys.argv[1] if len(sys.argv) > 1 else ""
+_race_track_name = sys.argv[1] if (len(sys.argv) > 1) and not (sys.argv[1] in ["-ssp", "-td", "-ra", "-h", "-sg", "-od", "-t"]) else "mt5t"
 
 simulation_interface(_racing_category_name, _racing_class_name, _race_track_name, main_mgr.ready_drivers(_racing_category_name, _racing_class_name))
 

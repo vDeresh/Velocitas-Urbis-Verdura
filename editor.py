@@ -40,7 +40,7 @@ class TurnPoint:
         self.cx1: int = c1[0]
         self.cy1: int = c1[1]
         self.tags: list = tags
-        self.index: int = len(TRACK) - 1
+        # self.index: int = len(TRACK_TURN_POINTS)
 
         if bnop:
             self.bnop: int = bnop
@@ -231,7 +231,7 @@ def calculate_max_cornering_speed_and_overtaking_risk(point2: int) -> tuple[floa
 
 
     for n, p in reversed(list(enumerate(TRACK[:point2]))):
-        turn_length += pg.Vector2(TRACK_POINTS[n]).distance_to(TRACK_POINTS[n + 1])
+        turn_length += pg.Vector2(TRACK_POINTS[n]).distance_to(TRACK_POINTS[n + 1]) * SETTINGS['TRACK']['scale']
 
         if "braking-finish-point" in p[2]:
             point1 = n
@@ -374,11 +374,11 @@ def tag_track(timer_tag_frequency: None | int):
             if (not n % timer_tag_frequency) or ("drs-start" in p[2]) or ("drs-end" in p[2]):
                 TRACK[n][2].insert(0, "timer")
 
-    calculate_track_points()
+    SHARED['request']['calculate-track-points'] = True
 
 
 
-def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window - 124x29
+def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
     global CURRENT_MODE
 
     curses.curs_set(0)
@@ -518,7 +518,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                         else:
                             TERMINAL_OUTPUT = f"[!] BNOP: This command takes atmost 2 parameters ({len(command) - 1} provided)"
 
-                        calculate_track_points()
+                        SHARED['request']['calculate-track-points'] = True
 
                     case "tag": # <tag> <frequency>
                         if 1 < len(command) <= 2 + 1:
@@ -582,7 +582,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                         else:
                             TERMINAL_OUTPUT = "[!] SNAP: Grid has not been set."
 
-                        calculate_track_points()
+                        SHARED['request']['calculate-track-points'] = True
 
                     case "move":
                         if len(command) == 3:
@@ -606,12 +606,43 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
 
                         elif len(command) == 2:
                             if command[1] in ["c", "center"]:
-                                pass
+                                _temp_min_x = _temp_min_y = 1000
+                                _temp_max_x = _temp_max_y = 0
+
+                                for p in TRACK_POINTS:
+                                    if p[0] < _temp_min_x:
+                                        _temp_min_x = p[0]
+                                    if p[1] < _temp_min_y:
+                                        _temp_min_y = p[1]
+                                    if p[0] > _temp_max_x:
+                                        _temp_max_x = p[0]
+                                    if p[1] > _temp_max_y:
+                                        _temp_max_y = p[1]
+
+                                print(_temp_min_x, 1000 - _temp_max_x)
+                                print(_temp_max_x)
+
+                                print(((1000 - _temp_max_x) + _temp_min_x) // 2)
+
+                                for tp in TRACK_TURN_POINTS:
+                                    tp.x += ((1000 - _temp_max_x) + _temp_min_x) // 4
+                                    tp.y += ((1000 - _temp_max_y) + _temp_min_y) // 4
+
+                                    tp.cx0 += ((1000 - _temp_max_x) + _temp_min_x) // 4
+                                    tp.cy0 += ((1000 - _temp_max_y) + _temp_min_y) // 4
+
+                                    tp.cx1 += ((1000 - _temp_max_x) + _temp_min_x) // 4
+                                    tp.cy1 += ((1000 - _temp_max_y) + _temp_min_y) // 4
+                                else:
+                                    del tp
+
+                                TERMINAL_OUTPUT = f"MOVE: Moved the track by [{((1000 - _temp_max_x) + _temp_min_x) // 4}, {((1000 - _temp_max_y) + _temp_min_y) // 4}]."
+                                del _temp_min_x, _temp_min_y, _temp_max_x, _temp_max_y
 
                         else:
                             TERMINAL_OUTPUT = f"[?] MOVE: Type `help mode` to get help about this command's syntax."
 
-                        calculate_track_points()
+                        SHARED['request']['calculate-track-points'] = True
 
                     case "del":
                         if len(TRACK_TURN_POINTS):
@@ -629,7 +660,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                         else:
                             TERMINAL_OUTPUT = "[!] DEL: There are no turn-points to delete."
 
-                        calculate_track_points()
+                        SHARED['request']['calculate-track-points'] = True
 
                     case "mode":
                         if len(command) > 1:
@@ -655,12 +686,17 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                                     if float(command[1]) > 0:
                                         SETTINGS['TRACK']['scale'] = round_half_up(float(command[1]) * 10000) / 10000
 
-                                        for n, p in enumerate(TRACK):
-                                            if "braking-finish-point" in TRACK[n][2]:
-                                                _temp_rts_or_1 = calculate_max_cornering_speed_and_overtaking_risk(n)
-                                                TRACK[n][2][-1].update({"reference-target-speed": _temp_rts_or_1[0], "overtaking-risk": _temp_rts_or_1[1]})
+                                        for n1, p1 in reversed(list(enumerate(TRACK))):
+                                            if "acceleration-start-point" in p1[2]:
+
+                                                for n2, p2 in enumerate(TRACK):
+                                                    if "braking-finish-point" in p2[2]:
+                                                        _temp_rts_or_1 = calculate_max_cornering_speed_and_overtaking_risk(n1)
+                                                        TRACK[n2][2][-1].update({"reference-target-speed": _temp_rts_or_1[0], "overtaking-risk": _temp_rts_or_1[1]})
+                                                else:
+                                                    del n2, p2
                                         else:
-                                            del n, p
+                                            del n1, p1
                                     else:
                                         TERMINAL_OUTPUT = f"[!] SCALE: Parameter must be an integer bigger than 0. ({command[1]} provided)"
                                 except ValueError:
@@ -675,7 +711,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
 
                     case "update":
                         if len(command) == 1:
-                            calculate_track_points()
+                            SHARED['request']['calculate-track-points'] = True
                             TERMINAL_OUTPUT = "UPDATE: Updated track."
                         else:
                             TERMINAL_OUTPUT = "[!] UPDATE: This command requires no parameters."
@@ -705,7 +741,7 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
                         save_number = 0
 
 
-                        calculate_track_points()
+                        SHARED['request']['calculate-track-points'] = True
 
 
                         if _project:
@@ -959,7 +995,10 @@ def terminal(stdscr: _curses.window, SHARED: dict[str, str]) -> None: # window -
 SHARED: dict = {
     'terminal-output': "",
     'track-length': 0,
-    'starting-direction': [0, 0]
+    'starting-direction': [0, 0],
+    'request': {
+        'calculate-track-points': False
+    }
 }
 
 
@@ -1122,6 +1161,9 @@ while 1: # ---------------------------------------------------------------------
             SHARED['starting-direction'] = None
     else:
         SHARED['starting-direction'] = None
+
+    if SHARED['request']['calculate-track-points']:
+        calculate_track_points()
 
     MOUSE_POS     = pg.mouse.get_pos()
     MOUSE_PRESSED = pg.mouse.get_pressed()
@@ -1471,7 +1513,13 @@ while 1: # ---------------------------------------------------------------------
 
     # Info ---------------------------------------------------------------------------------------------------
     if (pointn := closest_point(MOUSE_POS)) != None:
-        _temp_point_info = str(pointn) + "\n"
+        _temp_track_turn_point_index = [n for n, p in enumerate(TRACK_TURN_POINTS) if is_similar(tuple(TRACK_POINTS[pointn]), p.xy)]
+
+        if len(_temp_track_turn_point_index):
+            _temp_point_info = str(pointn) + f" [{_temp_track_turn_point_index[0]}]" + "\n"
+            del _temp_track_turn_point_index
+        else:
+            _temp_point_info = str(pointn) + "\n"
 
         if "meta" in TRACK[pointn][2]:
             _temp_point_info += "meta" + "\n"
