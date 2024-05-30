@@ -17,7 +17,7 @@ _racing_allowed      = "-ra"  in sys.argv
 _half_of_the_grid    = "-h"   in sys.argv
 _shuffle_grid        = "-sg"  in sys.argv
 _one_driver          = "-od"  in sys.argv
-_tires               = 0
+_tires               = 3
 # _laps                = None
 # _fps                 = 0 # for simulation
 # _pit                 = False
@@ -48,10 +48,18 @@ else:
 from src.code.game.racesim import simulation, qualifications
 from src.code.manager import main_mgr
 from src.code.classes import Driver
-from src.code.config  import FONT_2, WIN
+# from src.code.config  import FONT_2, WIN
 
 from threading import Thread
 from random import shuffle
+
+
+pg.quit()
+pg.display.init()
+pg.font.init()
+
+WIN = pg.display.set_mode((500, 500), pg.SCALED)
+FONT = pg.sysfont.SysFont("console", 16)
 
 
 def simulation_interface(racing_category_name: str, racing_class_name: str, track_name: str, DRIVERS: list[Driver]) -> None:
@@ -226,23 +234,26 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
             pg.draw.circle(WIN, driver.team.color, driver.pos / 2 / TRACK_INFO['scale'], 1)
 
 
-        WIN.blit(FONT_2.render(str(SHARED['fps']), True, "white"), (0, 0))
+        WIN.blit(FONT.render(str(SHARED['fps']), True, "white"), (0, 0))
 
         if _racing_allowed:
             for n, d in enumerate(DRIVERS):
-                WIN.blit(FONT_2.render(str(round(d.time_difference, 3)), True, "white"), (0, 16 * (n + 1)))
+                WIN.blit(FONT.render(f"{d.number:02} {d.full_name} > {round(d.time_difference, 3)}", True, "white"), (0, 16 * (n + 1)))
         else:
             for n, d in enumerate(DRIVERS):
                 if isinf(d.quali_best_lap_time):
-                    WIN.blit(FONT_2.render(f"{d.number:02} > NO TIME SET", True, "white"), (0, 16 * (n + 1)))
+                    WIN.blit(FONT.render(f"{d.number:02} > NO TIME SET", True, "white"), (0, 16 * (n + 1)))
                 else:
                     # min_sec = divmod(d.quali_best_lap_time, 3600)
                     # m, s = int(min_sec[0]), min_sec[1]
                     # sec_msec = divmod(s, 60)
                     # s, ms = int(sec_msec[0]), sec_msec[1]
 
-                    m, s, ms = int(d.quali_best_lap_time // 3600), int(d.quali_best_lap_time % 3600 // 60), round(d.quali_best_lap_time % 3600 % 60, 2)
-                    WIN.blit(FONT_2.render(f"{d.number:02} > {m:02}:{s:02}.{ms:0<2}", True, "white"), (0, 16 * (n + 1)))
+                    m, s, ms = int(d.quali_best_lap_time // 3600), int(d.quali_best_lap_time % 3600 // 60), round(d.quali_best_lap_time % 3600 % 60, 3)
+                    if ms < 10:
+                        WIN.blit(FONT.render(f"{d.number:02} > {m:02}:{s:02}.{str(ms).zfill(2)}", True, "white"), (0, 16 * (n + 1)))
+                    else:
+                        WIN.blit(FONT.render(f"{d.number:02} > {m:02}:{s:02}.{ms:0<2}", True, "white"), (0, 16 * (n + 1)))
 
         # self.quali_lap_time
         pg.display.flip()

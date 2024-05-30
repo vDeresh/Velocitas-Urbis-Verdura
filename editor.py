@@ -686,13 +686,14 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
                                     if float(command[1]) > 0:
                                         SETTINGS['TRACK']['scale'] = round_half_up(float(command[1]) * 10000) / 10000
 
-                                        for n1, p1 in reversed(list(enumerate(TRACK))):
+                                        for n1, p1 in enumerate(TRACK):
                                             if "acceleration-start-point" in p1[2]:
 
-                                                for n2, p2 in enumerate(TRACK):
+                                                for n2, p2 in reversed(list(enumerate(TRACK[:n1]))):
                                                     if "braking-finish-point" in p2[2]:
                                                         _temp_rts_or_1 = calculate_max_cornering_speed_and_overtaking_risk(n1)
                                                         TRACK[n2][2][-1].update({"reference-target-speed": _temp_rts_or_1[0], "overtaking-risk": _temp_rts_or_1[1]})
+                                                        break
                                                 else:
                                                     del n2, p2
                                         else:
@@ -787,7 +788,7 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
 
                                             "info": {
                                                 "scale": SETTINGS['TRACK']['scale'],
-                                                "length": sum([pg.Vector2(TRACK_POINTS[n]).distance_to(TRACK_POINTS[n + 1]) for n in range(len(TRACK_POINTS) - 1)]),
+                                                "length": sum([pg.Vector2(TRACK_POINTS[n]).distance_to(TRACK_POINTS[n + 1]) for n in range(len(TRACK_POINTS) - 1)]) * SETTINGS['TRACK']['scale'],
                                                 "starting-direction": list(pg.Vector2(TRACK_POINTS[0][0] - TRACK_POINTS[-1][0], TRACK_POINTS[0][1] - TRACK_POINTS[-1][1]).normalize()),
 
                                                 "track-capacity": 0,
@@ -796,7 +797,7 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
                                                 "pit-lane-exit-point": 0,
 
                                                 "timer-ids": [n               for n, tags in TRACK_POINTS_TAGS if "timer" in tags],
-                                                "timer-pos": [TRACK_POINTS[n] for n, tags in TRACK_POINTS_TAGS if "timer" in tags]
+                                                "timer-pos": [(int(TRACK_POINTS[n][0] * SETTINGS['TRACK']['scale']), int(TRACK_POINTS[n][1] * SETTINGS['TRACK']['scale'])) for n, tags in TRACK_POINTS_TAGS if "timer" in tags]
                                             },
 
                                             "pit-lane": [],
@@ -1543,7 +1544,11 @@ while 1: # ---------------------------------------------------------------------
             _temp_point_info += "drs-end" + "\n"
 
         _temp_render_point_index = FONT_1.render(_temp_point_info, True, "azure", "azure4")
-        WIN.blit(_temp_render_point_index, (MOUSE_POS[0] - _temp_render_point_index.get_width(), MOUSE_POS[1] - _temp_render_point_index.get_height()))
+
+        if MOUSE_POS[0] - _temp_render_point_index.get_width() > 0:
+            WIN.blit(_temp_render_point_index, (MOUSE_POS[0] - _temp_render_point_index.get_width(), MOUSE_POS[1] - _temp_render_point_index.get_height()))
+        else:
+            WIN.blit(_temp_render_point_index, (MOUSE_POS[0], MOUSE_POS[1] - _temp_render_point_index.get_height()))
     # --------------------------------------------------------------------------------------------------- info
 
     pg.display.flip()

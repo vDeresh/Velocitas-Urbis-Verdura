@@ -30,8 +30,9 @@ class Team:
 
 
 class Driver:
-    def __init__(self, name: str, team: Team, number: int, skills: dict[str, float]) -> None:
-        self.name = name
+    def __init__(self, full_name: str, team: Team, number: int, skills: dict[str, float]) -> None:
+        self.full_name = full_name
+        self.name = full_name.split(" ")
         self.team = team
         self.number = number
         self.skills: dict[str, float] = skills
@@ -224,6 +225,11 @@ class Driver:
             self.next_point_xy = track_points[0]
 
         self.pos = self.pos.move_towards(self.next_point_xy, self.speed)
+
+
+        if self.prev_position != self.position:
+            self.time_difference = -1
+
         self.prev_position = self.position
 
     # def post_update(self) -> None:

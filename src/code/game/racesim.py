@@ -4,7 +4,8 @@ from ..classes import Team, Driver, Timer
 # from ..others import calculate_pit_entry_point as init_others
 
 from threading import Thread
-from time import perf_counter
+# from multiprocessing import Process
+# from time import perf_counter
 from random import shuffle
 
 
@@ -20,19 +21,18 @@ def qualifications(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POI
             driver.position = n + 1
             driver.qualifications(TRACK, TRACK_POINTS, PITLANE, PITLANE_POINTS, TRACK_INFO)
 
-        DRIVERS.sort(key=lambda x: x.quali_best_lap_time)
+        DRIVERS.sort(key=lambda x: (x.quali_best_lap_time, x.number))
         shared["fps"] = clock.get_fps()
 
     return DRIVERS
 
 
 def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS: list[Driver]) -> None:
-    clock = pg.Clock()
+    DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True)
 
     TIMERS = [Timer(_id, TRACK_INFO['timer-pos'][n]) for n, _id in enumerate(TRACK_INFO['timer-ids'])]
 
-    DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True)
-
+    clock = pg.Clock()
     while 1:
         clock.tick(60)
 
@@ -47,12 +47,15 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
                     if timer.id == driver.current_point:
                         if timer.cached_driver != driver.number:
                             timer.cached_driver = driver.number
-                            driver.time_difference = perf_counter() - timer.time
-                            timer.time = perf_counter()
+                            driver.time_difference = timer.time / 60
+                            timer.time = 0
                         break
 
             if n == 0:
                 driver.time_difference = 0
+
+        for timer in TIMERS:
+            timer.time += 1
 
         DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True) # the bigger the better
         shared["lap"] = DRIVERS[0].lap
@@ -60,15 +63,11 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 
 
 def simulation_interface(racing_category_name: str, racing_class_name: str, track_name: str, DRIVERS: list[Driver]) -> None:
+    IMG_RACE_UI = pg.image.load(os.path.join("src", "textures", "race_ui.png")).convert()
+
     main_mgr.init(racing_category_name, racing_class_name)
 
-    # DRIVERS = DRIVERS[:len(DRIVERS) // 2]
     shuffle(DRIVERS)
-
-    # for driver in DRIVERS[::2]:
-    #     driver.call_stack.append({"type": "pit", "tyre": 2})
-    # else:
-    #     del driver
 
     track_features = main_mgr.get_features(racing_category_name, racing_class_name, track_name)
     class_manifest = main_mgr.read_manifest(racing_category_name, racing_class_name)
@@ -97,8 +96,7 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
 
     for n, driver in enumerate(DRIVERS):
         driver.init(TRACK, n + 1, 3)
-        driver.set_pos(TRACK_POINTS[0][0] - 8 * TRACK_INFO['starting-direction'][0] * (n + 1), TRACK_POINTS[0][1] - 8 * TRACK_INFO['starting-direction'][1] * (n + 1))
-        # driver.set_pos(TRACK_POINTS[0][0], TRACK_POINTS[0][1])
+        driver.set_pos(TRACK_POINTS[0][0] - 10 * TRACK_INFO['starting-direction'][0] * (n + 1), TRACK_POINTS[0][1] - 10 * TRACK_INFO['starting-direction'][1] * (n + 1))
     else:
         del n, driver
 
@@ -151,18 +149,51 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
         del n, t, p, temp_all_tracks_scaled, all_tracks
     # -------------------------------------------
 
+    _current_surface_type = "asphalt"
+
+
+    SURF_TRACK     = pg.Surface((500, 500), pg.SRCALPHA)
+    SURF_POSITIONS = pg.Surface((428, 500), pg.SRCALPHA)
+    SURF_RACE_INFO = pg.Surface((500, 200), pg.SRCALPHA)
+
+    SURF_MAIN.fill(COLOR_BACKGROUND)
+    SURF_MAIN.blit(IMG_RACE_UI, (0, 0))
+
+    SURF_TRACK.fill((0, 0, 0, 60))
+    SURF_POSITIONS.fill((0, 0, 0, 60))
+    SURF_RACE_INFO.fill((0, 0, 0, 60))
+
     _thread_simulation = Thread(target=simulation, name="simulation-thread", args=[SHARED, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS], daemon=True)
     _thread_simulation.start()
 
-    _current_surface_type = "asphalt"
+    # _process_simulation = Process(target=simulation, name="simulation-process", args=[SHARED, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS], daemon=True)
+    # _process_simulation.start()
+
+    clock = pg.Clock()
+
+    TIMER_S = 0
 
     while 1:
+        if TIMER_S != 0 and not TIMER_S % 60:
+            TIMER_S = 0
+        else:
+            TIMER_S += 1
+
+        clock.tick(60)
+
         for e in pg.event.get():
             if e.type == pg.QUIT:
                 pg.quit()
                 exit()
 
-        WIN.fill("black")
+        SURF_MAIN.fill(COLOR_BACKGROUND)
+        SURF_MAIN.blit(IMG_RACE_UI, (0, 0))
+
+        SURF_TRACK.fill((0, 0, 0, 60))
+        # for n in range(20):
+        #     pg.draw.rect(SURF_TRACK, (0, 0, 0, 40 + n * 2), (n, n, 500 - n * 2, 500 - n * 2))
+
+        SURF_RACE_INFO.fill((0, 0, 0, 60))
 
         for t in all_tracks_points_scaled: # Showing other (all) tracks
             # for n2, p in enumerate(t):
@@ -174,11 +205,11 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
             # if _current_surface_type == "dirt":
             #     pg.draw.aalines(WIN, "gray50", True, t)
             # else:
-                pg.draw.aalines(WIN, "gray16", True, t)
+                pg.draw.aalines(SURF_TRACK, "gray16", True, t)
 
 
         if track_features['pit-lane']:
-            pg.draw.aalines(WIN, "azure4", False, PITLANE_POINTS_SCALED)
+            pg.draw.aalines(SURF_TRACK, "azure4", False, PITLANE_POINTS_SCALED)
 
         # pg.draw.lines(WIN, "azure1", True, TRACK_POINTS_SCALED)
         for n, p in enumerate(TRACK_POINTS_SCALED):
@@ -191,81 +222,86 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
 
             if n < len(TRACK_POINTS_SCALED) - 1:
                 if _current_surface_type == "dirt":
-                    pg.draw.aalines(WIN, "orange", True, [p, TRACK_POINTS_SCALED[n + 1]])
+                    pg.draw.aalines(SURF_TRACK, "orange", True, [p, TRACK_POINTS_SCALED[n + 1]])
                 else:
-                    pg.draw.aalines(WIN, "azure1", True, [p, TRACK_POINTS_SCALED[n + 1]])
+                    pg.draw.aalines(SURF_TRACK, "azure1", True, [p, TRACK_POINTS_SCALED[n + 1]])
             else:
                 if _current_surface_type == "dirt":
-                    pg.draw.aalines(WIN, "orange", True, [p, TRACK_POINTS_SCALED[0]])
+                    pg.draw.aalines(SURF_TRACK, "orange", True, [p, TRACK_POINTS_SCALED[0]])
                 else:
-                    pg.draw.aalines(WIN, "azure1", True, [p, TRACK_POINTS_SCALED[0]])
+                    pg.draw.aalines(SURF_TRACK, "azure1", True, [p, TRACK_POINTS_SCALED[0]])
 
         # pg.draw.lines(WIN, "lime", False, drs_zone_points_scaled)
         if track_features['drs']:
             for drs_zone_scaled in drs_zones_scaled:
                 pg.draw.aalines(WIN, "lime", False, drs_zone_scaled)
 
-        pg.draw.rect(WIN, "red", (TRACK_POINTS_SCALED[0][0] - 1, TRACK_POINTS_SCALED[0][1] - 1, 3, 3), 2)
+        # pg.draw.rect(WIN, "red", (TRACK_POINTS_SCALED[0][0] - 1, TRACK_POINTS_SCALED[0][1] - 1, 3, 3), 2)
+        pg.draw.circle(SURF_TRACK, "red", (TRACK_POINTS_SCALED[0]), 2)
 
         for driver in DRIVERS:
             if driver.tyre_type == 0:
-                pg.draw.circle(WIN, "#ff7a7a", driver.pos / 2, 2)
+                pg.draw.circle(SURF_TRACK, "#ff7a7a", driver.pos / 2 / TRACK_INFO['scale'], 2)
             elif driver.tyre_type == 1:
-                pg.draw.circle(WIN, "#c61010", driver.pos / 2, 2)
+                pg.draw.circle(SURF_TRACK, "#c61010", driver.pos / 2 / TRACK_INFO['scale'], 2)
             elif driver.tyre_type == 2:
-                pg.draw.circle(WIN, "#ffcf24", driver.pos / 2, 2)
+                pg.draw.circle(SURF_TRACK, "#ffcf24", driver.pos / 2 / TRACK_INFO['scale'], 2)
             elif driver.tyre_type == 3:
-                pg.draw.circle(WIN, "#f2f2f2", driver.pos / 2, 2)
+                pg.draw.circle(SURF_TRACK, "#f2f2f2", driver.pos / 2 / TRACK_INFO['scale'], 2)
             elif driver.tyre_type == 4:
-                pg.draw.circle(WIN, "#21ad46", driver.pos / 2, 2)
+                pg.draw.circle(SURF_TRACK, "#21ad46", driver.pos / 2 / TRACK_INFO['scale'], 2)
             elif driver.tyre_type == 5:
-                pg.draw.circle(WIN, "#0050d1", driver.pos / 2, 2)
-            pg.draw.circle(WIN, driver.team.color, driver.pos / 2, 1)
+                pg.draw.circle(SURF_TRACK, "#0050d1", driver.pos / 2 / TRACK_INFO['scale'], 2)
+            pg.draw.circle(SURF_TRACK, driver.team.color, driver.pos / 2 / TRACK_INFO['scale'], 1)
 
-        # for n, p in enumerate(PITLANE_POINTS_SCALED):
-        #     if "speed-limit-start" in PITLANE[n][2] or "speed-limit-end" in PITLANE[n][2]:
-        #         pg.draw.circle(WIN, "yellow",  (p[0], p[1]), 3)
-
-        #     if "pit-box" in PITLANE[n][2]:
-        #         pg.draw.circle(WIN, "pink", (p[0], p[1]), 3)
-
-        #     pg.draw.circle(WIN, "darkred", (p[0], p[1]), 1)
-        #     # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
+        SURF_MAIN.blit(FONT_1.render(str(SHARED['fps']), True, "white"), (0, 0))
 
 
-        # for n, p in enumerate(TRACK_POINTS_SCALED):
-        #     if "turn-end" in TRACK[n][2]:
-        #         pg.draw.circle(WIN, "red",  (p[0], p[1]), 4)
+        # SURF_RACE_INFO -------------------------------------------------------------------------------------
+        SURF_RACE_INFO.blit(FONT_2.render("Track", True, "azure"), (0, 0))
+        SURF_RACE_INFO.blit(FONT_1.render(str(track_name), False, "azure3"), (80, 0))
 
-        #     if "turn-start" in TRACK[n][2]:
-        #         pg.draw.circle(WIN, "lime", (p[0], p[1]), 3)
-
-        #     pg.draw.circle(WIN, "darkred", (p[0], p[1]), 1)
-        #     # WIN.blit(FONT.render(str(n), False, "darkred"), (p[0], p[1]))
-
-        WIN.blit(FONT_1.render(str(SHARED['fps']), True, "white"), (0, 0))
-        WIN.blit(FONT_1.render(str(SHARED['lap']), True, "white"), (0, 26))
+        SURF_RACE_INFO.blit(FONT_2.render("Lap", True, "azure"), (0, 22))
+        SURF_RACE_INFO.blit(FONT_1.render(str(SHARED['lap']), False, "azure3"), (80, 22))
+        # ------------------------------------------------------------------------------------- SURF_RACE_INFO
         # WIN.blit(FONT_1.render(str(DRIVERS[1].speed * 2 * 60), True, "white"), (0, 26))
 
-        # for n, d in enumerate(DRIVERS):
-        #     WIN.blit(FONT_1.render(str(round(d.time_difference, 3)), True, "white"), (0, 26 * (n + 1)))
 
+        # SURF_POSITIONS -------------------------------------------------------------------------------------
+        if not TIMER_S % 10:
+            SURF_POSITIONS.fill((0, 0, 0, 60))
+
+            for n, d in enumerate(DRIVERS):
+                _const_pos_name_x = 20 + FONT_1.render("00", True, "black").get_width()
+                _const_pos_time_x = 428 - FONT_1.render("0.000", True, "black").get_width()
+                _const_pos_team_x = _const_pos_time_x - 20 - FONT_2.render("XXX", True, "black").get_width()
+
+                SURF_POSITIONS.blit(FONT_1.render(f"{d.number:02}",                                                  False, "azure4"), (0,  22 * n))
+                SURF_POSITIONS.blit(FONT_2.render(f"{d.name[1] if len(d.name[1]) <= 17 else d.name[1][:15] + ".."}", True, "azure1"), (_const_pos_name_x, 22 * n))
+                SURF_POSITIONS.blit(FONT_2.render(f"{d.team.name_abbreviation}",                                     True, "azure3"), (_const_pos_team_x, 22 * n))
+                SURF_POSITIONS.blit(FONT_1.render(f"{round(d.time_difference, 3) if d.time_difference > 0 else "-----" if d.position == 1 else ""}", False, "azure4"), (_const_pos_time_x, 22 * n))
+        # ------------------------------------------------------------------------------------- SURF_POSITIONS
+
+        WIN.blit(SURF_MAIN, (0, 0))
+        WIN.blit(SURF_TRACK, (42, 42))
+        WIN.blit(SURF_POSITIONS, (586, 42))
+        WIN.blit(SURF_RACE_INFO, (42, 575))
         pg.display.flip()
 
 
 
-def simulation_no_racing(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS: list[Driver]) -> None:
-    clock = pg.Clock()
+# def simulation_no_racing(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS: list[Driver]) -> None:
+#     clock = pg.Clock()
 
-    DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True)
+#     DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True)
 
-    while 1:
-        clock.tick(60)
+#     while 1:
+#         clock.tick(60)
 
-        for n, driver in enumerate(DRIVERS):
-            driver.position = n + 1
-            driver.update(TRACK, TRACK_POINTS, PITLANE, PITLANE_POINTS, TRACK_INFO, [])
+#         for n, driver in enumerate(DRIVERS):
+#             driver.position = n + 1
+#             driver.update(TRACK, TRACK_POINTS, PITLANE, PITLANE_POINTS, TRACK_INFO, [])
 
-        DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True) # the bigger the better
-        shared["lap"] = DRIVERS[0].lap
-        shared["fps"] = clock.get_fps()
+#         DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True) # the bigger the better
+#         shared["lap"] = DRIVERS[0].lap
+#         shared["fps"] = clock.get_fps()
