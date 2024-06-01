@@ -32,6 +32,8 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 
     TIMERS = [Timer(_id, TRACK_INFO['timer-pos'][n]) for n, _id in enumerate(TRACK_INFO['timer-ids'])]
 
+    ALL_LAPS = 200_000 // TRACK_INFO['length'] + 1
+
     clock = pg.Clock()
     while 1:
         clock.tick(60)
@@ -40,6 +42,10 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
         for n, driver in enumerate(DRIVERS):
             driver.position = n + 1
             driver.update(TRACK, TRACK_POINTS, PITLANE, PITLANE_POINTS, TRACK_INFO, prev_DRIVERS)
+
+            if driver.lap > ALL_LAPS:
+                driver.slow = True
+                continue
 
             if driver.current_point in TRACK_INFO['timer-ids'] \
             and any([driver.pos.distance_squared_to(tpos) < 2.25 for tpos in TRACK_INFO['timer-pos']]):
@@ -58,6 +64,7 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
             timer.time += 1
 
         DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True) # the bigger the better
+
         shared["lap"] = DRIVERS[0].lap
         shared["fps"] = clock.get_fps()
 
@@ -67,7 +74,7 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
 
     main_mgr.init(racing_category_name, racing_class_name)
 
-    shuffle(DRIVERS)
+    # shuffle(DRIVERS)
 
     track_features = main_mgr.get_features(racing_category_name, racing_class_name, track_name)
     class_manifest = main_mgr.read_manifest(racing_category_name, racing_class_name)
@@ -94,17 +101,14 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
     TRACK_INFO['timer-ids'] = set(TRACK_INFO['timer-ids'])
 
 
+    ALL_LAPS = 200_000 // TRACK_INFO['length'] + 1
+
+
     for n, driver in enumerate(DRIVERS):
         driver.init(TRACK, n + 1, 3)
         driver.set_pos(TRACK_POINTS[0][0] - 10 * TRACK_INFO['starting-direction'][0] * (n + 1), TRACK_POINTS[0][1] - 10 * TRACK_INFO['starting-direction'][1] * (n + 1))
     else:
         del n, driver
-
-
-    SHARED = {
-        "fps": 0,
-        "lap": 0
-    }
 
 
     drs_zones: list[list] = []
@@ -157,15 +161,14 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
     SURF_POSITIONS = pg.Surface((428, 500), pg.SRCALPHA)
     SURF_RACE_INFO = pg.Surface((500, 120), pg.SRCALPHA)
 
-    # SURF_TRACK.fill(COLOR_MONITOR)
-    # SURF_POSITIONS.fill(COLOR_MONITOR)
-    # SURF_RACE_INFO.fill(COLOR_MONITOR)
+
+    SHARED = {
+        "fps": 0,
+        "lap": 0
+    }
 
     _thread_simulation = Thread(target=simulation, name="simulation-thread", args=[SHARED, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS], daemon=True)
     _thread_simulation.start()
-
-    # _process_simulation = Process(target=simulation, name="simulation-process", args=[SHARED, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS], daemon=True)
-    # _process_simulation.start()
 
     clock = pg.Clock()
 
@@ -259,7 +262,7 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
         SURF_RACE_INFO.blit(FONT_1.render(str(track_name), False, "azure3"), (80, 0))
 
         SURF_RACE_INFO.blit(FONT_2.render("Lap", True, "azure"), (0, 22))
-        SURF_RACE_INFO.blit(FONT_1.render(str(SHARED['lap']), False, "azure3"), (80, 22))
+        SURF_RACE_INFO.blit(FONT_1.render(str(SHARED['lap']) + "/" + str(ALL_LAPS), False, "azure3"), (80, 22))
         # ------------------------------------------------------------------------------------- SURF_RACE_INFO
         # WIN.blit(FONT_1.render(str(DRIVERS[1].speed * 2 * 60), True, "white"), (0, 26))
 
@@ -276,7 +279,10 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
                 SURF_POSITIONS.blit(FONT_1.render(f"{d.number:02}",                                                  False, "azure4"), (0,  22 * n))
                 SURF_POSITIONS.blit(FONT_2.render(f"{d.name[1] if len(d.name[1]) <= 17 else d.name[1][:15] + ".."}", True, "azure1"), (_const_pos_name_x, 22 * n))
                 SURF_POSITIONS.blit(FONT_2.render(f"{d.team.name_abbreviation}",                                     True, "azure3"), (_const_pos_team_x, 22 * n))
-                SURF_POSITIONS.blit(FONT_1.render(f"{round(d.time_difference, 3) if d.time_difference > 0 else "-int-" if d.position == 1 else ""}", False, "azure3" if d.position == 1 else "azure4"), (_const_pos_time_x, 22 * n))
+                if d.lap <= ALL_LAPS:
+                    SURF_POSITIONS.blit(FONT_1.render(f"{round(d.time_difference, 3) if d.time_difference > 0 else "-int-" if d.position == 1 else ""}", False, "azure3" if d.position == 1 else "azure4"), (_const_pos_time_x, 22 * n))
+                else:
+                    SURF_POSITIONS.blit(FONT_1.render("-fin-", False, "azure3"), (_const_pos_time_x, 22 * n))
         # ------------------------------------------------------------------------------------- SURF_POSITIONS
 
         SURF_MONITOR.fill((0, 0, 0, 0))

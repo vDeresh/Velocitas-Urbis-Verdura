@@ -1,4 +1,4 @@
-# from src.code.game.racesim import free_simulation_interface, main_mgr
+from src.code.game.racesim import free_simulation_interface, main_mgr
 from src.code.game.menu import main_menu
 
 # _racing_category_name = "Aper"
@@ -9,4 +9,7 @@ from src.code.game.menu import main_menu
 
 if __name__ == "__main__":
     # free_simulation_interface(_racing_category_name, _racing_class_name, _race_track_name, main_mgr.ready_drivers(_racing_category_name, _racing_class_name))
-    main_menu()
+    output = main_menu()
+    match output['type']:
+        case "custom-race":
+            free_simulation_interface("Volo", "CAT-B", "mt5t", main_mgr.ready_drivers("Volo", "CAT-B"))

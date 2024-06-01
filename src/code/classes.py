@@ -67,6 +67,8 @@ class Driver:
 
         self.time_difference: float = 0
 
+        self.slow: bool = False
+
         # QUALIFICATIONS
         # self.time: float = 0 # in seconds
         self.coming_back: bool = False
@@ -106,7 +108,15 @@ class Driver:
 
     def calculate_speed(self, distance_to_braking_finish_point: float, reference_target_speed: float, drivers: list, ultimateAccelerationMultiplier3000: float) -> float: # track_points: list
         if distance_to_braking_finish_point:
-            return link.calculate_speed(self.is_already_turning, self.speed, distance_to_braking_finish_point, self.tyre_wear, self.tyre_type, self.skills['braking'], reference_target_speed, self.team.car_stats['mass'], self.downforce, self.team.car_stats['drag'], self.distance_to_next_driver, drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken, ultimateAccelerationMultiplier3000, self.max_speed, self.gear)
+            if self.slow:
+                _temp_speed = link.calculate_speed(self.is_already_turning, self.speed * 1.5, distance_to_braking_finish_point, self.tyre_wear, self.tyre_type, self.skills['braking'], reference_target_speed, self.team.car_stats['mass'], self.downforce, self.team.car_stats['drag'], self.distance_to_next_driver, drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken, ultimateAccelerationMultiplier3000, self.max_speed, self.gear) / 1.5
+
+                if self.distance_to_next_driver < 6:
+                    min(_temp_speed, drivers[self.position - 1 - 1].speed)
+                else:
+                    return _temp_speed
+            else:
+                return link.calculate_speed(self.is_already_turning, self.speed, distance_to_braking_finish_point, self.tyre_wear, self.tyre_type, self.skills['braking'], reference_target_speed, self.team.car_stats['mass'], self.downforce, self.team.car_stats['drag'], self.distance_to_next_driver, drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken, ultimateAccelerationMultiplier3000, self.max_speed, self.gear)
         return self.speed
 
     def calculate_quali_speed(self, ultimateAccelerationMultiplier3000: float) -> float:
@@ -198,7 +208,8 @@ class Driver:
         # else:
         self.speed = self.calculate_speed(self.distance_to_next_turn, self.next_turn_data[2][-1]['reference-target-speed'], drivers, 1)
 
-        self.racing_logic(track, drivers)
+        if not self.slow:
+            self.racing_logic(track, drivers)
         # -------------------------------------------------------------------------------------------------------------------------------------- racing
 
 
