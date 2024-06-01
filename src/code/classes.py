@@ -48,15 +48,16 @@ class Driver:
         self.lap: int = 1
         self.position: int
         self.prev_position: int
-        # self.was_overtaken: float = 10 * self.skills['reaction-time-multiplier']
+        self.was_overtaken: float = 0
         self.is_already_turning: int = 0
 
         self.call_stack: list[dict] = [] # [{"type": "pit"}]
 
         self.pit_path_points: list
         self.on_pitlane: bool = False
-        self.pitting: bool = False
+        # self.pitting: bool = False
         self.pitlane_speed_limit_on: bool = False
+        self.pit_exit: bool = False
         self.pitstop_timer: float
 
         # self.overtaking: float = 0
@@ -103,9 +104,9 @@ class Driver:
         self.tyre_type = tyre_type
         self.next_point_xy = track[self.current_point][0 : 2]
 
-    def calculate_speed(self, drivers: list, ultimateAccelerationMultiplier3000: float) -> float: # track_points: list
-        if self.distance_to_next_turn:
-            return link.calculate_speed(self.is_already_turning, self.speed, self.distance_to_next_turn, self.tyre_wear, self.tyre_type, self.skills['braking'], self.next_turn_data[2][-1]['reference-target-speed'], self.team.car_stats['mass'], self.downforce, self.team.car_stats['drag'], self.distance_to_next_driver, drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], 0, ultimateAccelerationMultiplier3000, self.max_speed, self.gear)
+    def calculate_speed(self, distance_to_braking_finish_point: float, reference_target_speed: float, drivers: list, ultimateAccelerationMultiplier3000: float) -> float: # track_points: list
+        if distance_to_braking_finish_point:
+            return link.calculate_speed(self.is_already_turning, self.speed, distance_to_braking_finish_point, self.tyre_wear, self.tyre_type, self.skills['braking'], reference_target_speed, self.team.car_stats['mass'], self.downforce, self.team.car_stats['drag'], self.distance_to_next_driver, drivers[self.position - 1 - 1].speed, drivers[self.position - 1 - 1].team.car_stats['downforce'], self.was_overtaken, ultimateAccelerationMultiplier3000, self.max_speed, self.gear)
         return self.speed
 
     def calculate_quali_speed(self, ultimateAccelerationMultiplier3000: float) -> float:
@@ -130,6 +131,7 @@ class Driver:
                     if (not self.is_already_turning) and (self.current_point + 60 > track_info['pit-lane-entry-point']) and (not self.on_pitlane) and (self.distance_to_next_turn > distance_to_pit_lane_entry(track_info['length'], track, self.current_point, self.pos.distance_to(self.next_point_xy[:2]), track_info['pit-lane-entry-point'])):
                         self.pit_to_tyre_type = call['tyre']
                         self.on_pitlane = True
+                        self.pit_exit = False
                         # self.pit_path_points = track_points[self.current_point : track_info['pit-lane-entry-point'] - 1]
                         # self.pit_path_points = pitlane_points
                         self.current_point = 0
@@ -143,8 +145,10 @@ class Driver:
         if self.on_pitlane:
             if self.pitlane_speed_limit_on:
                 self.speed = track_info['pit-lane-speed-limit']
+            elif self.pit_exit:
+                self.speed = self.calculate_speed(self.distance_to_next_turn, self.next_turn_data[2][-1]['reference-target-speed'], [], 1)
             else:
-                self.speed = self.calculate_speed(drivers, 1)
+                self.speed = self.calculate_speed(0, track_info['pit-lane-speed-limit'], [], 1)
 
             if self.pos == self.next_point_xy:
                 self.current_point += 1
@@ -170,7 +174,7 @@ class Driver:
 
             if "pit-lane-exit" in pitlane[self.current_point][2]:
                 self.on_pitlane = False
-                self.pitting = False
+                # self.pitting = False
                 self.pitlane_speed_limit_on = False
                 # self.current_point = track_info['pit-lane-exit-point']
                 # self.pit_path_points.clear()
@@ -192,7 +196,7 @@ class Driver:
         # if self.drs_active:
         #     self.speed = self.calculate_speed(drivers, self.team.car_stats['drs-efficiency'])
         # else:
-        self.speed = self.calculate_speed(drivers, 1)
+        self.speed = self.calculate_speed(self.distance_to_next_turn, self.next_turn_data[2][-1]['reference-target-speed'], drivers, 1)
 
         self.racing_logic(track, drivers)
         # -------------------------------------------------------------------------------------------------------------------------------------- racing
@@ -230,6 +234,9 @@ class Driver:
         if self.prev_position != self.position:
             self.time_difference = -1
 
+            if self.prev_position > self.position:
+                self.was_overtaken = 10 * self.skills['reaction-time-multiplier']
+
         self.prev_position = self.position
 
     # def post_update(self) -> None:
@@ -260,13 +267,13 @@ class Driver:
         # if self.position > self.prev_position:
         #     self.was_overtaken = 30 * self.skills['reaction-time-multiplier']
 
-        # if self.was_overtaken > 0:
-        #     self.was_overtaken -= 1
+        if self.was_overtaken > 0:
+            self.was_overtaken -= 1
 
-        #     if self.was_overtaken < 0:
-        #         self.was_overtaken = 0
-        #     else:
-        #         return
+            if self.was_overtaken < 0:
+                self.was_overtaken = 0
+            else:
+                return
 
         # slipstream = self.slipstream_multiplier(drivers)
         next_driver: Driver = drivers[self.position - 1 - 1]
@@ -285,13 +292,13 @@ class Driver:
             #     self.overtaking = 1 * 60 * self.skills['reaction-time-multiplier']
         #     return
 
-        if (4 < self.distance_to_next_driver < 500) and (next_driver.next_turn_data[2][-1]['reference-target-speed'] == self.next_turn_data[2][-1]['reference-target-speed']):
+        if (self.distance_to_next_driver > 4) and (self.distance_to_next_driver < 500) and (next_driver.next_turn_data[2][-1]['reference-target-speed'] == self.next_turn_data[2][-1]['reference-target-speed']):
             # if next_driver.distance_to_next_driver < 4:
             #     if self.distance_to_next_driver < 6:
             #         self.speed = min(self.speed, speed_of_the_next_driver)
                 # print("Opponent is already fighting")
 
-            if (self.distance_to_next_turn < 100) and (self.skills['attack'] - next_driver.skills['defence'] * self.next_turn_data[2][-1]['overtaking-risk'] > random.random() * 60):
+            if (self.distance_to_next_turn < 100) and (self.skills['attack'] - self.next_turn_data[2][-1]['overtaking-risk'] + random.random() / 2 > next_driver.skills['defence']): # (self.skills['attack'] - next_driver.skills['defence'] * self.next_turn_data[2][-1]['overtaking-risk'] > random.random() * 30):
                 # self.overtaking = 60 * self.skills['reaction-time-multiplier']
                 pass
                 # self.speed *= slipstream
@@ -308,6 +315,7 @@ class Driver:
             else:
                 if self.distance_to_next_driver < 6:
                     self.speed = min(self.speed, speed_of_the_next_driver)
+                        # self.speed = self.calculate_speed(self.distance_to_next_driver, speed_of_the_next_driver, drivers, 1)
                 # self.speed *= slipstream
                 # self.overtaking = 4 * 60 * self.skills['reaction-time-multiplier']
                 # print("Overtake 2")
@@ -326,6 +334,7 @@ class Driver:
                     if (not self.is_already_turning) and (self.current_point + 60 > track_info['pit-lane-entry-point']) and (not self.on_pitlane) and (self.distance_to_next_turn > distance_to_pit_lane_entry(track_info['length'], track, self.current_point, self.pos.distance_to(self.next_point_xy[:2]), track_info['pit-lane-entry-point'])):
                         self.coming_back = True
                         self.on_pitlane = True
+                        self.pit_exit = False
                         self.current_point = 0
                         self.pitstop_timer = 0
                         self.call_stack.remove(call)
@@ -337,8 +346,10 @@ class Driver:
         if self.on_pitlane:
             if self.pitlane_speed_limit_on:
                 self.speed = track_info['pit-lane-speed-limit']
+            elif self.pit_exit:
+                self.speed = self.calculate_speed(self.distance_to_next_turn, self.next_turn_data[2][-1]['reference-target-speed'], [], 1)
             else:
-                self.speed = self.calculate_speed([], 1)
+                self.speed = self.calculate_speed(0, track_info['pit-lane-speed-limit'], [], 1)
 
             if self.pos == self.next_point_xy:
                 self.current_point += 1
@@ -356,11 +367,12 @@ class Driver:
             if self.coming_back:
                 if "pit-box" in pitlane[self.current_point][2] and self.team.id == pitlane[self.current_point][2][1]:
                     self.speed = 0
-                    self.pitstop_timer += 1 / 60 # 1 / FPS
+                    pass # TODO
+                    # self.pitstop_timer += 1 / 60 # 1 / FPS
 
             if "pit-lane-exit" in pitlane[self.current_point][2]:
                 self.on_pitlane = False
-                self.pitting = False
+                # self.pitting = False
                 self.pitlane_speed_limit_on = False
                 # self.current_point = track_info['pit-lane-exit-point']
                 # self.pit_path_points.clear()

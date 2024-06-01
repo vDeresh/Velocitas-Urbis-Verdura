@@ -66,10 +66,12 @@ double handleSpeed(int alreadyTurning, double currentSpeed, double distanceToTur
     currentSpeed *= 2 * FPS;
     speedOfCarAhead *= 2 * FPS;
 
-    wasOvertaken = 0;
-
     if (alreadyTurning) {
-        return (min(maxSpeed, (min(realTargetSpeed(referenceTargetSpeed, mass, downforce), currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, currentSpeed, wasOvertaken, ultimateAccelerationMultiplier3000, gear)))) + dirtyAir(distanceToCarAhead, downforceOfCarAhead, speedOfCarAhead) - (rand() % 1001 / 10000)) / 2 / FPS;
+        double _temp_dirty_air = dirtyAir(distanceToCarAhead, downforceOfCarAhead, speedOfCarAhead);
+        double _temp_result_speed = min(maxSpeed, (min(realTargetSpeed(referenceTargetSpeed, mass, downforce), currentSpeed + acceleration(drag, tyreWear, tyreType, mass, downforce, distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, currentSpeed, wasOvertaken, ultimateAccelerationMultiplier3000, gear))));
+        
+        if (_temp_result_speed + _temp_dirty_air < 40) return (_temp_result_speed - (rand() % 1001 / 10000)) / 2 / FPS;
+        else return (_temp_result_speed + _temp_dirty_air - (rand() % 1001 / 10000)) / 2 / FPS;
     }
 
     double s1 = min(maxSpeed, braking(distanceToTurn, driversBrakingSkill, tyreWear, referenceTargetSpeed, mass, downforce));
@@ -129,7 +131,7 @@ double acceleration(double drag, double tyreWear, double tyreType, double mass, 
     // double result = ((60 - (tyreType * tyreType)) - ((gear - 1) / 4) + (((drag - (downforce / 2)) - (mass / 100)) / tyreEfficiency(tyreType, tyreWear)));
     double result = ((60 - (tyreType * tyreType)) - ((gear - 1) / 4) + (((drag - (downforce / 8)) - (mass / 100)) / tyreEfficiency(tyreType, tyreWear)));
 
-    if (result > 0) return result / 2 / FPS;
+    if (result > 0) return result * slipstreamMultiplier(distanceToCarAhead, speedOfCarAhead, downforceOfCarAhead, wasOvertaken) / 2 / FPS;
     else return 0; // retirement
 }
 
@@ -156,9 +158,11 @@ double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, d
     // printf("b\n");
     // if (distanceToCarAhead < 0) return 1;
     // printf("c\n");
-    if (distanceToCarAhead < 4) return 1;
+    if (distanceToCarAhead < 2) return 1;
+    // if (distanceToCarAhead > 400) return 1;
     if (speedOfCarAhead < 90) return 1;
-    if (wasOvertaken > 0) return 1 / (wasOvertaken - (wasOvertaken / 1.2) + 1);
+    // if (wasOvertaken > 0) return 1 / (wasOvertaken - (wasOvertaken / 1.2) + 1);
+    if (wasOvertaken > 0) return 1;
 
 
     // double x = (-distanceToCarAhead + speedOfCarAhead + ((downforceOfCarAhead * downforceOfCarAhead) / speed)) / 16;
@@ -166,7 +170,7 @@ double slipstreamMultiplier(double distanceToCarAhead, double speedOfCarAhead, d
     // if (x > 0) return x / FPS;
     // else return 0;
     // return (1 + (speedOfCarAhead / (100 * (distanceToCarAhead * distanceToCarAhead))));
-    return 1 + ((downforceOfCarAhead * speedOfCarAhead) / (200 * distanceToCarAhead) * SLIPSTREAM_EFFECTIVENESS);
+    return 1 + ((downforceOfCarAhead * speedOfCarAhead) / (400 * distanceToCarAhead * distanceToCarAhead) * SLIPSTREAM_EFFECTIVENESS);
     // double temp1 = 1 + ((downforceOfCarAhead * speedOfCarAhead) / (100 * distanceToCarAhead));
 
     // printf("downforce [%f], speed [%f], distance [%f] - %f\n", downforceOfCarAhead, speedOfCarAhead, distanceToCarAhead, temp1);

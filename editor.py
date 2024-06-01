@@ -5,6 +5,7 @@ import sys
 import os
 import json
 import math
+import random
 
 from threading import Thread
 
@@ -253,7 +254,7 @@ def calculate_max_cornering_speed_and_overtaking_risk(point2: int) -> tuple[floa
     SHARED['terminal-output'] = f"angle: {angle}\n   turn length: {turn_length}\n   c: {max(2, pow(angle, 4) / pow(160, 3.65))}\n   result: {result}"
     pg.draw.line(WIN, "red", TRACK_POINTS[point1], TRACK_POINTS[point2])
 
-    return round(result, 4), round(1 - angle / 180, 4)
+    return round(result, 4), round((1 - angle / 180) / (random.random() / 2 + 1.2), 4)
 
 
 def is_similar(p1, p2, _range: int = 2) -> bool:
