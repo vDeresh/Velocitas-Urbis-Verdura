@@ -9,7 +9,8 @@ from src.code.game.menu import main_menu
 
 if __name__ == "__main__":
     # free_simulation_interface(_racing_category_name, _racing_class_name, _race_track_name, main_mgr.ready_drivers(_racing_category_name, _racing_class_name))
-    output = main_menu()
-    match output['type']:
-        case "custom-race":
-            free_simulation_interface("Volo", "CAT-B", "mt5t", main_mgr.ready_drivers("Volo", "CAT-B"))
+    while 1:
+        output = main_menu()
+        match output['type']:
+            case "custom-race":
+                free_simulation_interface("Volo", "CAT-B", "mt5t", main_mgr.ready_drivers("Volo", "CAT-B"))

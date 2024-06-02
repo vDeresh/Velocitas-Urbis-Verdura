@@ -52,11 +52,14 @@ class Button:
 
         del temp_render
 
+    def draw(self) -> None:
+        SURF_MENU.blit(FONT_3.render(self.text, True, self.color), self.rect)
+
     def update(self, MOUSE_POS: tuple[int, int], CLICKED_BUTTON: None | int) -> None | int:
         if self.hover < 20:
             self.color = [x + (((y - x) / (20)) * self.hover) for x, y in zip(THEMES[THEME_CURRENT][2], THEMES[THEME_CURRENT][1])]
 
-        SURF_MENU.blit(FONT_3.render(self.text, True, self.color), self.rect)
+        self.draw()
 
         if self.rect.collidepoint(MOUSE_POS):
             self.hover = max(0, self.hover - 1)
@@ -76,7 +79,35 @@ def main_menu() -> dict:
     BUTTONS.append(Button("Career", 1))
     BUTTONS.append(Button("Custom race", 2))
 
+
+    # Drawing menu for fade-in -------------------
+    
+    # ------------------- drawing menu for fade-in
+
+
     clock = pg.Clock()
+
+    # Fade-in --------------------------------------
+    fadein = pg.Surface((WIN_W, WIN_H))
+    fadein.fill((0, 0, 0))
+
+    for n in range(256).__reversed__():
+        clock.tick(60 * 1)
+        pg.event.pump()
+
+        SURF_MENU.blit(BACKGROUND_THEMED_MENU, (0, 0))
+
+        for button in BUTTONS:
+            button.draw()
+
+        fadein.set_alpha(n)
+
+        WIN.blit(SURF_MENU, (0, 0))
+        WIN.blit(fadein, (0, 0))
+
+        pg.display.flip()
+    # -------------------------------------- fade-in
+
     while 1:
         clock.tick(60)
 

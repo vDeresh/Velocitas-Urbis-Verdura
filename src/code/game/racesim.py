@@ -32,7 +32,9 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 
     TIMERS = [Timer(_id, TRACK_INFO['timer-pos'][n]) for n, _id in enumerate(TRACK_INFO['timer-ids'])]
 
-    ALL_LAPS = 200_000 // TRACK_INFO['length'] + 1
+    ALL_LAPS = 1 # 200_000 // TRACK_INFO['length'] + 1
+
+    _end_it_all_timer = 60 * 4
 
     clock = pg.Clock()
     while 1:
@@ -64,6 +66,12 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
             timer.time += 1
 
         DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True) # the bigger the better
+
+        if (_end_it_all_timer < 60 * 4) or all(d.lap > ALL_LAPS for d in DRIVERS):
+            _end_it_all_timer -= 1
+
+            if _end_it_all_timer <= 0:
+                return
 
         shared["lap"] = DRIVERS[0].lap
         shared["fps"] = clock.get_fps()
@@ -101,7 +109,7 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
     TRACK_INFO['timer-ids'] = set(TRACK_INFO['timer-ids'])
 
 
-    ALL_LAPS = 200_000 // TRACK_INFO['length'] + 1
+    ALL_LAPS = 1 # 200_000 // TRACK_INFO['length'] + 1
 
 
     for n, driver in enumerate(DRIVERS):
@@ -285,6 +293,7 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
                     SURF_POSITIONS.blit(FONT_1.render("-fin-", False, "azure3"), (_const_pos_time_x, 22 * n))
         # ------------------------------------------------------------------------------------- SURF_POSITIONS
 
+
         SURF_MONITOR.fill((0, 0, 0, 0))
         SURF_MONITOR.blit(SURF_TRACK, (4, 336))
         SURF_MONITOR.blit(SURF_POSITIONS, (520, 336))
@@ -292,6 +301,21 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
         SURF_MAIN.blit(SURF_MONITOR, (100 + 20, 100 + 20))
         WIN.blit(SURF_MAIN, (0, 0))
         pg.display.flip()
+
+        if not _thread_simulation.is_alive():
+            fadeout = pg.Surface((WIN_W, WIN_H))
+            fadeout.fill((0, 0, 0))
+
+            for n in range(256):
+                clock.tick(60 * 0.2)
+                pg.event.pump()
+
+                fadeout.set_alpha(n)
+                WIN.blit(fadeout, (0, 0))
+
+                pg.display.flip()
+
+            return
 
 
 def career_simulation_interface(racing_category_name: str, racing_class_name: str, track_name: str, DRIVERS: list[Driver], career_name: str) -> None:
