@@ -307,9 +307,10 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
             fadeout.fill((0, 0, 0))
 
             for n in range(256):
-                clock.tick(60 * 0.2)
+                clock.tick(60 * 1)
                 pg.event.pump()
 
+                WIN.blit(SURF_MAIN, (0, 0))
                 fadeout.set_alpha(n)
                 WIN.blit(fadeout, (0, 0))
 

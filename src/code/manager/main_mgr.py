@@ -22,7 +22,7 @@ def get_classes_from_category(category: str):
     return [class_name for class_name in os.listdir(path) if os.path.isdir(os.path.join(path, class_name))]
 
 
-def get_racing_categories_dict():
+def get_racing_categories_dict() -> dict[str, list[str]]:
     result: dict = {}
     for category_name in os.listdir(RCPATH):
         result.update({category_name: [class_name for class_name in os.listdir(path_to_category(category_name))]})
@@ -113,6 +113,9 @@ def ready_drivers(racing_category_name: str, racing_class_name: str) -> list[Dri
 
 
 # TRACK
+
+def show_all_tracks() -> list[str]:
+    return os.listdir(os.path.abspath(os.path.join("src", "data", "tracks")))
 
 def track_show(race_track_name: str) -> Any:
     with open(os.path.abspath(os.path.join("src", "data", "tracks", race_track_name)), "r") as file:

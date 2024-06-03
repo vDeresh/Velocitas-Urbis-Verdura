@@ -19,6 +19,8 @@ SURF_MAIN = pg.Surface((WIN_W, WIN_H))
 FONT_1 = pg.Font(os.path.join("src", "fonts", "MajorMonoDisplay", "MajorMonoDisplay-Regular.ttf"), 16)
 FONT_2 = pg.Font(os.path.join("src", "fonts", "RubikMonoOne", "RubikMonoOne-Regular.ttf"), 16)
 FONT_3 = pg.Font(os.path.join("src", "fonts", "RubikMonoOne", "RubikMonoOne-Regular.ttf"), 64)
+FONT_4 = pg.Font(os.path.join("src", "fonts", "RubikMonoOne", "RubikMonoOne-Regular.ttf"), 32)
+FONT_5 = pg.Font(os.path.join("src", "fonts", "RubikMonoOne", "RubikMonoOne-Regular.ttf"), 24)
 
 
 COLOR_BACKGROUND = pg.Color(100, 110, 140)
