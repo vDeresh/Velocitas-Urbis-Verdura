@@ -788,7 +788,6 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
                                             },
 
                                             "info": {
-                                                "scale": SETTINGS['TRACK']['scale'],
                                                 "length": sum([pg.Vector2(TRACK_POINTS[n]).distance_to(TRACK_POINTS[n + 1]) for n in range(len(TRACK_POINTS) - 1)]) * SETTINGS['TRACK']['scale'],
                                                 "starting-direction": list(pg.Vector2(TRACK_POINTS[0][0] - TRACK_POINTS[-1][0], TRACK_POINTS[0][1] - TRACK_POINTS[-1][1]).normalize()),
 
@@ -806,6 +805,8 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
                                             "track": [[int(p[0] * SETTINGS['TRACK']['scale']), int(p[1] * SETTINGS['TRACK']['scale']), p[2]] for p in TRACK]
                                         }
                                     })
+
+                                    final_file.update({"scale": SETTINGS['TRACK']['scale']}) # TODO
 
                                 with open(path_to_file, "w") as file:
                                     json.dump(final_file, file)
