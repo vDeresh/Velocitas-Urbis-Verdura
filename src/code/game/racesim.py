@@ -78,6 +78,7 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 
 
 def free_simulation_interface(racing_category_name: str, racing_class_name: str, track_name: str, DRIVERS: list[Driver]) -> None:
+    SURF_MAIN = pg.Surface((WIN_W, WIN_H))
     IMG_RACE_UI = pg.image.load(os.path.join("src", "textures", "race_ui.png")).convert_alpha()
 
     main_mgr.init(racing_category_name, racing_class_name)
@@ -307,7 +308,7 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
             fadeout.fill((0, 0, 0))
 
             for n in range(256):
-                clock.tick(60 * 1)
+                clock.tick(60 * 2)
                 pg.event.pump()
 
                 WIN.blit(SURF_MAIN, (0, 0))
@@ -320,6 +321,7 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
 
 
 def career_simulation_interface(racing_category_name: str, racing_class_name: str, track_name: str, DRIVERS: list[Driver], career_name: str) -> None:
+    SURF_MAIN = pg.Surface((WIN_W, WIN_H))
     IMG_RACE_UI = pg.image.load(os.path.join("src", "textures", "race_ui.png")).convert_alpha()
 
     main_mgr.init(racing_category_name, racing_class_name)

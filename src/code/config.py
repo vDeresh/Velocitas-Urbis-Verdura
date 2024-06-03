@@ -8,7 +8,6 @@ pg.font.init()
 WIN_H = 1080 # 500
 WIN_W = 1920 # 500
 WIN = pg.display.set_mode((WIN_W, WIN_H), pg.SCALED | pg.FULLSCREEN)
-SURF_MAIN = pg.Surface((WIN_W, WIN_H))
 
 # FPS = 60
 

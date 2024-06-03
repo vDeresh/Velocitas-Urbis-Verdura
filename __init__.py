@@ -13,4 +13,4 @@ if __name__ == "__main__":
         output = main_menu()
         match output['type']:
             case "custom-race":
-                free_simulation_interface("Volo", "CAT-B", "mt5t", main_mgr.ready_drivers("Volo", "CAT-B"))
+                free_simulation_interface(output['category'], output['class'], output['track'], output['drivers'])

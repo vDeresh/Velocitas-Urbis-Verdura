@@ -80,11 +80,6 @@ def main_menu() -> dict:
     BUTTONS.append(Button("Custom race", 2))
 
 
-    # Drawing menu for fade-in -------------------
-    
-    # ------------------- drawing menu for fade-in
-
-
     clock = pg.Clock()
 
     # Fade-in --------------------------------------
@@ -167,9 +162,11 @@ def custom_race_menu():
     ALL_DRIVERS_LIST: list = main_mgr.ready_drivers(CHOOSEN_RACING_CLASS[0], CHOOSEN_RACING_CLASS[1])
     CHOOSEN_DRIVERS_COUNT: int = len(ALL_DRIVERS_LIST)
 
-    OTHER_SETTINGS = {
-        'racing-type': "formula"
-    }
+    # OTHER_SETTINGS = {
+    #     'racing-type': "formula"
+    # }
+
+    INCOMPATIBILIES: set[str] = set()
 
     clock = pg.Clock()
     while 1:
@@ -227,35 +224,29 @@ def custom_race_menu():
 
 
         # Other settings -------------------------------------------------------------------------------------
-        racing_type_setting_render = FONT_5.render(f"Racing type: {OTHER_SETTINGS['racing-type']}", True, "azure2")
-        racing_type_setting_rect = pg.Rect(0, 0, racing_type_setting_render.get_width(), racing_type_setting_render.get_height())
+        # racing_type_setting_render = FONT_5.render(f"Racing type: {OTHER_SETTINGS['racing-type']}", True, "azure2")
+        # racing_type_setting_rect = pg.Rect(0, 0, racing_type_setting_render.get_width(), racing_type_setting_render.get_height())
 
-        other_settings_surf.blit(racing_type_setting_render, racing_type_setting_rect)
+        # other_settings_surf.blit(racing_type_setting_render, racing_type_setting_rect)
 
-        if racing_type_setting_rect.collidepoint((MOUSE_POS[0] - 500 - 10, MOUSE_POS[1] - 500 - 10)) and (CLICKED_BUTTON == 1):
-            if OTHER_SETTINGS['racing-type'] == "formula":
-                OTHER_SETTINGS['racing-type'] = "rallycross"
-            elif OTHER_SETTINGS['racing-type'] == "rallycross":
-                OTHER_SETTINGS['racing-type'] = "formula"
+        # if racing_type_setting_rect.collidepoint((MOUSE_POS[0] - 500 - 10, MOUSE_POS[1] - 500 - 10)) and (CLICKED_BUTTON == 1):
+        #     if OTHER_SETTINGS['racing-type'] == "formula":
+        #         OTHER_SETTINGS['racing-type'] = "rallycross"
+        #     elif OTHER_SETTINGS['racing-type'] == "rallycross":
+        #         OTHER_SETTINGS['racing-type'] = "formula"
         # ------------------------------------------------------------------------------------- other settings
 
 
         # Drivers --------------------------------------------------------------------------------------------
         for n, driver in enumerate(ALL_DRIVERS_LIST):
-            # pg.draw.circle(drivers_surf, "red", (MOUSE_POS[0] - 500 - 500 - 10, MOUSE_POS[1] - 500 - 10), 20)
-            # pg.draw.rect(drivers_surf, "red", pg.Rect(0, FONT_2.get_height() * n, 500, FONT_2.get_height()))
-
-            if pg.Rect(0, FONT_2.get_height() * n, 500, FONT_2.get_height()).collidepoint((MOUSE_POS[0] - 500 - 500 - 10, MOUSE_POS[1] - 500 - 10)):
-                print(driver.full_name)
+            if pg.Rect(0, FONT_2.get_height() * n, 500, FONT_2.get_height()).collidepoint((MOUSE_POS[0] - 500 - 10, MOUSE_POS[1] - 500 - 10)):
                 if (CLICKED_BUTTON == 1):
                     if n >= CHOOSEN_DRIVERS_COUNT:
-                        print("a")
                         ALL_DRIVERS_LIST.insert(0, driver)
                         ALL_DRIVERS_LIST.pop(n + 1)
                         CHOOSEN_DRIVERS_COUNT += 1
                 elif (CLICKED_BUTTON == 3):
                     if n < CHOOSEN_DRIVERS_COUNT:
-                        print("b")
                         ALL_DRIVERS_LIST.insert(CHOOSEN_DRIVERS_COUNT, driver)
                         ALL_DRIVERS_LIST.pop(n)
                         CHOOSEN_DRIVERS_COUNT -= 1
@@ -271,13 +262,28 @@ def custom_race_menu():
         for button in BUTTONS:
             match button.update(MOUSE_POS, CLICKED_BUTTON):
                 case 0:
-                    return {"type": "custom-race", "category": CHOOSEN_RACING_CLASS[0], "class": CHOOSEN_RACING_CLASS[1], "track": ALL_TRACKS[choosen_track], "racing-type": OTHER_SETTINGS['racing-type'], "drivers": [d for n, d in enumerate(ALL_DRIVERS_LIST) if n < CHOOSEN_DRIVERS_COUNT]}
+                    if not len(INCOMPATIBILIES):
+                        return {"type": "custom-race", "category": CHOOSEN_RACING_CLASS[0], "class": CHOOSEN_RACING_CLASS[1], "track": ALL_TRACKS[choosen_track], "drivers": [d for n, d in enumerate(ALL_DRIVERS_LIST) if n < CHOOSEN_DRIVERS_COUNT]}
         # -------------------------------------------------------------------------------------------- buttons 
 
 
-        SURF_MENU.blit(track_preview_surf,    (0   + 10,       0   + 10))
-        SURF_MENU.blit(category_preview_surf, (0   + 10,       500 + 10))
-        SURF_MENU.blit(other_settings_surf,   (500 + 10,       500 + 10))
-        SURF_MENU.blit(drivers_surf,          (500 + 500 + 10, 500 + 10))
+        # Incompatibilities ----------------------------------------------------------------------------------
+        INCOMPATIBILIES.clear()
+
+        if main_mgr.get_features(CHOOSEN_RACING_CLASS[0], CHOOSEN_RACING_CLASS[1], ALL_TRACKS[choosen_track]) == None:
+            INCOMPATIBILIES.add("This class is not allowed on this track")
+
+        if CHOOSEN_DRIVERS_COUNT <= 0:
+            INCOMPATIBILIES.add("At least one driver must start")
+
+        for n, i in enumerate(INCOMPATIBILIES):
+            SURF_MENU.blit(FONT_4.render(i, True, "red"), (10, WIN_H - FONT_4.get_height() * n - FONT_4.get_height()))
+        # ---------------------------------------------------------------------------------- incompatibilities
+
+
+        SURF_MENU.blit(track_preview_surf,    (0   + 10, 0   + 10))
+        SURF_MENU.blit(category_preview_surf, (0   + 10, 500 + 10))
+        # SURF_MENU.blit(other_settings_surf,   (500 + 10,       500 + 10))
+        SURF_MENU.blit(drivers_surf,          (500 + 10, 500 + 10))
         WIN.blit(SURF_MENU, (0, 0))
         pg.display.flip()
