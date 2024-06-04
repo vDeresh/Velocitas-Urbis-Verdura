@@ -89,18 +89,18 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
     class_manifest = main_mgr.read_manifest(racing_category_name, racing_class_name)
 
     if isinstance(track_features, dict):
-        TRACK_INFO = main_mgr.track_show(track_name)[class_manifest['racing-type']]['info']
-        TRACK      = main_mgr.track_show(track_name)[class_manifest['racing-type']]['track']
-
         ALL_TRACKS = main_mgr.track_show(track_name)
 
+        TRACK_INFO = ALL_TRACKS[class_manifest['racing-type']]['info']
+        TRACK      = ALL_TRACKS[class_manifest['racing-type']]['track']
+
         TRACK_POINTS = main_mgr.convert_track_to_points(TRACK)
-        TRACK_POINTS_SCALED = main_mgr.scale_track_points(TRACK_POINTS, TRACK_INFO['scale'])
+        TRACK_POINTS_SCALED = main_mgr.scale_track_points(TRACK_POINTS, ALL_TRACKS['scale'])
 
         if track_features['pit-lane']:
-            PITLANE = main_mgr.track_show(track_name)[class_manifest['racing-type']]['pit-lane']
+            PITLANE = ALL_TRACKS[class_manifest['racing-type']]['pit-lane']
             PITLANE_POINTS = main_mgr.convert_track_to_points(PITLANE)
-            PITLANE_POINTS_SCALED = main_mgr.scale_track_points(PITLANE_POINTS, TRACK_INFO['scale'])
+            PITLANE_POINTS_SCALED = main_mgr.scale_track_points(PITLANE_POINTS, ALL_TRACKS['scale'])
         else:
             PITLANE = PITLANE_POINTS = PITLANE_POINTS_SCALED = []
     else:
@@ -142,11 +142,13 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
 
 
     # For showing other tracks in this place ----
-    all_tracks = [[]]
+    all_tracks = []
     all_tracks_points_scaled = []
-    for n, t in enumerate(ALL_TRACKS):
-        n -= 3
-        if n < 0: continue
+    n = -1
+    for t in ALL_TRACKS:
+        if not t in ["formula", "rallycross"]: continue
+        else: n += 1
+
         for p in ALL_TRACKS[t]['track']:
             if len(all_tracks) < n + 1:
                 all_tracks.append([])
@@ -157,7 +159,7 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
             for p in t:
                 temp_all_tracks_scaled.append(p[0 : 2])
 
-            all_tracks_points_scaled.append(main_mgr.scale_track_points(temp_all_tracks_scaled, TRACK_INFO['scale']))
+            all_tracks_points_scaled.append(main_mgr.scale_track_points(temp_all_tracks_scaled, ALL_TRACKS['scale']))
 
         del n, t, p, temp_all_tracks_scaled, all_tracks
     # -------------------------------------------
@@ -250,18 +252,18 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
 
         for driver in DRIVERS:
             if driver.tyre_type == 0:
-                pg.draw.circle(SURF_TRACK, "#ff7a7a", driver.pos / 2 / TRACK_INFO['scale'], 2)
+                pg.draw.circle(SURF_TRACK, "#ff7a7a", driver.pos / 2 / ALL_TRACKS['scale'], 2)
             elif driver.tyre_type == 1:
-                pg.draw.circle(SURF_TRACK, "#c61010", driver.pos / 2 / TRACK_INFO['scale'], 2)
+                pg.draw.circle(SURF_TRACK, "#c61010", driver.pos / 2 / ALL_TRACKS['scale'], 2)
             elif driver.tyre_type == 2:
-                pg.draw.circle(SURF_TRACK, "#ffcf24", driver.pos / 2 / TRACK_INFO['scale'], 2)
+                pg.draw.circle(SURF_TRACK, "#ffcf24", driver.pos / 2 / ALL_TRACKS['scale'], 2)
             elif driver.tyre_type == 3:
-                pg.draw.circle(SURF_TRACK, "#f2f2f2", driver.pos / 2 / TRACK_INFO['scale'], 2)
+                pg.draw.circle(SURF_TRACK, "#f2f2f2", driver.pos / 2 / ALL_TRACKS['scale'], 2)
             elif driver.tyre_type == 4:
-                pg.draw.circle(SURF_TRACK, "#21ad46", driver.pos / 2 / TRACK_INFO['scale'], 2)
+                pg.draw.circle(SURF_TRACK, "#21ad46", driver.pos / 2 / ALL_TRACKS['scale'], 2)
             elif driver.tyre_type == 5:
-                pg.draw.circle(SURF_TRACK, "#0050d1", driver.pos / 2 / TRACK_INFO['scale'], 2)
-            pg.draw.circle(SURF_TRACK, driver.team.color, driver.pos / 2 / TRACK_INFO['scale'], 1)
+                pg.draw.circle(SURF_TRACK, "#0050d1", driver.pos / 2 / ALL_TRACKS['scale'], 2)
+            pg.draw.circle(SURF_TRACK, driver.team.color, driver.pos / 2 / ALL_TRACKS['scale'], 1)
 
         SURF_MAIN.blit(FONT_1.render(str(SHARED['fps']), True, "white"), (0, 0))
 

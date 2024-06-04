@@ -44,16 +44,16 @@ class Button:
         self.color = THEMES[THEME_CURRENT][1]
         self.hover: float = 20
 
-        temp_render: pg.Surface = FONT_3.render(text, True, "#222034")
+        temp_render: pg.Surface = FONT_5.render(text, True, "#222034")
 
         self.rect: pg.Rect = temp_render.get_rect()
         self.rect.x = WIN_W - temp_render.get_width()  - 20
-        self.rect.y = WIN_H - temp_render.get_height() - 20 - FONT_3.get_height() * len(BUTTONS)
+        self.rect.y = WIN_H - temp_render.get_height() - 20 - FONT_5.get_height() * len(BUTTONS)
 
         del temp_render
 
     def draw(self) -> None:
-        SURF_MENU.blit(FONT_3.render(self.text, True, self.color), self.rect)
+        SURF_MENU.blit(FONT_5.render(self.text, True, self.color), self.rect)
 
     def update(self, MOUSE_POS: tuple[int, int], CLICKED_BUTTON: None | int) -> None | int:
         if self.hover < 20:
@@ -195,6 +195,7 @@ def custom_race_menu():
 
 
         CURRENT_TRACK = main_mgr.track_show(ALL_TRACKS[choosen_track])
+        CURRENT_CLASS_MANIFEST = main_mgr.read_manifest(CHOOSEN_RACING_CLASS[0], CHOOSEN_RACING_CLASS[1])
 
 
         SURF_MENU.blit(BACKGROUND_THEMED_MENU, (0, 0))
@@ -222,9 +223,6 @@ def custom_race_menu():
         # ----------------------------------------------------------------------------------- category preview
 
 
-        print(pg.Color("azure"))
-        print(pg.Color("azure2"))
-
         # Track preview --------------------------------------------------------------------------------------
         track_preview_surf.blit(IMG_ARROW_DOWN, track_preview_arrow_next_rect)
         track_preview_surf.blit(IMG_ARROW_UP,   track_preview_arrow_prev_rect)
@@ -241,11 +239,12 @@ def custom_race_menu():
 
         track_preview_surf.blit(FONT_4.render(ALL_TRACKS[choosen_track], True, "azure"), (500, 0))
 
-        for n, racing_type in enumerate(CURRENT_TRACK):
-            if not racing_type in ["formula", "rallycross"]:
-                continue
+        for racing_type in CURRENT_TRACK:
+            if not racing_type in ["formula", "rallycross"]: continue
+            pg.draw.lines(track_preview_surf, "white", True, main_mgr.scale_track_points([(x, y) for x, y, *_ in CURRENT_TRACK[racing_type]['track']], CURRENT_TRACK['scale']))
 
-            pg.draw.lines(track_preview_surf, "white", True, main_mgr.scale_track_points([(x, y) for x, y, *_ in CURRENT_TRACK[racing_type]['track']], CURRENT_TRACK[racing_type]['info']['scale']))
+        if CURRENT_CLASS_MANIFEST['racing-type'] in CURRENT_TRACK:
+            track_preview_surf.blit(FONT_3.render(str(round(CURRENT_TRACK[CURRENT_CLASS_MANIFEST['racing-type']]['info']['length'] / 1000, 3)) + " km", True, "azure"), (500, FONT_4.get_height()))
         # -------------------------------------------------------------------------------------- track preview
 
 
@@ -296,7 +295,7 @@ def custom_race_menu():
         # Incompatibilities ----------------------------------------------------------------------------------
         INCOMPATIBILIES.clear()
 
-        if main_mgr.get_features(CHOOSEN_RACING_CLASS[0], CHOOSEN_RACING_CLASS[1], ALL_TRACKS[choosen_track]) == None:
+        if not CURRENT_CLASS_MANIFEST['racing-type'] in CURRENT_TRACK:
             INCOMPATIBILIES.add("This class is not allowed on this track")
 
         if CHOOSEN_DRIVERS_COUNT <= 0:

@@ -1,5 +1,5 @@
 {
-    "allowed-racing-types": ["formula"], "authors": ["Deresh", "Deresh", "Deresh", "Deresh", "Deresh", "Deresh", "Deresh", "Deresh"], "via-editor": true, "formula": {"features": {"pit-lane": 0, "drs": false}, "info": {"scale": 1.4, "length": 2961.536178333457, "starting-direction": [-0.8173609378018489, -0.576125938797831], "track-capacity": 0, "pit-lane-speed-limit": 0, "pit-lane-entry-point": 0, "pit-lane-exit-point": 0, "timer-ids": [0, 10, 17, 25, 30, 40, 50, 60, 70, 78, 90, 100, 110, 120, 130, 140, 150, 155, 160, 170, 176, 184, 190, 197, 205, 214, 222, 226], "timer-pos": [
+    "allowed-racing-types": ["formula"], "authors": ["Deresh", "Deresh", "Deresh", "Deresh", "Deresh", "Deresh", "Deresh", "Deresh", "Deresh"], "via-editor": true, "formula": {"features": {"pit-lane": 0, "drs": false}, "info": {"length": 2961.536178333457, "starting-direction": [-0.8173609378018489, -0.576125938797831], "track-capacity": 0, "pit-lane-speed-limit": 0, "pit-lane-entry-point": 0, "pit-lane-exit-point": 0, "timer-ids": [0, 10, 17, 25, 30, 40, 50, 60, 70, 78, 90, 100, 110, 120, 130, 140, 150, 155, 160, 170, 176, 184, 190, 197, 205, 214, 222, 226], "timer-pos": [
     [347, 828], [237, 712], [190, 589], [155, 523], [148, 485], [219, 460], [327, 468], [331, 369], [331, 302], [441, 281], [589, 306], [606, 407], [709, 516], [791, 494], [915, 456], [1034, 491], [1139, 550], [1190, 623], [1244, 715], [1272, 807], [1226, 863], [1149, 922], [1052, 896], [981, 883], [986, 974], [970, 1107], [855, 1153], [750, 1113]]}, "pit-lane": [], "track":
     [[347, 828, ["asphalt", "timer", "meta"]],
     [331, 812, []],
@@ -227,4 +227,4 @@
     [831, 1148, []],
     [806, 1139, []],
     [779, 1128, []],
-    [750, 1113, ["timer", "turn-end"]]]}}
+    [750, 1113, ["timer", "turn-end"]]]}, "scale": 1.4}

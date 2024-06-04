@@ -42,7 +42,7 @@ def get_racing_categories_dict() -> dict[str, list[str]]:
 
 # MANIFEST / SETUP
 
-def read_manifest(racing_category: str, racing_class: str):
+def read_manifest(racing_category: str, racing_class: str) -> dict:
     with open(os.path.join(path_to_class(racing_category, racing_class), ".manifest"), "r") as file:
         return json.load(file)
 
@@ -115,7 +115,7 @@ def ready_drivers(racing_category_name: str, racing_class_name: str) -> list[Dri
 # TRACK
 
 def show_all_tracks() -> list[str]:
-    return os.listdir(os.path.abspath(os.path.join("src", "data", "tracks")))
+    return [item for item in os.listdir(os.path.abspath(os.path.join("src", "data", "tracks"))) if os.path.isfile(os.path.join("src", "data", "tracks", item))]
 
 def track_show(race_track_name: str) -> Any:
     with open(os.path.abspath(os.path.join("src", "data", "tracks", race_track_name)), "r") as file:

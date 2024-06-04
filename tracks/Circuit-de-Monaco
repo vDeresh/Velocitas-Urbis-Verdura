@@ -1,6 +1,6 @@
 {
-    "allowed-racing-types": ["formula"], "authors": ["Deresh", "Deresh", "Deresh", "Deresh", "Deresh", "Deresh"], "via-editor": true, "formula": {"features": {"pit-lane": 0, "drs": false}, "info": {"scale": 1.284, "length": 3129.016363467827, "starting-direction": [0.7207011567592967, -0.6932458745970377], "track-capacity": 0, "pit-lane-speed-limit": 0, "pit-lane-entry-point": 0, "pit-lane-exit-point": 0, "timer-ids": [0], "timer-pos": [
-    [218, 388]]}, "pit-lane": [], "track":
+    "allowed-racing-types": ["formula"], "authors": ["Deresh", "Deresh", "Deresh", "Deresh", "Deresh", "Deresh", "Deresh"], "via-editor": true, "formula": {"features": {"pit-lane": 0, "drs": false}, "info": {"length": 3129.016363467827, "starting-direction": [0.7207011567592967, -0.6932458745970377], "track-capacity": 0, "pit-lane-speed-limit": 0, "pit-lane-entry-point": 0, "pit-lane-exit-point": 0, "timer-ids": [0], "timer-pos": [
+    [279, 498]]}, "pit-lane": [], "track":
     [[279, 498, ["asphalt", "timer", "meta"]],
     [290, 489, []],
     [300, 482, []],
@@ -304,4 +304,4 @@
     [132, 649, []],
     [136, 642, []],
     [141, 634, []],
-    [145, 627, []]]}}
+    [145, 627, []]]}, "scale": 1.284}
