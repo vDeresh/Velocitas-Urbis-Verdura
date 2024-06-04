@@ -77,7 +77,7 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
         shared["fps"] = clock.get_fps()
 
 
-def free_simulation_interface(racing_category_name: str, racing_class_name: str, track_name: str, DRIVERS: list[Driver]) -> None:
+def free_simulation_interface(racing_category_name: str, racing_class_name: str, track_name: str, DRIVERS: list[Driver], ALL_LAPS: int) -> None:
     SURF_MAIN = pg.Surface((WIN_W, WIN_H))
     IMG_RACE_UI = pg.image.load(os.path.join("src", "textures", "race_ui.png")).convert_alpha()
 
@@ -110,7 +110,7 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
     TRACK_INFO['timer-ids'] = set(TRACK_INFO['timer-ids'])
 
 
-    ALL_LAPS = 1 # 200_000 // TRACK_INFO['length'] + 1
+    # ALL_LAPS = 1 # 200_000 // TRACK_INFO['length'] + 1
 
 
     for n, driver in enumerate(DRIVERS):

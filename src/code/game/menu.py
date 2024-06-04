@@ -169,9 +169,9 @@ def custom_race_menu():
     ALL_DRIVERS_LIST: list = main_mgr.ready_drivers(CHOOSEN_RACING_CLASS[0], CHOOSEN_RACING_CLASS[1])
     CHOOSEN_DRIVERS_COUNT: int = len(ALL_DRIVERS_LIST)
 
-    # OTHER_SETTINGS = {
-    #     'racing-type': "formula"
-    # }
+    OTHER_SETTINGS: dict[str, float] = {
+        'race-length': 1
+    }
 
     INCOMPATIBILIES: set[str] = set()
 
@@ -196,6 +196,9 @@ def custom_race_menu():
 
         CURRENT_TRACK = main_mgr.track_show(ALL_TRACKS[choosen_track])
         CURRENT_CLASS_MANIFEST = main_mgr.read_manifest(CHOOSEN_RACING_CLASS[0], CHOOSEN_RACING_CLASS[1])
+
+        if CURRENT_CLASS_MANIFEST['racing-type'] in CURRENT_TRACK:
+            CURRENT_ALL_LAPS = int(max(1, (200_000 // CURRENT_TRACK[CURRENT_CLASS_MANIFEST['racing-type']]['info']['length'] + 1) * OTHER_SETTINGS['race-length']))
 
 
         SURF_MENU.blit(BACKGROUND_THEMED_MENU, (0, 0))
@@ -237,28 +240,42 @@ def custom_race_menu():
             if choosen_track < 0:
                 choosen_track = len(ALL_TRACKS) - 1
 
+
         track_preview_surf.blit(FONT_4.render(ALL_TRACKS[choosen_track], True, "azure"), (500, 0))
+
+        if CURRENT_CLASS_MANIFEST['racing-type'] in CURRENT_TRACK:
+            track_preview_surf.blit(FONT_3.render("Lap length: " + str(round(CURRENT_TRACK[CURRENT_CLASS_MANIFEST['racing-type']]['info']['length'] / 1000, 3)) + " km", True, "azure"), (500, FONT_4.get_height()))
+
+            if CURRENT_CLASS_MANIFEST['racing-type'] == "formula":
+                track_preview_surf.blit(FONT_3.render("Laps: " + str(CURRENT_ALL_LAPS), True, "azure"), (500, FONT_4.get_height() + FONT_3.get_height()))
+
+            track_preview_surf.blit(FONT_3.render("Race length: " + str(round(CURRENT_ALL_LAPS * CURRENT_TRACK[CURRENT_CLASS_MANIFEST['racing-type']]['info']['length'] / 1000, 3)) + " km", True, "azure"), (500, FONT_4.get_height() + FONT_3.get_height() + FONT_3.get_height()))
+
 
         for racing_type in CURRENT_TRACK:
             if not racing_type in ["formula", "rallycross"]: continue
             pg.draw.lines(track_preview_surf, "white", True, main_mgr.scale_track_points([(x, y) for x, y, *_ in CURRENT_TRACK[racing_type]['track']], CURRENT_TRACK['scale']))
-
-        if CURRENT_CLASS_MANIFEST['racing-type'] in CURRENT_TRACK:
-            track_preview_surf.blit(FONT_3.render(str(round(CURRENT_TRACK[CURRENT_CLASS_MANIFEST['racing-type']]['info']['length'] / 1000, 3)) + " km", True, "azure"), (500, FONT_4.get_height()))
         # -------------------------------------------------------------------------------------- track preview
 
 
         # Other settings -------------------------------------------------------------------------------------
-        # racing_type_setting_render = FONT_5.render(f"Racing type: {OTHER_SETTINGS['racing-type']}", True, "azure2")
-        # racing_type_setting_rect = pg.Rect(0, 0, racing_type_setting_render.get_width(), racing_type_setting_render.get_height())
+        race_length_setting_render = FONT_3.render(f"Race length: {OTHER_SETTINGS['race-length'] * 100}%", True, "azure2")
+        race_length_setting_rect = pg.Rect(0, 0, race_length_setting_render.get_width(), race_length_setting_render.get_height())
 
-        # other_settings_surf.blit(racing_type_setting_render, racing_type_setting_rect)
+        other_settings_surf.blit(race_length_setting_render, race_length_setting_rect)
 
-        # if racing_type_setting_rect.collidepoint((MOUSE_POS[0] - 500 - 10, MOUSE_POS[1] - 500 - 10)) and (CLICKED_BUTTON == 1):
-        #     if OTHER_SETTINGS['racing-type'] == "formula":
-        #         OTHER_SETTINGS['racing-type'] = "rallycross"
-        #     elif OTHER_SETTINGS['racing-type'] == "rallycross":
-        #         OTHER_SETTINGS['racing-type'] = "formula"
+        if race_length_setting_rect.collidepoint((MOUSE_POS[0] - 500 - 500 - 10, MOUSE_POS[1] - 500 - 10)) and (CLICKED_BUTTON == 1):
+            match OTHER_SETTINGS['race-length']:
+                case 1:
+                    OTHER_SETTINGS['race-length'] = 0.75
+                case 0.75:
+                    OTHER_SETTINGS['race-length'] = 0.50
+                case 0.5:
+                    OTHER_SETTINGS['race-length'] = 0.25
+                case 0.25:
+                    OTHER_SETTINGS['race-length'] = 0.10
+                case 0.1:
+                    OTHER_SETTINGS['race-length'] = 1.00
         # ------------------------------------------------------------------------------------- other settings
 
 
@@ -288,7 +305,7 @@ def custom_race_menu():
             match button.update(MOUSE_POS, CLICKED_BUTTON):
                 case 0:
                     if not len(INCOMPATIBILIES):
-                        return {"type": "custom-race", "category": CHOOSEN_RACING_CLASS[0], "class": CHOOSEN_RACING_CLASS[1], "track": ALL_TRACKS[choosen_track], "drivers": [d for n, d in enumerate(ALL_DRIVERS_LIST) if n < CHOOSEN_DRIVERS_COUNT]}
+                        return {"type": "custom-race", "category": CHOOSEN_RACING_CLASS[0], "class": CHOOSEN_RACING_CLASS[1], "track": ALL_TRACKS[choosen_track], "drivers": [d for n, d in enumerate(ALL_DRIVERS_LIST) if n < CHOOSEN_DRIVERS_COUNT], "laps": CURRENT_ALL_LAPS}
         # -------------------------------------------------------------------------------------------- buttons 
 
 
@@ -306,9 +323,9 @@ def custom_race_menu():
         # ---------------------------------------------------------------------------------- incompatibilities
 
 
-        SURF_MENU.blit(track_preview_surf,    (0   + 10, 0   + 10))
-        SURF_MENU.blit(category_preview_surf, (0   + 10, 500 + 10))
-        # SURF_MENU.blit(other_settings_surf,   (500 + 10,       500 + 10))
-        SURF_MENU.blit(drivers_surf,          (500 + 10, 500 + 10))
+        SURF_MENU.blit(track_preview_surf,    (0 + 10,         0 + 10))
+        SURF_MENU.blit(category_preview_surf, (0 + 10,         500 + 10))
+        SURF_MENU.blit(drivers_surf,          (500 + 10,       500 + 10))
+        SURF_MENU.blit(other_settings_surf,   (500 + 500 + 10, 500 + 10))
         WIN.blit(SURF_MENU, (0, 0))
         pg.display.flip()
