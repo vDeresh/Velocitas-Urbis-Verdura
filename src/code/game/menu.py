@@ -14,7 +14,7 @@ def hex_to_rgb(hex: str) -> pg.Color:
     return pg.Color(rgb)
 
 
-THEMES: list[list] = [
+THEMES: list[list] = [ # #222034
     ["#ac3232", "#8a1010", "#eeeeee"],
     ["#d77bba", "#a44887", "#eeeeee"],
     ["#76428a", "#542068", "#eeeeee"],
@@ -142,6 +142,13 @@ def main_menu() -> dict:
 
 
 def custom_race_menu():
+    IMG_ARROW_DOWN = pg.image.load(os.path.join("src", "textures", "buttons", "arrow.png")).convert_alpha()
+    IMG_ARROW_UP = pg.transform.rotate(IMG_ARROW_DOWN, 180).convert_alpha()
+
+    IMG_ARROW_DOWN.set_colorkey("#222034")
+    IMG_ARROW_UP.set_colorkey("#222034")
+
+
     BUTTONS.clear()
     BUTTONS.append(Button("Start", 0))
 
@@ -167,6 +174,9 @@ def custom_race_menu():
     # }
 
     INCOMPATIBILIES: set[str] = set()
+
+    track_preview_arrow_next_rect = pg.Rect(500, 500 - 50 - 50,           50, 50)
+    track_preview_arrow_prev_rect = pg.Rect(500, 500 - 50 - 50 - 50 - 10, 50, 50)
 
     clock = pg.Clock()
     while 1:
@@ -212,7 +222,23 @@ def custom_race_menu():
         # ----------------------------------------------------------------------------------- category preview
 
 
+        print(pg.Color("azure"))
+        print(pg.Color("azure2"))
+
         # Track preview --------------------------------------------------------------------------------------
+        track_preview_surf.blit(IMG_ARROW_DOWN, track_preview_arrow_next_rect)
+        track_preview_surf.blit(IMG_ARROW_UP,   track_preview_arrow_prev_rect)
+
+        if track_preview_arrow_next_rect.collidepoint((MOUSE_POS[0] - 10, MOUSE_POS[1] - 10)) and (CLICKED_BUTTON == 1):
+            choosen_track += 1
+            if choosen_track > len(ALL_TRACKS) - 1:
+                choosen_track = 0
+
+        if track_preview_arrow_prev_rect.collidepoint((MOUSE_POS[0] - 10, MOUSE_POS[1] - 10)) and (CLICKED_BUTTON == 1):
+            choosen_track -= 1
+            if choosen_track < 0:
+                choosen_track = len(ALL_TRACKS) - 1
+
         track_preview_surf.blit(FONT_4.render(ALL_TRACKS[choosen_track], True, "azure"), (500, 0))
 
         for n, racing_type in enumerate(CURRENT_TRACK):
