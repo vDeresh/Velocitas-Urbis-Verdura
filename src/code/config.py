@@ -20,6 +20,7 @@ FONT_2 = pg.Font(os.path.join("src", "fonts", "RubikMonoOne", "RubikMonoOne-Regu
 FONT_3 = pg.Font(os.path.join("src", "fonts", "RubikMonoOne", "RubikMonoOne-Regular.ttf"), 24)
 FONT_4 = pg.Font(os.path.join("src", "fonts", "RubikMonoOne", "RubikMonoOne-Regular.ttf"), 32)
 FONT_5 = pg.Font(os.path.join("src", "fonts", "RubikMonoOne", "RubikMonoOne-Regular.ttf"), 64)
+FONT_6 = pg.Font(os.path.join("src", "fonts", "RubikMonoOne", "RubikMonoOne-Regular.ttf"), 72)
 
 
 COLOR_BACKGROUND = pg.Color(100, 110, 140)

@@ -780,6 +780,7 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
                                     if len(_authors):
                                         final_file['authors'].extend(_authors)
 
+                                    final_file.update({"scale": SETTINGS['TRACK']['scale']})
                                     final_file.update({
                                         _racing_type: {
                                             "features": {
@@ -806,7 +807,6 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
                                         }
                                     })
 
-                                    final_file.update({"scale": SETTINGS['TRACK']['scale']}) # TODO
 
                                 with open(path_to_file, "w") as file:
                                     json.dump(final_file, file)
