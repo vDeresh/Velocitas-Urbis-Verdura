@@ -352,7 +352,8 @@ def menu_career() -> None:
 
 
     BUTTONS.clear()
-    # BUTTONS.append(Button("Start", 0))
+    BUTTONS.append(Button("Start", 0))
+    BUTTONS.append(Button("New career", 1))
 
 
     # ALL_TRACKS = main_mgr.show_all_tracks()
@@ -360,13 +361,20 @@ def menu_career() -> None:
     # CATEGORIES_DICT = main_mgr.get_racing_categories_dict()
     # CATEGORIES_LIST = main_mgr.get_racing_categories_list()
 
-    track_preview_surf       = pg.Surface((WIN_W - 20, 500),   pg.SRCALPHA)
-    category_preview_surf    = pg.Surface((500,        500),   pg.SRCALPHA)
-    other_settings_surf      = pg.Surface((500,        500),   pg.SRCALPHA)
-    drivers_surf             = pg.Surface((500,        500),   pg.SRCALPHA)
-    settings_background_surf = pg.Surface((WIN_W,      WIN_H), pg.SRCALPHA)
+    # track_preview_surf       = pg.Surface((WIN_W - 20, 500),   pg.SRCALPHA)
+    # category_preview_surf    = pg.Surface((500,        500),   pg.SRCALPHA)
+    # other_settings_surf      = pg.Surface((500,        500),   pg.SRCALPHA)
+    # drivers_surf             = pg.Surface((500,        500),   pg.SRCALPHA)
+    # settings_background_surf = pg.Surface((WIN_W,      WIN_H), pg.SRCALPHA)
 
-    settings_background_surf.set_alpha(80)
+    surf_career_list       = pg.Surface((500,   500),   pg.SRCALPHA)
+    surf_career_background = pg.Surface((WIN_W, WIN_H), pg.SRCALPHA)
+
+    surf_career_background.set_alpha(80)
+
+    ALL_CAREERS = main_mgr.show_all_careers()
+
+    CHOSEN_CAREER = 0
 
     # choosen_track = 0
     # CHOOSEN_RACING_CLASS: list[str] = ["Volo", "CAT-B"]
@@ -383,7 +391,7 @@ def menu_career() -> None:
     # track_preview_arrow_next_rect = pg.Rect(500, 500 - 50 - 50,           50, 50)
     # track_preview_arrow_prev_rect = pg.Rect(500, 500 - 50 - 50 - 50 - 10, 50, 50)
 
-    settings_background_render = FONT_6.render("Settings", True, THEMES[THEME_CURRENT][0])
+    settings_background_render = FONT_6.render("Career", True, THEMES[THEME_CURRENT][0])
 
     clock = pg.Clock()
     while 1:
@@ -414,16 +422,27 @@ def menu_career() -> None:
 
         SURF_MENU.blit(BACKGROUND_THEMED_MENU, (0, 0))
 
-        settings_background_surf.fill((0, 0, 0, 0))
+        surf_career_background.fill((0, 0, 0, 0))
         for n in range(WIN_H // FONT_6.get_height()):
-            settings_background_surf.blit(settings_background_render, (WIN_W -settings_background_render.get_width(), WIN_H - FONT_6.get_height() * (n + 1)))
-            SURF_MENU.blit(settings_background_surf, (0, 0))
+            surf_career_background.blit(settings_background_render, (WIN_W -settings_background_render.get_width(), WIN_H - FONT_6.get_height() * (n + 1)))
+            SURF_MENU.blit(surf_career_background, (0, 0))
 
 
-        category_preview_surf.fill((0, 0, 0, 0))
-        track_preview_surf.fill((0, 0, 0, 0))
-        other_settings_surf.fill((0, 0, 0, 0))
-        drivers_surf.fill((0, 0, 0, 0))
+        surf_career_list.fill((0, 0, 0, 0))
+
+
+        # Career list ----------------------------------------------------------------------------------------
+        for n, career in enumerate(ALL_CAREERS):
+            if n == CHOSEN_CAREER:
+                _temp_render_career = FONT_4.render(career, True, THEMES[THEME_CURRENT][0])
+            else:
+                _temp_render_career = FONT_4.render(career, True, "azure3")
+
+            surf_career_list.blit(_temp_render_career, (0, FONT_4.get_height() * n))
+
+            if pg.Rect(0, FONT_4.get_height() * n, _temp_render_career.get_width(), FONT_4.get_height()).collidepoint((MOUSE_POS[0] - 10, MOUSE_POS[1] - 10)) and (CLICKED_BUTTON == 1):
+                CHOSEN_CAREER = n
+        # ---------------------------------------------------------------------------------------- career list
 
 
         # Category preview -----------------------------------------------------------------------------------
@@ -540,10 +559,7 @@ def menu_career() -> None:
         # ---------------------------------------------------------------------------------- incompatibilities
 
 
-        SURF_MENU.blit(track_preview_surf,    (0 + 10,         0 + 10))
-        SURF_MENU.blit(category_preview_surf, (0 + 10,         500 + 10))
-        SURF_MENU.blit(drivers_surf,          (500 + 10,       500 + 10))
-        SURF_MENU.blit(other_settings_surf,   (500 + 500 + 10, 500 + 10))
+        SURF_MENU.blit(surf_career_list, (0 + 10, 0 + 10))
         WIN.blit(SURF_MENU, (0, 0))
         pg.display.flip()
 
@@ -560,7 +576,7 @@ def menu_custom_race():
     BUTTONS.append(Button("Start", 0))
 
 
-    ALL_TRACKS = main_mgr.show_all_tracks()
+    ALL_TRACKS = main_mgr.show_all_tracks() # TODO - empty tracks dir
 
     CATEGORIES_DICT = main_mgr.get_racing_categories_dict()
     # CATEGORIES_LIST = main_mgr.get_racing_categories_list()
@@ -716,9 +732,9 @@ def menu_custom_race():
                         CHOOSEN_DRIVERS_COUNT -= 1
 
             if n < CHOOSEN_DRIVERS_COUNT:
-                drivers_surf.blit(FONT_2.render(driver.full_name, True, "azure"), (0, FONT_2.get_height() * n))
-            else:
                 drivers_surf.blit(FONT_2.render(driver.full_name, True, THEMES[THEME_CURRENT][0]), (0, FONT_2.get_height() * n))
+            else:
+                drivers_surf.blit(FONT_2.render(driver.full_name, True, "azure3"), (0, FONT_2.get_height() * n))
         # -------------------------------------------------------------------------------------------- drivers
 
 

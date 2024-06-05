@@ -7,6 +7,8 @@
         ".manifest": "json",
         "**/tracks/**": "json",
         "**/**.vvtrack": "txt",
+        "**/**.vvc": "json",
+        "**/**.vvt": "json",
         "cmath": "c"
     },
     "C_Cpp.errorSquiggles": "disabled"

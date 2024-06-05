@@ -115,10 +115,10 @@ def ready_drivers(racing_category_name: str, racing_class_name: str) -> list[Dri
 # TRACK
 
 def show_all_tracks() -> list[str]:
-    return [item for item in os.listdir(os.path.abspath(os.path.join("src", "data", "tracks"))) if os.path.isfile(os.path.join("src", "data", "tracks", item))]
+    return [item.removesuffix(".vvt") for item in os.listdir(os.path.abspath(os.path.join("src", "data", "tracks"))) if (item.split(".")[-1] == "vvt") and os.path.isfile(os.path.join("src", "data", "tracks", item))]
 
 def track_show(race_track_name: str) -> Any:
-    with open(os.path.abspath(os.path.join("src", "data", "tracks", race_track_name)), "r") as file:
+    with open(os.path.abspath(os.path.join("src", "data", "tracks", race_track_name + ".vvt")), "r") as file:
         return json.load(file)
 
 def convert_track_to_points(track: list[list]):
@@ -131,5 +131,5 @@ def scale_track_points(track_points: list[tuple[int, int]], track_scale: float) 
 
 
 
-# if read_manifest(RACING_CATEGORY, RACING_CLASS)['racing-type'] not in track_show()['allowed-racing-types']:
-#     raise ValueError(f"{RACING_CATEGORY}\\{RACING_CLASS} is not allowed on track {RACE_TRACK}")
+def show_all_careers() -> list[str]:
+    return [item.removesuffix(".vvc") for item in os.listdir(os.path.abspath(os.path.join("src", "data", "careers"))) if (item.split(".")[-1] == "vvc") and os.path.isfile(os.path.join("src", "data", "careers", item))]

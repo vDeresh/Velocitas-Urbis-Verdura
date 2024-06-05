@@ -771,7 +771,7 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
 
                         while 1:
                             try:
-                                with open(path_to_file, "r") as file:
+                                with open(path_to_file + ".vvt", "r") as file:
                                     final_file: dict = json.load(file)
 
                                     if not _racing_type in final_file['allowed-racing-types']:
@@ -808,10 +808,10 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
                                     })
 
 
-                                with open(path_to_file, "w") as file:
+                                with open(path_to_file + ".vvt", "w") as file:
                                     json.dump(final_file, file)
 
-                                with open(path_to_file, "r+") as file:
+                                with open(path_to_file + ".vvt", "r+") as file:
                                     content = file.read()
                                     content = content.replace("{", "{\n", 1)
                                     content = content.replace("]], ", "]],\n").replace("\n", "\n    ")
@@ -826,13 +826,13 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
                                 break
 
                             except (FileNotFoundError, json.decoder.JSONDecodeError):
-                                with open(path_to_file, "w") as file:
+                                with open(path_to_file + ".vvt", "w") as file:
                                     file.write("{}")
 
-                                with open(path_to_file, "r") as file:
+                                with open(path_to_file + ".vvt", "r") as file:
                                     json.load(file)
 
-                                with open(path_to_file, "w") as file:
+                                with open(path_to_file + ".vvt", "w") as file:
                                     json.dump({
                                         "allowed-racing-types": [],
                                         "authors": [],
