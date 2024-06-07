@@ -1,5 +1,5 @@
 from ..config import *
-from ..manager import main_mgr
+from ..manager import main_mgr, data
 from random import randint
 
 
@@ -343,7 +343,7 @@ def menu_settings() -> None:
         pg.display.flip()
 
 
-def menu_career() -> None:
+def menu_career() -> None | dict:
     # IMG_ARROW_DOWN = pg.image.load(os.path.join("src", "textures", "buttons", "arrow.png")).convert_alpha()
     # IMG_ARROW_UP = pg.transform.rotate(IMG_ARROW_DOWN, 180).convert_alpha()
 
@@ -429,6 +429,14 @@ def menu_career() -> None:
 
 
         surf_career_list.fill((0, 0, 0, 0))
+
+
+        for button in BUTTONS:
+            match button.update(MOUSE_POS, CLICKED_BUTTON):
+                case 0:
+                    pass
+                case 1:
+                    return sub_menu_career_new_career()
 
 
         # Career list ----------------------------------------------------------------------------------------
@@ -560,6 +568,93 @@ def menu_career() -> None:
 
 
         SURF_MENU.blit(surf_career_list, (0 + 10, 0 + 10))
+        WIN.blit(SURF_MENU, (0, 0))
+        pg.display.flip()
+
+
+def sub_menu_career_new_career() -> None | dict:
+    BUTTONS.clear()
+    BUTTONS.append(Button("Start", 0))
+    BUTTONS.append(Button("New career", 1))
+
+
+    surf_team_picker           = pg.Surface((500, 500), pg.SRCALPHA)
+    surf_new_career_background = pg.Surface((WIN_W, WIN_H), pg.SRCALPHA)
+
+    surf_new_career_background.set_alpha(80)
+
+
+    INCOMPATIBILIES: set[str] = set()
+
+    settings_background_render = FONT_6.render("New career", True, THEMES[THEME_CURRENT][0])
+
+
+    CAREER_FILE = data.default_career_file.copy()
+
+    choosen_team = 0
+
+
+    clock = pg.Clock()
+    while 1:
+        clock.tick(60)
+
+        MOUSE_POS = pg.mouse.get_pos()
+        CLICKED_BUTTON = None
+
+        for e in pg.event.get():
+            if e.type == pg.QUIT:
+                pg.quit()
+                exit()
+
+            if e.type == pg.KEYDOWN:
+                if e.key == pg.K_ESCAPE:
+                    return
+
+            if e.type == pg.MOUSEBUTTONDOWN:
+                CLICKED_BUTTON = e.button
+
+
+        SURF_MENU.blit(BACKGROUND_THEMED_MENU, (0, 0))
+
+        surf_new_career_background.fill((0, 0, 0, 0))
+        for n in range(WIN_H // FONT_6.get_height()):
+            surf_new_career_background.blit(settings_background_render, (WIN_W -settings_background_render.get_width(), WIN_H - FONT_6.get_height() * (n + 1)))
+            SURF_MENU.blit(surf_new_career_background, (0, 0))
+
+
+        surf_team_picker.fill((0, 0, 0, 0))
+
+
+        # Team picker ----------------------------------------------------------------------------------------
+        for n, team in enumerate(data.teams):
+            surf_team_picker.blit(FONT_4.render(team, True, THEMES[THEME_CURRENT][0] if choosen_team == n else "azure2"), (0, FONT_4.get_height() * n))
+        # ---------------------------------------------------------------------------------------- team picker
+
+
+        # Buttons --------------------------------------------------------------------------------------------
+        for button in BUTTONS:
+            match button.update(MOUSE_POS, CLICKED_BUTTON):
+                case 0:
+                    if not len(INCOMPATIBILIES):
+                        return CAREER_FILE
+        # -------------------------------------------------------------------------------------------- buttons 
+
+
+        # Incompatibilities ----------------------------------------------------------------------------------
+        INCOMPATIBILIES.clear()
+
+        # if not CURRENT_CLASS_MANIFEST['racing-type'] in CURRENT_TRACK:
+        #     INCOMPATIBILIES.add("This class is not allowed on this track")
+
+        # if CHOOSEN_DRIVERS_COUNT <= 0:
+        #     INCOMPATIBILIES.add("At least one driver must start")
+
+        # for n, i in enumerate(INCOMPATIBILIES):
+        #     SURF_MENU.blit(FONT_4.render(i, True, "red"), (10, WIN_H - FONT_4.get_height() * n - FONT_4.get_height()))
+        # ---------------------------------------------------------------------------------- incompatibilities
+
+
+        SURF_MENU.blit(surf_team_picker, (0 + 10, 0 + 10))
         WIN.blit(SURF_MENU, (0, 0))
         pg.display.flip()
 

@@ -1,4 +1,8 @@
-from src.code.game.racesim import free_simulation_interface, main_mgr
+import os
+
+print(os.path.abspath(os.getcwd()))
+
+from src.code.game.racesim import free_simulation_interface #, main_mgr
 from src.code.game.menu import menu_main
 
 # _racing_category_name = "Aper"
