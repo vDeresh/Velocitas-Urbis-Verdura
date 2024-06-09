@@ -27,12 +27,12 @@ def qualifications(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POI
     return DRIVERS
 
 
-def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS: list[Driver]) -> None:
+def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS: list[Driver], ALL_LAPS: int) -> None:
     DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True)
 
     TIMERS = [Timer(_id, TRACK_INFO['timer-pos'][n]) for n, _id in enumerate(TRACK_INFO['timer-ids'])]
 
-    ALL_LAPS = 1 # 200_000 // TRACK_INFO['length'] + 1
+    # ALL_LAPS = 1 # 200_000 // TRACK_INFO['length'] + 1
 
     _end_it_all_timer = 60 * 4
 
@@ -113,12 +113,29 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
     # ALL_LAPS = 1 # 200_000 // TRACK_INFO['length'] + 1
 
 
-    for n, driver in enumerate(DRIVERS):
-        driver.init(TRACK, n + 1, 3)
-        driver.set_pos(TRACK_POINTS[0][0] - 10 * TRACK_INFO['starting-direction'][0] * (n + 1), TRACK_POINTS[0][1] - 10 * TRACK_INFO['starting-direction'][1] * (n + 1))
-    else:
-        del n, driver
+    _temp_reversed_track_list = list(range(len(TRACK_POINTS)).__reversed__())
+    _temp_reversed_track_list.insert(0, 0)
+    _temp_reversed_track_list.pop()
 
+    for n1, driver in enumerate(DRIVERS):
+        driver.init(TRACK, n1 + 1, 3)
+        # driver.set_pos(TRACK_POINTS[0][0] - 10 * TRACK_INFO['starting-direction'][0] * (n + 1), TRACK_POINTS[0][1] - 10 * TRACK_INFO['starting-direction'][1] * (n + 1))
+
+        _temp_distance = 0
+        for n2 in _temp_reversed_track_list:
+            _temp_distance += pg.Vector2(TRACK_POINTS[n2]).distance_to(TRACK_POINTS[n2 - 1])
+
+            if 10 * (n1 + 1) < _temp_distance:
+
+                _temp_starting_pos = (_temp_distance - 10 * (n1 + 1)) * (pg.Vector2(TRACK_POINTS[n2]) - pg.Vector2(TRACK_POINTS[n2 - 1])).normalize() + TRACK_POINTS[n2 - 1]
+                driver.set_pos(_temp_starting_pos.x, _temp_starting_pos.y)
+                driver.current_point = n2
+
+                _temp_distance = 0
+                break
+    else:
+        del n1, driver, _temp_distance
+    del _temp_reversed_track_list
 
     drs_zones: list[list] = []
     _temp_drs_zone_now = False
@@ -136,7 +153,7 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
         if _temp_drs_zone_now:
             drs_zones[_temp_drs_zone_counter].append(tuple(p[0:2]))
 
-    drs_zones_scaled = [main_mgr.scale_track_points(drs_zone_points, TRACK_INFO['scale']) for drs_zone_points in drs_zones]
+    drs_zones_scaled = [main_mgr.scale_track_points(drs_zone_points, ALL_TRACKS['scale']) for drs_zone_points in drs_zones]
 
     del drs_zones, _temp_drs_zone_now, _temp_drs_zone_counter, n, p
 
@@ -178,7 +195,7 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
         "lap": 0
     }
 
-    _thread_simulation = Thread(target=simulation, name="simulation-thread", args=[SHARED, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS], daemon=True)
+    _thread_simulation = Thread(target=simulation, name="simulation-thread", args=[SHARED, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS, ALL_LAPS], daemon=True)
     _thread_simulation.start()
 
     clock = pg.Clock()
@@ -245,7 +262,7 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
         # pg.draw.lines(WIN, "lime", False, drs_zone_points_scaled)
         if track_features['drs']:
             for drs_zone_points_scaled in drs_zones_scaled:
-                pg.draw.aalines(WIN, "lime", False, drs_zone_points_scaled)
+                pg.draw.aalines(SURF_TRACK, "lime", False, drs_zone_points_scaled)
 
         # pg.draw.rect(WIN, "red", (TRACK_POINTS_SCALED[0][0] - 1, TRACK_POINTS_SCALED[0][1] - 1, 3, 3), 2)
         pg.draw.circle(SURF_TRACK, "red", (TRACK_POINTS_SCALED[0]), 2)

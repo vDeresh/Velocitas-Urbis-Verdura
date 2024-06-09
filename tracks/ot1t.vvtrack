@@ -1,0 +1,10 @@
+0.3
+ot1t
+['Deresh']
+[(0, ['asphalt', 'timer', 'meta']), (2, [{'reference-target-speed': 296.8652, 'overtaking-risk': 0.342}]), (56, ['braking-finish-point', {'reference-target-speed': 131.1324, 'overtaking-risk': 0.1667}]), (59, ['acceleration-start-point']), (60, ['acceleration-start-point'])]
+1
+500 100 800 100 400 100 ['asphalt'] 16
+900 500 900 800 900 200 ['asphalt'] 16
+500 900 200 900 800 900 ['asphalt'] 16
+100 500 100 200 100 800 ['asphalt'] 16
+200 100 300 100 100 100 ['asphalt'] 16

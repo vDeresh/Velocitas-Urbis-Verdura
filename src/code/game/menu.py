@@ -161,7 +161,7 @@ def menu_settings() -> None:
     drivers_surf             = pg.Surface((500,        500),   pg.SRCALPHA)
     settings_background_surf = pg.Surface((WIN_W,      WIN_H), pg.SRCALPHA)
 
-    settings_background_surf.set_alpha(80)
+    settings_background_surf.set_alpha(40)
 
     # choosen_track = 0
     # CHOOSEN_RACING_CLASS: list[str] = ["Volo", "CAT-B"]
@@ -370,7 +370,7 @@ def menu_career() -> None | dict:
     surf_career_list       = pg.Surface((500,   500),   pg.SRCALPHA)
     surf_career_background = pg.Surface((WIN_W, WIN_H), pg.SRCALPHA)
 
-    surf_career_background.set_alpha(80)
+    surf_career_background.set_alpha(40)
 
     ALL_CAREERS = main_mgr.show_all_careers()
 
@@ -581,7 +581,7 @@ def sub_menu_career_new_career() -> None | dict:
     surf_team_picker           = pg.Surface((500, 500), pg.SRCALPHA)
     surf_new_career_background = pg.Surface((WIN_W, WIN_H), pg.SRCALPHA)
 
-    surf_new_career_background.set_alpha(80)
+    surf_new_career_background.set_alpha(40)
 
 
     INCOMPATIBILIES: set[str] = set()
@@ -682,7 +682,7 @@ def menu_custom_race():
     drivers_surf                = pg.Surface((500,        500),   pg.SRCALPHA)
     custom_race_background_surf = pg.Surface((WIN_W,      WIN_H), pg.SRCALPHA)
 
-    custom_race_background_surf.set_alpha(80)
+    custom_race_background_surf.set_alpha(40)
 
     choosen_track = 0
     CHOOSEN_RACING_CLASS: list[str] = ["Volo", "CAT-B"]
@@ -725,7 +725,7 @@ def menu_custom_race():
         CURRENT_CLASS_MANIFEST = main_mgr.read_manifest(CHOOSEN_RACING_CLASS[0], CHOOSEN_RACING_CLASS[1])
 
         if CURRENT_CLASS_MANIFEST['racing-type'] in CURRENT_TRACK:
-            CURRENT_ALL_LAPS = int(max(1, (200_000 // CURRENT_TRACK[CURRENT_CLASS_MANIFEST['racing-type']]['info']['length'] + 1) * OTHER_SETTINGS['race-length']))
+            CURRENT_ALL_LAPS = int(max(1, (300_000 // CURRENT_TRACK[CURRENT_CLASS_MANIFEST['racing-type']]['info']['length'] + 1) * OTHER_SETTINGS['race-length']))
 
 
         SURF_MENU.blit(BACKGROUND_THEMED_MENU, (0, 0))

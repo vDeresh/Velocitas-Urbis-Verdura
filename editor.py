@@ -10,9 +10,6 @@ import random
 from threading import Thread
 
 
-# print(os.path.abspath(""))
-
-
 # Prepare directories ----------------------------------------------------------------------------------------
 if not os.path.exists(os.path.abspath("tracks")):
     os.mkdir("tracks")
@@ -274,7 +271,7 @@ def is_similar(p1, p2, _range: int = 2) -> bool:
 
 
 def calculate_track_points():
-    if len(TRACK_TURN_POINTS) < 2:
+    if len(TRACK_TURN_POINTS) <= 2:
         TRACK.clear()
         return
 
@@ -291,9 +288,14 @@ def calculate_track_points():
             TRACK_POINTS_TAGS.append((n, p[2]))
 
     TRACK.clear()
-    for n in range(len(TRACK_TURN_POINTS) - 1):
-        point1 = TRACK_TURN_POINTS[n]
-        point2 = TRACK_TURN_POINTS[n + 1]
+    for n in range(len(TRACK_TURN_POINTS)):
+
+        if n == len(TRACK_TURN_POINTS) - 1:
+            point1 = TRACK_TURN_POINTS[n]
+            point2 = TRACK_TURN_POINTS[0]
+        else:
+            point1 = TRACK_TURN_POINTS[n]
+            point2 = TRACK_TURN_POINTS[n + 1]
 
         control_points = [(point1.x, point1.y), (point1.cx0, point1.cy0), (point2.cx1, point2.cy1), (point2.x, point2.y)]
 
@@ -405,13 +407,13 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
         stdscr.addstr(1, 3, f"amount of points:.. {len(TRACK_POINTS)}")
         stdscr.addstr(2, 3, f"track length:...... {SHARED['track-length']}")
 
-        if len(TRACK_POINTS) >= 3:
-            if TRACK_POINTS[0] != TRACK_POINTS[-1]:
-                stdscr.addstr(3, 3, f"starting direction: {SHARED['starting-direction']}")
-            else:
-                stdscr.addstr(3, 3, f"first point cannot be the same as last point")
-        else:
-            stdscr.addstr(3, 3, f"not enough points to calculate the starting direction")
+        # if len(TRACK_POINTS) >= 3:
+        #     if TRACK_POINTS[0] != TRACK_POINTS[-1]:
+        #         stdscr.addstr(3, 3, f"starting direction: {SHARED['starting-direction']}")
+        #     else:
+        #         stdscr.addstr(3, 3, f"first point cannot be the same as last point")
+        # else:
+        #     stdscr.addstr(3, 3, f"not enough points to calculate the starting direction")
 
         stdscr.addstr(4, 3, f"scale:............. {SETTINGS['TRACK']['scale']}")
         stdscr.addstr(5, 3, f"number of timers:.. {sum([int('timer' in tags) for _, tags in TRACK_POINTS_TAGS])}")
@@ -620,11 +622,6 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
                                     if p[1] > _temp_max_y:
                                         _temp_max_y = p[1]
 
-                                print(_temp_min_x, 1000 - _temp_max_x)
-                                print(_temp_max_x)
-
-                                print(((1000 - _temp_max_x) + _temp_min_x) // 2)
-
                                 for tp in TRACK_TURN_POINTS:
                                     tp.x += ((1000 - _temp_max_x) + _temp_min_x) // 4
                                     tp.y += ((1000 - _temp_max_y) + _temp_min_y) // 4
@@ -698,7 +695,8 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
                                                 else:
                                                     del n2, p2
                                         else:
-                                            del n1, p1
+                                            if len(TRACK):
+                                                del n1, p1
                                     else:
                                         TERMINAL_OUTPUT = f"[!] SCALE: Parameter must be an integer bigger than 0. ({command[1]} provided)"
                                 except ValueError:
@@ -790,7 +788,7 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
 
                                             "info": {
                                                 "length": sum([pg.Vector2(TRACK_POINTS[n]).distance_to(TRACK_POINTS[n + 1]) for n in range(len(TRACK_POINTS) - 1)]) * SETTINGS['TRACK']['scale'],
-                                                "starting-direction": list(pg.Vector2(TRACK_POINTS[0][0] - TRACK_POINTS[-1][0], TRACK_POINTS[0][1] - TRACK_POINTS[-1][1]).normalize()),
+                                                # "starting-direction": list(pg.Vector2(TRACK_POINTS[0][0] - TRACK_POINTS[-1][0], TRACK_POINTS[0][1] - TRACK_POINTS[-1][1]).normalize()),
 
                                                 "track-capacity": 0,
                                                 "pit-lane-speed-limit": 0,
@@ -998,7 +996,7 @@ def terminal(stdscr: _curses.window, SHARED: dict) -> None: # window - 124x29
 SHARED: dict = {
     'terminal-output': "",
     'track-length': 0,
-    'starting-direction': [0, 0],
+    # 'starting-direction': [0, 0],
     'request': {
         'calculate-track-points': False
     }
@@ -1157,13 +1155,13 @@ calculate_track_points()
 while 1: # ---------------------------------------------------------------------------------------------------------------------- Main loop
     SHARED['track-length'] = sum([pg.Vector2(TRACK_POINTS[n]).distance_to(TRACK_POINTS[n + 1]) for n in range(len(TRACK_POINTS) - 1)]) * SETTINGS['TRACK']['scale']
 
-    if len(TRACK_POINTS) >= 3:
-        if TRACK_POINTS[0] != TRACK_POINTS[1]:
-            SHARED['starting-direction'] = pg.Vector2(TRACK_POINTS[0][0] - TRACK_POINTS[-1][0], TRACK_POINTS[0][1] - TRACK_POINTS[-1][1]).normalize()
-        else:
-            SHARED['starting-direction'] = None
-    else:
-        SHARED['starting-direction'] = None
+    # if len(TRACK_POINTS) >= 3:
+    #     if TRACK_POINTS[0][0] != TRACK_POINTS[-1][0] and TRACK_POINTS[0][1] != TRACK_POINTS[-1][1]:
+    #         SHARED['starting-direction'] = pg.Vector2(TRACK_POINTS[0][0] - TRACK_POINTS[-1][0], TRACK_POINTS[0][1] - TRACK_POINTS[-1][1]).normalize()
+    #     else:
+    #         SHARED['starting-direction'] = None
+    # else:
+    #     SHARED['starting-direction'] = None
 
     if SHARED['request']['calculate-track-points']:
         calculate_track_points()

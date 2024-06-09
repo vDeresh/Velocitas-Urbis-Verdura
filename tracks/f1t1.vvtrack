@@ -1,0 +1,19 @@
+0.3
+f1t1
+['Deresh']
+[(0, ['asphalt', 'timer', 'meta']), (4, ['braking-finish-point', {'reference-target-speed': 79.0218, 'overtaking-risk': 0.1471}]), (7, ['acceleration-start-point']), (31, ['braking-finish-point', {'reference-target-speed': 77.7734, 'overtaking-risk': 0.1664}]), (33, ['acceleration-start-point']), (40, ['braking-finish-point', {'reference-target-speed': 65.5366, 'overtaking-risk': 0.1815}]), (42, ['acceleration-start-point']), (47, ['braking-finish-point', {'reference-target-speed': 53.8732, 'overtaking-risk': 0.2791}]), (49, ['acceleration-start-point']), (56, ['braking-finish-point', {'reference-target-speed': 53.4304, 'overtaking-risk': 0.336}]), (58, ['acceleration-start-point']), (67, ['braking-finish-point', {'reference-target-speed': 95.8418, 'overtaking-risk': 0.2214}]), (71, ['acceleration-start-point']), (75, ['braking-finish-point', {'reference-target-speed': 106.8795, 'overtaking-risk': 0.2215}]), (77, ['acceleration-start-point']), (87, ['braking-finish-point', {'reference-target-speed': 66.1133, 'overtaking-risk': 0.455}]), (89, ['acceleration-start-point']), (113, ['braking-finish-point', {'reference-target-speed': 49.9103, 'overtaking-risk': 0.4879}]), (117, ['acceleration-start-point']), (129, ['braking-finish-point', {'reference-target-speed': 38.8711, 'overtaking-risk': 0.3656}]), (132, ['acceleration-start-point']), (141, ['braking-finish-point', {'reference-target-speed': 38.3595, 'overtaking-risk': 0.4669}]), (144, ['acceleration-start-point']), (159, ['braking-finish-point', {'reference-target-speed': 82.7105, 'overtaking-risk': 0.1643}]), (161, ['acceleration-start-point']), (167, ['braking-finish-point', {'reference-target-speed': 123.0801, 'overtaking-risk': 0.1491}]), (169, ['acceleration-start-point']), (182, ['braking-finish-point', {'reference-target-speed': 48.4556, 'overtaking-risk': 0.3149}]), (184, ['acceleration-start-point']), (198, ['drs-start']), (209, ['drs-end'])]
+1
+160 60 120 20 200 100 ['asphalt'] 16
+100 80 100 120 100 40 ['asphalt'] 16
+140 180 140 240 140 120 ['asphalt'] 16
+80 260 100 340 60 180 ['asphalt'] 16
+180 260 240 440 160 200 ['asphalt'] 16
+160 460 60 460 200 460 ['asphalt'] 16
+140 740 280 580 60 820 ['asphalt'] 16
+600 460 620 420 540 560 ['asphalt'] 16
+660 420 660 500 660 340 ['asphalt'] 16
+680 520 720 480 640 560 ['asphalt'] 16
+740 560 760 700 720 420 ['asphalt'] 16
+820 740 920 740 720 740 ['asphalt'] 16
+920 940 940 1020 900 860 ['asphalt'] 16
+840 900 820 860 860 940 ['asphalt'] 16
