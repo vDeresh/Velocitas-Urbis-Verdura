@@ -25,6 +25,8 @@ THEMES: list[list] = [ # #222034
     ["#45283c", "#23061a", "#eeeeee"]
 ]
 
+# THEMES: list[list[pg.Color]] = [[] for _ in range(len(temp_THEMES))]
+
 for n1, theme in enumerate(THEMES):
     for n2, color in enumerate(theme):
         THEMES[n1][n2] = hex_to_rgb(color)
@@ -42,7 +44,7 @@ class Button:
         self.feedback_id: int = feedback_id
 
         self.color = THEMES[THEME_CURRENT][1]
-        self.hover: float = 20
+        self.hover: int = 20
 
         temp_render: pg.Surface = FONT_5.render(text, True, "#222034")
 
@@ -57,7 +59,7 @@ class Button:
 
     def update(self, MOUSE_POS: tuple[int, int], CLICKED_BUTTON: None | int) -> None | int:
         if self.hover < 20:
-            self.color = [x + (((y - x) / (20)) * self.hover) for x, y in zip(THEMES[THEME_CURRENT][2], THEMES[THEME_CURRENT][1])]
+            self.color = [x + (((y - x) // (20)) * self.hover) for x, y in zip(THEMES[THEME_CURRENT][2], THEMES[THEME_CURRENT][1])]
 
         self.draw()
 
@@ -862,3 +864,76 @@ def menu_custom_race():
         SURF_MENU.blit(other_settings_surf,   (500 + 500 + 10, 500 + 10))
         WIN.blit(SURF_MENU, (0, 0))
         pg.display.flip()
+
+
+def menu_confirm(text: str) -> bool:
+    SURF_MENU = pg.Surface((WIN_W, WIN_H), pg.SRCALPHA)
+
+
+    surf_background = pg.Surface((WIN_W, WIN_H), pg.SRCALPHA)
+    surf_background.blit(WIN, (0, 0))
+
+    # _temp_1_surf_background = pg.Surface((WIN_W, WIN_H), pg.SRCALPHA)
+    _temp_2_surf_background = pg.Surface((WIN_W, WIN_H))
+
+    # _temp_1_surf_background.fill(THEMES[THEME_CURRENT][0])
+
+    _temp_2_surf_background.fill((0, 0, 0))
+    _temp_2_surf_background.set_alpha(80)
+    # _temp_2_surf_background.convert()
+
+    # _temp_1_surf_background.blit(_temp_2_surf_background, (0, 0))
+    # surf_background.blit(_temp_1_surf_background, (0, 0))
+
+    # del _temp_1_surf_background, _temp_2_surf_background
+
+
+    # from threading import Thread
+
+    # _temp_surf_background = surf_background.copy()
+
+    # _thread_blur = Thread(target=pg.transform.gaussian_blur, args=[surf_background.copy(), 16, False, surf_background], daemon=True)
+    # _thread_blur.start()
+
+    surf_background = pg.transform.gaussian_blur(surf_background, 2, False) # .convert()
+    # surf_background = pg.transform.box_blur(surf_background, 16, False)
+
+
+    render_text_color = "azure"
+    render_text = FONT_4.render(text, True, render_text_color)
+    render_text_rect = pg.Rect(WIN_W / 2 - render_text.get_width() / 2, WIN_H / 2 - render_text.get_height(), render_text.get_width(), render_text.get_height())
+
+    render_no_color = "azure2"
+    render_no = FONT_4.render("No", True, render_no_color)
+
+    render_yes_color = "azure2"
+    render_yes = FONT_4.render("Yes", True, render_yes_color)
+
+    render_no_rect  = pg.Rect(WIN_W / 2 - render_no.get_width() - 20, WIN_H / 2, render_no.get_width(),  render_no.get_height())
+    render_yes_rect = pg.Rect(WIN_W / 2                         + 20, WIN_H / 2, render_yes.get_width(), render_yes.get_height())
+
+
+    while 1:
+        for e in pg.event.get():
+            if e.type == pg.QUIT:
+                pg.quit()
+                exit()
+
+            if e.type == pg.KEYDOWN:
+                if e.key == pg.K_ESCAPE:
+                    return False
+
+
+            SURF_MENU.fill((0, 0, 0))
+            SURF_MENU.blit(surf_background, (0, 0))
+            SURF_MENU.blit(_temp_2_surf_background, (0, 0))
+
+            SURF_MENU.blit(render_text, render_text_rect)
+            SURF_MENU.blit(render_no,   render_no_rect)
+            SURF_MENU.blit(render_yes,  render_yes_rect)
+
+
+            WIN.blit(SURF_MENU, (0, 0))
+            pg.display.flip()
+
+    return False

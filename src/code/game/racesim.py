@@ -2,6 +2,7 @@ from ..config import *
 from ..manager import main_mgr
 from ..classes import Driver, Timer
 # from ..others import calculate_pit_entry_point as init_others
+from .menu import menu_confirm
 
 from threading import Thread
 # from multiprocessing import Process
@@ -214,6 +215,11 @@ def free_simulation_interface(racing_category_name: str, racing_class_name: str,
             if e.type == pg.QUIT:
                 pg.quit()
                 exit()
+
+            if e.type == pg.KEYDOWN:
+                if e.key == pg.K_ESCAPE:
+                    if menu_confirm("Are you sure you want to get back to menu?"):
+                        return
 
 
         SURF_MAIN.fill(COLOR_BACKGROUND)
