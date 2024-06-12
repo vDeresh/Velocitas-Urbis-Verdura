@@ -1,6 +1,7 @@
 from pygame.math import Vector2
 from .others import distance_between_points, next_turn_data, is_it_end_of_turn, distance_to_pit_lane_entry #, is_it_pit_entry
 from ..code.manager import link
+from .config import _const_simulation_speed
 
 import random
 # from time import perf_counter
@@ -130,9 +131,10 @@ class Driver:
     def set_pos(self, x: float, y: float) -> None:
         self.pos = Vector2(x, y)
 
-    def update(self, track: list[list], track_points: list, pitlane: list, pitlane_points: list, track_info: dict, drivers: list) -> None:
-        self.distance_to_next_turn = self.pos.distance_to((self.next_turn_data[0], self.next_turn_data[1]))
-        self.distance_to_next_driver = distance_to_next_driver(track_info['length'], track_points, self, drivers)
+    def update(self, timer: int, track: list[list], track_points: list, pitlane: list, pitlane_points: list, track_info: dict, drivers: list) -> None:
+        if not timer % 2:
+            self.distance_to_next_turn = self.pos.distance_to((self.next_turn_data[0], self.next_turn_data[1]))
+            self.distance_to_next_driver = distance_to_next_driver(track_info['length'], track_points, self, drivers)
 
         # Calls -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
         for call in self.call_stack:
@@ -175,7 +177,7 @@ class Driver:
 
             if "pit-box" in pitlane[self.current_point][2] and self.team.id == pitlane[self.current_point][2][1]:
                 self.speed = 0
-                self.pitstop_timer += 1 / 60 # 1 / FPS
+                self.pitstop_timer += 1 / _const_simulation_speed # 1 / FPS
                 if self.pitstop_timer >= 2 * self.skills['reaction-time-multiplier']:
                     self.current_point += 1
                     self.tyre_wear = 1
@@ -217,7 +219,8 @@ class Driver:
             self.is_already_turning = 1
             # self.next_turn_data = None
         else:
-            if is_it_end_of_turn(track, self.current_point):
+            # if is_it_end_of_turn(track, self.current_point):
+            if "acceleration-start-point" in track[self.current_point][2]:
                 self.is_already_turning = 0
                 self.next_turn_data = next_turn_data(track, self.current_point)
 
@@ -257,7 +260,7 @@ class Driver:
         # DRS ----------------------------------------------------------------
         if "drs-start" in track[self.current_point][2]:
             self.drs_zone = True
-            self.drs_available = 0.1 * self.skills['reaction-time-multiplier'] * (self.time_difference <= 1) * (self.position > 1)
+            self.drs_available = 0.1 * self.skills['reaction-time-multiplier'] * (self.time_difference <= 1) * (self.position > 1) * (_const_simulation_speed / 60)
             self.drs_active = False
 
         elif "drs-end" in track[self.current_point][2]:
@@ -420,7 +423,7 @@ class Driver:
         # DRS ----------------------------------------------------------------
         if "drs-start" in track[self.current_point][2]:
             self.drs_zone = True
-            self.drs_available = 0.1 * self.skills['reaction-time-multiplier']
+            self.drs_available = 0.1 * self.skills['reaction-time-multiplier'] * (_const_simulation_speed / 60)
             self.drs_active = False
 
         elif "drs-end" in track[self.current_point][2]:

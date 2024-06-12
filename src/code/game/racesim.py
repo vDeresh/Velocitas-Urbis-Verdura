@@ -1,4 +1,5 @@
 from ..config import *
+from ..config import _const_simulation_speed
 from ..manager import main_mgr
 from ..classes import Driver, Timer
 # from ..others import calculate_pit_entry_point as init_others
@@ -28,6 +29,9 @@ def qualifications(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POI
     return DRIVERS
 
 
+# from profilehooks import profile
+
+# @profile
 def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS, DRIVERS: list[Driver], ALL_LAPS: int) -> None:
     DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True)
 
@@ -37,14 +41,21 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 
     _end_it_all_timer = _const_simulation_speed * 4
 
+
+    TIMER: int = 1
+
     clock = pg.Clock()
     while 1:
+        TIMER += 1
+        if TIMER > _const_simulation_speed:
+            TIMER = 0
+
         clock.tick(_const_simulation_speed)
 
         prev_DRIVERS = DRIVERS
         for n, driver in enumerate(DRIVERS):
             driver.position = n + 1
-            driver.update(TRACK, TRACK_POINTS, PITLANE, PITLANE_POINTS, TRACK_INFO, prev_DRIVERS)
+            driver.update(TIMER, TRACK, TRACK_POINTS, PITLANE, PITLANE_POINTS, TRACK_INFO, prev_DRIVERS)
 
             if driver.lap > ALL_LAPS:
                 driver.slow = True
@@ -68,7 +79,7 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 
         DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True) # the bigger the better
 
-        if (_end_it_all_timer < _const_simulation_speed * 4) or all(d.lap > ALL_LAPS for d in DRIVERS):
+        if (_end_it_all_timer < _const_simulation_speed * 4) or DRIVERS[-1].lap > ALL_LAPS:
             _end_it_all_timer -= 1
 
             if _end_it_all_timer <= 0:

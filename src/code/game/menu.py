@@ -59,7 +59,7 @@ class Button:
 
     def update(self, MOUSE_POS: tuple[int, int], CLICKED_BUTTON: None | int) -> None | int:
         if self.hover < 20:
-            self.color = [x + (((y - x) // (20)) * self.hover) for x, y in zip(THEMES[THEME_CURRENT][2], THEMES[THEME_CURRENT][1])]
+            self.color = [x + (((y - x) / (20)) * self.hover) for x, y in zip(THEMES[THEME_CURRENT][2], THEMES[THEME_CURRENT][1])]
 
         self.draw()
 
