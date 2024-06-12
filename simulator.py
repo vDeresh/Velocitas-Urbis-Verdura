@@ -91,12 +91,12 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
         ALL_TRACKS = main_mgr.track_show(track_name)
 
         TRACK_POINTS = main_mgr.convert_track_to_points(TRACK)
-        TRACK_POINTS_SCALED = main_mgr.scale_track_points(TRACK_POINTS, TRACK_INFO['scale'])
+        TRACK_POINTS_SCALED = main_mgr.scale_track_points(TRACK_POINTS, ALL_TRACKS['scale'])
 
         if track_features['pit-lane']:
             PITLANE = main_mgr.track_show(track_name)[class_manifest['racing-type']]['pit-lane']
             PITLANE_POINTS = main_mgr.convert_track_to_points(PITLANE)
-            PITLANE_POINTS_SCALED = main_mgr.scale_track_points(PITLANE_POINTS, TRACK_INFO['scale'])
+            PITLANE_POINTS_SCALED = main_mgr.scale_track_points(PITLANE_POINTS, ALL_TRACKS['scale'])
         else:
             PITLANE = PITLANE_POINTS = PITLANE_POINTS_SCALED = []
     else:
@@ -106,14 +106,30 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
     TRACK_INFO['timer-ids'] = set(TRACK_INFO['timer-ids'])
 
 
-    for n, driver in enumerate(DRIVERS):
-        driver.init(TRACK, n + 1, _tires)
+    _temp_reversed_track_list = list(range(len(TRACK_POINTS)).__reversed__())
+    _temp_reversed_track_list.insert(0, 0)
+    _temp_reversed_track_list.pop()
+
+    for n1, driver in enumerate(DRIVERS):
+        driver.init(TRACK, n1 + 1, _tires)
         if _same_starting_point:
             driver.set_pos(TRACK_POINTS[0][0], TRACK_POINTS[0][1])
         else:
-            driver.set_pos(TRACK_POINTS[0][0] - 8 * TRACK_INFO['starting-direction'][0] * (n + 1), TRACK_POINTS[0][1] - 8 * TRACK_INFO['starting-direction'][1] * (n + 1))
+            _temp_distance = 0
+            for n2 in _temp_reversed_track_list:
+                _temp_distance += pg.Vector2(TRACK_POINTS[n2]).distance_to(TRACK_POINTS[n2 - 1])
+
+                if 10 * (n1 + 1) < _temp_distance:
+
+                    _temp_starting_pos = (_temp_distance - 10 * (n1 + 1)) * (pg.Vector2(TRACK_POINTS[n2]) - pg.Vector2(TRACK_POINTS[n2 - 1])).normalize() + TRACK_POINTS[n2 - 1]
+                    driver.set_pos(_temp_starting_pos.x, _temp_starting_pos.y)
+                    driver.current_point = n2
+
+                    _temp_distance = 0
+                    break
     else:
-        del n, driver
+        del n1, driver, _temp_distance
+    del _temp_reversed_track_list
 
 
     SHARED = {
@@ -138,17 +154,19 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
         if _temp_drs_zone_now:
             drs_zones[_temp_drs_zone_counter].append(tuple(p[0:2]))
 
-    drs_zones_scaled = [main_mgr.scale_track_points(drs_zone_points, TRACK_INFO['scale']) for drs_zone_points in drs_zones]
+    drs_zones_scaled = [main_mgr.scale_track_points(drs_zone_points, ALL_TRACKS['scale']) for drs_zone_points in drs_zones]
 
     del drs_zones, _temp_drs_zone_now, _temp_drs_zone_counter, n, p
 
 
     # For showing other tracks in this place ----
-    all_tracks = [[]]
+    all_tracks = []
     all_tracks_points_scaled = []
-    for n, t in enumerate(ALL_TRACKS):
-        n -= 3
-        if n < 0: continue
+    n = -1
+    for t in ALL_TRACKS:
+        if not t in ["formula", "rallycross"]: continue
+        else: n += 1
+
         for p in ALL_TRACKS[t]['track']:
             if len(all_tracks) < n + 1:
                 all_tracks.append([])
@@ -159,7 +177,7 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
             for p in t:
                 temp_all_tracks_scaled.append(p[0 : 2])
 
-            all_tracks_points_scaled.append(main_mgr.scale_track_points(temp_all_tracks_scaled, TRACK_INFO['scale']))
+            all_tracks_points_scaled.append(main_mgr.scale_track_points(temp_all_tracks_scaled, ALL_TRACKS['scale']))
 
         del n, t, p, temp_all_tracks_scaled, all_tracks
     # -------------------------------------------
@@ -220,18 +238,18 @@ def simulation_interface(racing_category_name: str, racing_class_name: str, trac
         for driver in DRIVERS: # drawing drivers
             match driver.tyre_type:
                 case 0:
-                    pg.draw.circle(WIN, "#ff7a7a", driver.pos / 2 / TRACK_INFO['scale'], 2)
+                    pg.draw.circle(WIN, "#ff7a7a", driver.pos / 2 / ALL_TRACKS['scale'], 2)
                 case 1:
-                    pg.draw.circle(WIN, "#c61010", driver.pos / 2 / TRACK_INFO['scale'], 2)
+                    pg.draw.circle(WIN, "#c61010", driver.pos / 2 / ALL_TRACKS['scale'], 2)
                 case 2:
-                    pg.draw.circle(WIN, "#ffcf24", driver.pos / 2 / TRACK_INFO['scale'], 2)
+                    pg.draw.circle(WIN, "#ffcf24", driver.pos / 2 / ALL_TRACKS['scale'], 2)
                 case 3:
-                    pg.draw.circle(WIN, "#f2f2f2", driver.pos / 2 / TRACK_INFO['scale'], 2)
+                    pg.draw.circle(WIN, "#f2f2f2", driver.pos / 2 / ALL_TRACKS['scale'], 2)
                 case 4:
-                    pg.draw.circle(WIN, "#21ad46", driver.pos / 2 / TRACK_INFO['scale'], 2)
+                    pg.draw.circle(WIN, "#21ad46", driver.pos / 2 / ALL_TRACKS['scale'], 2)
                 case 5:
-                    pg.draw.circle(WIN, "#0050d1", driver.pos / 2 / TRACK_INFO['scale'], 2)
-            pg.draw.circle(WIN, driver.team.color, driver.pos / 2 / TRACK_INFO['scale'], 1)
+                    pg.draw.circle(WIN, "#0050d1", driver.pos / 2 / ALL_TRACKS['scale'], 2)
+            pg.draw.circle(WIN, driver.team.color, driver.pos / 2 / ALL_TRACKS['scale'], 1)
 
 
         WIN.blit(FONT.render(str(SHARED['fps']), True, "white"), (0, 0))

@@ -35,11 +35,11 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 
     # ALL_LAPS = 1 # 200_000 // TRACK_INFO['length'] + 1
 
-    _end_it_all_timer = 60 * 4
+    _end_it_all_timer = _const_simulation_speed * 4
 
     clock = pg.Clock()
     while 1:
-        clock.tick(60)
+        clock.tick(_const_simulation_speed)
 
         prev_DRIVERS = DRIVERS
         for n, driver in enumerate(DRIVERS):
@@ -56,7 +56,7 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
                     if timer.id == driver.current_point:
                         if timer.cached_driver != driver.number:
                             timer.cached_driver = driver.number
-                            driver.time_difference = timer.time / 60
+                            driver.time_difference = timer.time / _const_simulation_speed
                             timer.time = 0
                         break
 
@@ -68,7 +68,7 @@ def simulation(shared, TRACK, TRACK_POINTS, TRACK_INFO, PITLANE, PITLANE_POINTS,
 
         DRIVERS.sort(key=lambda x: (x.lap, x.current_point, -x.pos.distance_to(x.next_point_xy), x.speed), reverse=True) # the bigger the better
 
-        if (_end_it_all_timer < 60 * 4) or all(d.lap > ALL_LAPS for d in DRIVERS):
+        if (_end_it_all_timer < _const_simulation_speed * 4) or all(d.lap > ALL_LAPS for d in DRIVERS):
             _end_it_all_timer -= 1
 
             if _end_it_all_timer <= 0:

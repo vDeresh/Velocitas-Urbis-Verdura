@@ -29,3 +29,6 @@ COLOR_MONITOR = pg.Color(34, 32, 52)
 COLOR_MONITOR_ALPHA_40 = pg.Color(34, 32, 52, 40)
 COLOR_MONITOR_2 = pg.Color(26, 26, 44)
 COLOR_MONITOR_2_ALPHA_40 = pg.Color(26, 26, 44, 40)
+
+
+_const_simulation_speed = 120

@@ -462,13 +462,14 @@ class Driver:
 
         self.quali_lap_time_timer += 1
 
-        if self.current_point >= len(track):
+        if self.current_point >= len(track): # Meta
             self.current_point = 0
+
+            if self.lap:
+                if self.quali_lap_time_timer < self.quali_best_lap_time:
+                    self.quali_best_lap_time = self.quali_lap_time_timer
+
             self.lap += 1
-
-            if self.quali_lap_time_timer < self.quali_best_lap_time:
-                self.quali_best_lap_time = self.quali_lap_time_timer
-
             self.quali_lap_time_timer = 0
 
             # print(f"{self.name} ({self.team.name_abbreviation}) > [{self.quali_best_lap_time}] d: {self.team.car_stats['downforce']}")

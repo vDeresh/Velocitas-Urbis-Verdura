@@ -15,14 +15,14 @@ def hex_to_rgb(hex: str) -> pg.Color:
 
 
 THEMES: list[list] = [ # #222034
-    ["#ac3232", "#8a1010", "#eeeeee"],
-    ["#d77bba", "#a44887", "#eeeeee"],
-    ["#76428a", "#542068", "#eeeeee"],
-    ["#5b6ee1", "#394cc0", "#eeeeee"],
-    ["#306082", "#104060", "#eeeeee"],
-    ["#37946e", "#25724c", "#eeeeee"],
-    ["#df7126", "#bd5004", "#eeeeee"],
-    ["#45283c", "#23061a", "#eeeeee"]
+    ["#ac3232", "#8a1010", "#df6565", "#eeeeee"],
+    ["#d77bba", "#a44887", "#faaffd", "#eeeeee"],
+    ["#76428a", "#542068", "#a976bd", "#eeeeee"],
+    ["#5b6ee1", "#394cc0", "#8e9ff4", "#eeeeee"],
+    ["#306082", "#104060", "#6393b5", "#eeeeee"],
+    ["#37946e", "#25724c", "#6ac79f", "#eeeeee"],
+    ["#df7126", "#bd5004", "#ffb459", "#eeeeee"],
+    ["#45283c", "#23061a", "#785b6f", "#eeeeee"]
 ]
 
 # THEMES: list[list[pg.Color]] = [[] for _ in range(len(temp_THEMES))]
@@ -903,17 +903,21 @@ def menu_confirm(text: str) -> bool:
     render_text = FONT_4.render(text, True, render_text_color)
     render_text_rect = pg.Rect(WIN_W / 2 - render_text.get_width() / 2, WIN_H / 2 - render_text.get_height(), render_text.get_width(), render_text.get_height())
 
-    render_no_color = "azure2"
-    render_no = FONT_4.render("No", True, render_no_color)
+    render_no = FONT_5.render("No", True, "azure2")
 
-    render_yes_color = "azure2"
-    render_yes = FONT_4.render("Yes", True, render_yes_color)
+    render_yes = FONT_5.render("Yes", True, "azure2")
 
     render_no_rect  = pg.Rect(WIN_W / 2 - render_no.get_width() - 20, WIN_H / 2, render_no.get_width(),  render_no.get_height())
     render_yes_rect = pg.Rect(WIN_W / 2                         + 20, WIN_H / 2, render_yes.get_width(), render_yes.get_height())
 
 
+    clock = pg.Clock()
     while 1:
+        clock.tick(60)
+
+        MOUSE_POS = pg.mouse.get_pos()
+        CLICKED_BUTTON = None
+
         for e in pg.event.get():
             if e.type == pg.QUIT:
                 pg.quit()
@@ -923,17 +927,38 @@ def menu_confirm(text: str) -> bool:
                 if e.key == pg.K_ESCAPE:
                     return False
 
-
-            SURF_MENU.fill((0, 0, 0))
-            SURF_MENU.blit(surf_background, (0, 0))
-            SURF_MENU.blit(_temp_2_surf_background, (0, 0))
-
-            SURF_MENU.blit(render_text, render_text_rect)
-            SURF_MENU.blit(render_no,   render_no_rect)
-            SURF_MENU.blit(render_yes,  render_yes_rect)
+            if e.type == pg.MOUSEBUTTONDOWN:
+                CLICKED_BUTTON = e.button
 
 
-            WIN.blit(SURF_MENU, (0, 0))
-            pg.display.flip()
+        SURF_MENU.fill((0, 0, 0))
+        SURF_MENU.blit(surf_background, (0, 0))
+        SURF_MENU.blit(_temp_2_surf_background, (0, 0))
+
+
+        if render_no_rect.collidepoint(MOUSE_POS):
+            render_no = FONT_4.render("No", True, THEMES[THEME_CURRENT][2])
+
+            if CLICKED_BUTTON == 1:
+                return False
+        else:
+            render_no = FONT_4.render("No", True, "azure4")
+
+        if render_yes_rect.collidepoint(MOUSE_POS):
+            render_yes = FONT_4.render("Yes", True, THEMES[THEME_CURRENT][2])
+
+            if CLICKED_BUTTON == 1:
+                return True
+        else:
+            render_yes = FONT_4.render("Yes", True, "azure4")
+
+
+        SURF_MENU.blit(render_text, render_text_rect)
+        SURF_MENU.blit(render_no,   render_no_rect)
+        SURF_MENU.blit(render_yes,  render_yes_rect)
+
+
+        WIN.blit(SURF_MENU, (0, 0))
+        pg.display.flip()
 
     return False
